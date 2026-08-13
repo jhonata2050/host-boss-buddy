@@ -9,7 +9,13 @@ import { RefreshCw, AlertCircle, Users, Server, Receipt, CheckCircle2, Loader2 }
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { importWhmcsCsv, listWhmcsImports } from "@/lib/whmcs.functions";
+import { parseCsv, chunk } from "@/lib/csv";
+import {
+  startWhmcsImport,
+  importWhmcsBatch,
+  finishWhmcsImport,
+  listWhmcsImports,
+} from "@/lib/whmcs.functions";
 import {
   Dialog,
   DialogContent,
@@ -39,23 +45,39 @@ export const Route = createFileRoute("/_authenticated/admin/import")({
   }),
 });
 
-type Slot = "clientsCsv" | "servicesCsv" | "invoicesCsv";
+type Kind = "clients" | "services" | "invoices";
 
-const SLOTS: { key: Slot; title: string; icon: typeof Users; hint: string }[] = [
+type Stats = {
+  clients: { created: number; updated: number; failed: number };
+  services: { created: number; failed: number };
+  invoices: { created: number; failed: number };
+  errors: string[];
+};
+
+const emptyStats = (): Stats => ({
+  clients: { created: 0, updated: 0, failed: 0 },
+  services: { created: 0, failed: 0 },
+  invoices: { created: 0, failed: 0 },
+  errors: [],
+});
+
+const BATCH_SIZE = 100;
+
+const SLOTS: { key: Kind; title: string; icon: typeof Users; hint: string }[] = [
   {
-    key: "clientsCsv",
+    key: "clients",
     title: "Tabela de Clientes",
     icon: Users,
     hint: "Ex: tblclients.csv. O sistema filtrará automaticamente os campos relevantes.",
   },
   {
-    key: "servicesCsv",
+    key: "services",
     title: "Tabela de Serviços / Hospedagem",
     icon: Server,
     hint: "Ex: tblhosting.csv. Vincula ao cliente pelo e-mail.",
   },
   {
-    key: "invoicesCsv",
+    key: "invoices",
     title: "Tabela de Faturas",
     icon: Receipt,
     hint: "Ex: tblinvoices.csv. Vincula ao cliente pelo e-mail.",
@@ -63,9 +85,15 @@ const SLOTS: { key: Slot; title: string; icon: typeof Users; hint: string }[] = 
 ];
 
 function AdminWHMCSImportPage() {
-  const [files, setFiles] = useState<Partial<Record<Slot, { name: string; content: string }>>>({});
+  const [files, setFiles] = useState<Partial<Record<Kind, File>>>({});
   const [showStatus, setShowStatus] = useState(false);
-  const runImport = useServerFn(importWhmcsCsv);
+  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState("");
+  const [live, setLive] = useState<Stats>(emptyStats());
+
+  const startJob = useServerFn(startWhmcsImport);
+  const sendBatch = useServerFn(importWhmcsBatch);
+  const finishJob = useServerFn(finishWhmcsImport);
   const fetchImports = useServerFn(listWhmcsImports);
   const queryClient = useQueryClient();
 
@@ -77,12 +105,66 @@ function AdminWHMCSImportPage() {
   const mutation = useMutation({
     mutationFn: async () => {
       setShowStatus(true);
-      const payload: Record<string, string> = {};
+      setProgress(0);
+      setStep("Preparando arquivos...");
+      const total = emptyStats();
+      setLive(total);
+
+      const { jobId } = await startJob();
+
+      // Lê e converte os CSVs no navegador (evita enviar arquivos gigantes de uma vez)
+      const parsed: { kind: Kind; rows: Record<string, string>[] }[] = [];
       for (const slot of SLOTS) {
         const file = files[slot.key];
-        if (file) payload[slot.key] = file.content;
+        if (!file) continue;
+        setStep(`Lendo ${file.name}...`);
+        const rows = parseCsv(await file.text());
+        if (rows.length > 0) parsed.push({ kind: slot.key, rows });
       }
-      return runImport({ data: payload });
+
+      const batches = parsed.flatMap(({ kind, rows }) =>
+        chunk(rows, BATCH_SIZE).map((b) => ({ kind, rows: b })),
+      );
+      if (batches.length === 0) throw new Error("Nenhuma linha válida encontrada nos arquivos.");
+
+      let done = 0;
+      try {
+        for (const batch of batches) {
+          setStep(
+            `Enviando ${batch.kind === "clients" ? "clientes" : batch.kind === "services" ? "serviços" : "faturas"} (${done + 1}/${batches.length})`,
+          );
+          const res = (await sendBatch({ data: batch })) as Stats;
+          total.clients.created += res.clients.created;
+          total.clients.updated += res.clients.updated;
+          total.clients.failed += res.clients.failed;
+          total.services.created += res.services.created;
+          total.services.failed += res.services.failed;
+          total.invoices.created += res.invoices.created;
+          total.invoices.failed += res.invoices.failed;
+          for (const err of res.errors) {
+            if (total.errors.length < 50) total.errors.push(err);
+          }
+          done++;
+          setProgress(Math.round((done / batches.length) * 100));
+          setLive({
+            clients: { ...total.clients },
+            services: { ...total.services },
+            invoices: { ...total.invoices },
+            errors: [...total.errors],
+          });
+        }
+      } catch (e) {
+        if (jobId) {
+          await finishJob({
+            data: { jobId, stats: total, errorMessage: (e as Error).message },
+          });
+        }
+        throw e;
+      }
+
+      if (jobId) await finishJob({ data: { jobId, stats: total } });
+      setStep("Concluído");
+      return total;
     },
     onSuccess: (stats) => {
       toast.success(
@@ -92,20 +174,11 @@ function AdminWHMCSImportPage() {
         toast.warning(`${stats.errors.length} erro(s). Veja o histórico.`);
       }
       void queryClient.invalidateQueries();
-      // Keep popup for a moment then close
-      setTimeout(() => setShowStatus(false), 3000);
     },
     onError: (e: Error) => {
       toast.error(e.message);
-      setShowStatus(false);
     },
   });
-
-  const handleFile = async (slot: Slot, file: File | undefined) => {
-    if (!file) return;
-    const content = await file.text();
-    setFiles((prev) => ({ ...prev, [slot]: { name: file.name, content } }));
-  };
 
   const hasFiles = Object.keys(files).length > 0;
 
@@ -126,9 +199,9 @@ function AdminWHMCSImportPage() {
               <div className="text-sm space-y-2">
                 <p className="font-bold text-warning-foreground">Importação Simplificada</p>
                 <p className="text-muted-foreground">
-                  Você pode exportar as tabelas <strong>completas</strong> (todos os campos) do WHMCS em formato CSV. 
-                  O sistema irá identificar automaticamente o que é necessário. 
-                  Dica: No phpMyAdmin, selecione a tabela e use a aba "Exportar" com formato CSV.
+                  Você pode exportar as tabelas <strong>completas</strong> (todos os campos) do
+                  WHMCS em formato CSV. O sistema identifica automaticamente o que é necessário e
+                  envia os dados em lotes de {BATCH_SIZE} linhas, suportando arquivos grandes.
                   Importe primeiro os Clientes, depois Serviços e Faturas.
                 </p>
               </div>
@@ -154,11 +227,16 @@ function AdminWHMCSImportPage() {
                   <input
                     type="file"
                     accept=".csv,text/csv"
-                    onChange={(e) => void handleFile(slot.key, e.target.files?.[0])}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) setFiles((prev) => ({ ...prev, [slot.key]: f }));
+                    }}
                     className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-xl file:border-0 file:bg-brand/10 file:px-4 file:py-2 file:text-sm file:font-bold file:text-brand"
                   />
                   {file && (
-                    <p className="text-xs text-muted-foreground">Arquivo carregado: {file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Arquivo carregado: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -186,12 +264,7 @@ function AdminWHMCSImportPage() {
               <p className="text-sm text-muted-foreground">Nenhuma importação executada ainda.</p>
             )}
             {(history.data ?? []).map((job) => {
-              const stats = job.stats as {
-                clients?: { created: number; updated: number; failed: number };
-                services?: { created: number; failed: number };
-                invoices?: { created: number; failed: number };
-                errors?: string[];
-              } | null;
+              const stats = job.stats as Partial<Stats> | null;
               return (
                 <div key={job.id} className="rounded-2xl bg-muted/40 p-4 text-sm space-y-1">
                   <div className="flex items-center justify-between">
@@ -227,46 +300,44 @@ function AdminWHMCSImportPage() {
               <DialogTitle className="flex items-center gap-2">
                 {mutation.isPending ? (
                   <Loader2 className="h-5 w-5 animate-spin text-brand" />
-                ) : mutation.isSuccess ? (
-                  <CheckCircle2 className="h-5 w-5 text-brand" />
-                ) : (
+                ) : mutation.isError ? (
                   <AlertCircle className="h-5 w-5 text-destructive" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-brand" />
                 )}
                 Status da Importação
               </DialogTitle>
               <DialogDescription>
-                {mutation.isPending 
-                  ? "Processando arquivos e migrando dados do WHMCS..." 
-                  : mutation.isSuccess 
-                  ? "Migração finalizada com sucesso!"
-                  : "Ocorreu um erro durante a importação."}
+                {mutation.isPending
+                  ? step || "Processando arquivos..."
+                  : mutation.isError
+                    ? "Ocorreu um erro durante a importação."
+                    : "Migração finalizada com sucesso!"}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-xs font-medium">
                   <span>Progresso</span>
-                  <span>{mutation.isPending ? "Processando..." : mutation.isSuccess ? "100%" : "Erro"}</span>
+                  <span>{mutation.isError ? "Erro" : `${progress}%`}</span>
                 </div>
-                <Progress value={mutation.isPending ? 45 : mutation.isSuccess ? 100 : 0} className="h-2" />
+                <Progress value={progress} className="h-2" />
               </div>
-              
-              {mutation.isSuccess && mutation.data && (
-                <div className="grid grid-cols-3 gap-2 text-center pt-2">
-                  <div className="rounded-2xl bg-muted/50 p-3">
-                    <p className="text-xl font-bold text-brand">{mutation.data.clients.created}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase">Clientes</p>
-                  </div>
-                  <div className="rounded-2xl bg-muted/50 p-3">
-                    <p className="text-xl font-bold text-brand">{mutation.data.services.created}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase">Serviços</p>
-                  </div>
-                  <div className="rounded-2xl bg-muted/50 p-3">
-                    <p className="text-xl font-bold text-brand">{mutation.data.invoices.created}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase">Faturas</p>
-                  </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center pt-2">
+                <div className="rounded-2xl bg-muted/50 p-3">
+                  <p className="text-xl font-bold text-brand">{live.clients.created}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Clientes</p>
                 </div>
-              )}
+                <div className="rounded-2xl bg-muted/50 p-3">
+                  <p className="text-xl font-bold text-brand">{live.services.created}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Serviços</p>
+                </div>
+                <div className="rounded-2xl bg-muted/50 p-3">
+                  <p className="text-xl font-bold text-brand">{live.invoices.created}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase">Faturas</p>
+                </div>
+              </div>
 
               {mutation.isError && (
                 <div className="rounded-2xl bg-destructive/10 p-3 text-sm text-destructive font-medium">
@@ -275,8 +346,8 @@ function AdminWHMCSImportPage() {
               )}
             </div>
             {!mutation.isPending && (
-              <Button 
-                onClick={() => setShowStatus(false)} 
+              <Button
+                onClick={() => setShowStatus(false)}
                 className="w-full rounded-2xl bg-brand font-bold"
               >
                 Fechar

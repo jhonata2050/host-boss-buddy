@@ -2,26 +2,60 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const importSchema = z.object({
-  clientsCsv: z.string().optional(),
-  servicesCsv: z.string().optional(),
-  invoicesCsv: z.string().optional(),
+const rowSchema = z.record(z.string(), z.string());
+
+const batchSchema = z.object({
+  kind: z.enum(["clients", "services", "invoices"]),
+  rows: z.array(rowSchema).max(200),
 });
 
-export const importWhmcsCsv = createServerFn({ method: "POST" })
+const statsSchema = z.object({
+  clients: z.object({ created: z.number(), updated: z.number(), failed: z.number() }),
+  services: z.object({ created: z.number(), failed: z.number() }),
+  invoices: z.object({ created: z.number(), failed: z.number() }),
+  errors: z.array(z.string()),
+});
+
+const finishSchema = z.object({
+  jobId: z.string(),
+  stats: statsSchema,
+  errorMessage: z.string().optional(),
+});
+
+async function assertAdmin(supabase: any, userId: string) {
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  const isAdmin = roles?.some((r: { role: string }) => r.role === "admin") ?? false;
+  if (!isAdmin) throw new Error("Unauthorized");
+}
+
+export const startWhmcsImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => importSchema.parse(data))
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { startImportJob } = await import("./whmcs-import.server");
+    return { jobId: await startImportJob() };
+  });
+
+export const importWhmcsBatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => batchSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
+    await assertAdmin(context.supabase, context.userId);
+    const { importBatch } = await import("./whmcs-import.server");
+    return importBatch(data.kind, data.rows);
+  });
 
-    const isAdmin = roles?.some((r: { role: string }) => r.role === "admin") ?? false;
-    if (!isAdmin) throw new Error("Unauthorized");
-
-    const { runWhmcsImport } = await import("./whmcs-import.server");
-    return runWhmcsImport(data);
+export const finishWhmcsImport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => finishSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { finishImportJob } = await import("./whmcs-import.server");
+    await finishImportJob(data.jobId, data.stats, data.errorMessage);
+    return { ok: true };
   });
 
 export const listWhmcsImports = createServerFn({ method: "GET" })

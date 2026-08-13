@@ -7,68 +7,13 @@ export type ImportStats = {
   errors: string[];
 };
 
-/** Parser de CSV simples otimizado para não concatenar strings excessivamente. */
-export function parseCsv(text: any): Record<string, string>[] {
-  if (typeof text !== 'string') return [];
-  const clean = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
-  const lines: string[][] = [];
-  let currentLine: string[] = [];
-  let currentField: string[] = [];
-  let inQuotes = false;
-
-  for (let i = 0; i < clean.length; i++) {
-    const char = clean[i];
-    if (char === undefined) continue;
-
-    if (inQuotes) {
-      if (char === '"') {
-        const nextChar = i + 1 < clean.length ? clean[i + 1] : undefined;
-        if (nextChar === '"') {
-          currentField.push('"');
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        currentField.push(char);
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true;
-      } else if (char === "," || char === ";") {
-        currentLine.push(currentField.join(""));
-        currentField = [];
-      } else if (char === "\n") {
-        currentLine.push(currentField.join(""));
-        currentField = [];
-        lines.push(currentLine);
-        currentLine = [];
-      } else {
-        currentField.push(char);
-      }
-    }
-  }
-
-  if (currentField.length > 0 || currentLine.length > 0) {
-    currentLine.push(currentField.join(""));
-    lines.push(currentLine);
-  }
-
-  const nonEmpty = lines.filter((l) => l.some((v) => v.trim() !== ""));
-  if (nonEmpty.length === 0) return [];
-
-  const firstLine = nonEmpty[0];
-  if (!firstLine) return [];
-  if (!firstLine) return [];
-  
-  const headers = firstLine.map((h) => h.trim().toLowerCase());
-  return nonEmpty.slice(1).map((row) => {
-    const obj: Record<string, string> = {};
-    headers.forEach((h, idx) => {
-      obj[h] = (row[idx] ?? "").trim();
-    });
-    return obj;
-  });
+export function emptyStats(): ImportStats {
+  return {
+    clients: { created: 0, updated: 0, failed: 0 },
+    services: { created: 0, failed: 0 },
+    invoices: { created: 0, failed: 0 },
+    errors: [],
+  };
 }
 
 function pick(row: Record<string, string>, keys: string[]): string {
@@ -316,59 +261,40 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
   }
 }
 
-export async function runWhmcsImport(input: {
-  clientsCsv?: string | undefined;
-  servicesCsv?: string | undefined;
-  invoicesCsv?: string | undefined;
-}) {
-  const stats: ImportStats = {
-    clients: { created: 0, updated: 0, failed: 0 },
-    services: { created: 0, failed: 0 },
-    invoices: { created: 0, failed: 0 },
-    errors: [],
-  };
-
-  const { data: job } = await supabaseAdmin
+/** Cria um job de importação e retorna seu id. */
+export async function startImportJob(): Promise<string | null> {
+  const { data } = await supabaseAdmin
     .from("whmcs_imports")
     .insert({ status: "running" })
     .select("id")
     .single();
+  return data?.id ?? null;
+}
 
-  try {
-    if (input.clientsCsv && input.clientsCsv.trim()) {
-      const rows = parseCsv(input.clientsCsv);
-      input.clientsCsv = ""; 
-      await importClients(rows, stats);
-    }
-    if (input.servicesCsv && input.servicesCsv.trim()) {
-      const rows = parseCsv(input.servicesCsv);
-      input.servicesCsv = "";
-      await importServices(rows, stats);
-    }
-    if (input.invoicesCsv && input.invoicesCsv.trim()) {
-      const rows = parseCsv(input.invoicesCsv);
-      input.invoicesCsv = "";
-      await importInvoices(rows, stats);
-    }
+/** Processa um lote de linhas já convertidas no navegador. */
+export async function importBatch(
+  kind: "clients" | "services" | "invoices",
+  rows: Record<string, string>[],
+): Promise<ImportStats> {
+  const stats = emptyStats();
+  if (kind === "clients") await importClients(rows, stats);
+  else if (kind === "services") await importServices(rows, stats);
+  else await importInvoices(rows, stats);
+  return stats;
+}
 
-    if (job) {
-      await supabaseAdmin
-        .from("whmcs_imports")
-        .update({ status: "completed", stats: stats as never })
-        .eq("id", job.id);
-    }
-    return stats;
-  } catch (e) {
-    if (job) {
-      await supabaseAdmin
-        .from("whmcs_imports")
-        .update({
-          status: "failed",
-          error_message: (e as Error).message,
-          stats: stats as never,
-        })
-        .eq("id", job.id);
-    }
-    throw e;
-  }
+/** Finaliza o job registrando as estatísticas agregadas. */
+export async function finishImportJob(
+  jobId: string,
+  stats: ImportStats,
+  errorMessage?: string,
+) {
+  await supabaseAdmin
+    .from("whmcs_imports")
+    .update({
+      status: errorMessage ? "failed" : "completed",
+      error_message: errorMessage ?? null,
+      stats: stats as never,
+    })
+    .eq("id", jobId);
 }
