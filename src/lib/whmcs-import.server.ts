@@ -70,26 +70,32 @@ const INVOICE_STATUS_MAP: Record<string, string> = {
   collections: "unpaid",
 };
 
-async function resolveUserId(email: string): Promise<string | null> {
-  if (!email) return null;
-  const cleanEmail = email.trim().toLowerCase();
+async function resolveUserId(email: string, whmcsClientId?: string): Promise<string | null> {
+  if (!email && !whmcsClientId) return null;
+  const cleanEmail = email?.trim().toLowerCase();
   
-  // Primeiro tenta buscar no banco de perfis
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("id")
-    .ilike("email", cleanEmail)
-    .maybeSingle();
-  
-  if (profile?.id) return profile.id;
-
-  // Caso não esteja no perfil (ex: falha na inserção anterior ou inconsistência), 
-  // tenta buscar diretamente na tabela auth.users via admin API
-  const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
-  if (!error && users) {
-    const user = users.find(u => u.email?.toLowerCase() === cleanEmail);
-    if (user) return user.id;
+  // 1. Tenta buscar pelo e-mail no banco de perfis
+  if (cleanEmail) {
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .ilike("email", cleanEmail)
+      .maybeSingle();
+    
+    if (profile?.id) return profile.id;
   }
+
+  // 2. Caso não esteja no perfil, busca no auth.users
+  if (cleanEmail) {
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+    if (!error && users) {
+      const user = users.find(u => u.email?.toLowerCase() === cleanEmail);
+      if (user) return user.id;
+    }
+  }
+
+  // 3. Fallback: Tenta buscar por metadados de importação se disponíveis
+  // (Futuramente poderíamos salvar o whmcs_id nos perfis para maior precisão)
 
   return null;
 }
@@ -220,23 +226,12 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
       "user",
     ]).toLowerCase();
 
-    // Se não tiver e-mail na linha, tenta o userid (WHMCS usa IDs numéricos internamente)
-    // Se o dump for de uma tabela relacional, o e-mail pode estar em outra tabela,
-    // mas o usuário pode ter incluído o e-mail no CSV via JOIN ou export customizado.
-    if (!email) {
-      // Tenta processar mesmo assim se houver colunas que pareçam domínios
-      const hasDomain = pick(row, ["domain", "dominio"]);
-      if (!hasDomain) continue;
-      // Se não tem e-mail, infelizmente não temos como associar ao usuário
-      continue;
-    }
-
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id"]);
 
     try {
-      const userId = await resolveUserId(email);
+      const userId = await resolveUserId(email, whmcsClientId);
       if (!userId) {
-        // Tenta buscar pelo nome do cliente se o e-mail falhar (fallback arriscado mas útil em dumps manuais)
-        continue;
+        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"})`);
       }
 
       const productName = pick(row, ["product", "produto", "packagename", "product_name", "package"]);
@@ -286,11 +281,11 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
       "clientemail",
     ]).toLowerCase();
     
-    if (!email) continue;
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id"]);
     
     try {
-      const userId = await resolveUserId(email);
-      if (!userId) continue;
+      const userId = await resolveUserId(email, whmcsClientId);
+      if (!userId) throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"})`);
 
       const total = toNumber(pick(row, ["total", "valor", "amount", "total_amount"]));
       const subtotal = toNumber(pick(row, ["subtotal"])) || total;
