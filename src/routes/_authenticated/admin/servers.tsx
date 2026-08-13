@@ -171,17 +171,21 @@ function AdminServersPage() {
                   <div className="w-full bg-muted rounded-full h-2">
                     <div className="bg-brand h-2 rounded-full w-[2%]" />
                   </div>
-                  {syncResults[server.id] && (
+                  {(() => {
+                    const syncResult = syncResults[server.id];
+                    if (!syncResult) return null;
+                    return (
                     <div className="rounded-2xl border border-brand/20 bg-brand/5 p-3">
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <CheckCircle2 className="h-4 w-4 text-brand" />
-                        {syncResults[server.id].packages.length} pacotes sincronizados
+                        {syncResult.packages.length} pacotes sincronizados
                       </div>
                       <p className="mt-2 text-xs text-muted-foreground break-words">
-                        {syncResults[server.id].packages.join(", ")}
+                        {syncResult.packages.join(", ")}
                       </p>
                     </div>
-                  )}
+                    );
+                  })()}
                   <div className="grid grid-cols-2 gap-2 pt-2">
                     <Button 
                       variant="outline" 
