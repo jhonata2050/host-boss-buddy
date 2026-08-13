@@ -48,6 +48,7 @@ function InvoiceDetailsPage() {
   const startPayment = useServerFn(initializePayment);
   
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "credit_card" | "boleto">("pix");
+  const [gateway, setGateway] = useState<string>("abacatepay");
   const [pixResult, setPixResult] = useState<any>(null);
 
   const invoice = useQuery({
@@ -57,7 +58,7 @@ function InvoiceDetailsPage() {
 
   const paymentMutation = useMutation({
     mutationFn: (method: "pix" | "credit_card" | "boleto") => 
-      startPayment({ data: { invoiceId, method } }),
+      startPayment({ data: { invoiceId, method, gateway } }),
     onSuccess: (data) => {
       if (data.method === "pix") {
         setPixResult(data);
@@ -192,12 +193,33 @@ function InvoiceDetailsPage() {
                   </div>
                 ) : (
                   <div className="mt-6 space-y-3">
+                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Selecione o Gateway</p>
+                    <div className="flex gap-2 mb-4">
+                      <Button 
+                        variant={gateway === "abacatepay" ? "default" : "outline"} 
+                        className="flex-1 rounded-xl text-xs h-9"
+                        onClick={() => { setGateway("abacatepay"); setPaymentMethod("pix"); }}
+                      >
+                        AbacatePay
+                      </Button>
+                      <Button 
+                        variant={gateway === "stripe" ? "default" : "outline"} 
+                        className="flex-1 rounded-xl text-xs h-9"
+                        onClick={() => { setGateway("stripe"); setPaymentMethod("credit_card"); }}
+                      >
+                        Stripe
+                      </Button>
+                    </div>
+
+                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Forma de Pagamento</p>
                     <button
                       onClick={() => setPaymentMethod("pix")}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
-                        paymentMethod === "pix" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50"
+                        paymentMethod === "pix" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50",
+                        gateway === "stripe" && "opacity-50 cursor-not-allowed"
                       )}
+                      disabled={gateway === "stripe"}
                     >
                       <QrCode className="size-5 text-brand" />
                       <div>
@@ -208,29 +230,29 @@ function InvoiceDetailsPage() {
                     <button
                       onClick={() => setPaymentMethod("credit_card")}
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all opacity-60 cursor-not-allowed",
-                        paymentMethod === "credit_card" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border"
+                        "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
+                        paymentMethod === "credit_card" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50"
                       )}
-                      disabled
                     >
-                      <CreditCard className="size-5 text-muted-foreground" />
+                      <CreditCard className="size-5 text-brand" />
                       <div>
                         <p className="font-semibold text-sm">Cartão de Crédito</p>
-                        <p className="text-[10px] text-muted-foreground uppercase">Em breve</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">Via {gateway === 'stripe' ? 'Stripe' : 'AbacatePay'}</p>
                       </div>
                     </button>
                     <button
                       onClick={() => setPaymentMethod("boleto")}
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all opacity-60 cursor-not-allowed",
-                        paymentMethod === "boleto" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border"
+                        "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
+                        paymentMethod === "boleto" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50",
+                        gateway === "stripe" && "opacity-50 cursor-not-allowed"
                       )}
-                      disabled
+                      disabled={gateway === "stripe"}
                     >
-                      <FileText className="size-5 text-muted-foreground" />
+                      <FileText className="size-5 text-brand" />
                       <div>
                         <p className="font-semibold text-sm">Boleto Bancário</p>
-                        <p className="text-[10px] text-muted-foreground uppercase">Em breve</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">Disponível no AbacatePay</p>
                       </div>
                     </button>
 

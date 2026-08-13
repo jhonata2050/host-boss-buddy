@@ -19,16 +19,17 @@ export async function createPaymentSession(
   if (iError || !invoice) throw new Error("Fatura não encontrada");
   if (invoice.status === "paid") throw new Error("Fatura já está paga");
 
-  // 2. Gateway Logic (AbacatePay Real vs Mock)
+  // 2. Gateway Logic (AbacatePay vs Stripe vs Others)
   const { data: settings } = await supabaseAdmin
     .from("system_settings")
     .select("*")
-    .in("key", ["abacatepay_api_key"]);
+    .in("key", ["abacatepay_api_key", "stripe_secret_key", "stripe_webhook_secret"]);
   
-  const apiKey = settings?.find(s => s.key === "abacatepay_api_key")?.value;
+  const config = Object.fromEntries(settings?.map(s => [s.key, s.value]) || []);
   const amount = Number(invoice.total_amount);
 
-  if (typeof apiKey === 'string' && apiKey && !apiKey.includes("placeholder")) {
+  // ABACATEPAY
+  if (data.gateway === "abacatepay" && config["abacatepay_api_key"] && !String(config["abacatepay_api_key"]).includes("placeholder")) {
     try {
       const { data: profile } = await supabaseAdmin
         .from("profiles")
@@ -36,12 +37,11 @@ export async function createPaymentSession(
         .eq("id", userId)
         .single();
 
-      // Real AbacatePay API Call
       const response = await fetch("https://api.abacatepay.com/v1/billing/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Bearer ${config["abacatepay_api_key"]}`,
         },
         body: JSON.stringify({
           frequency: "ONE_TIME",
@@ -50,7 +50,7 @@ export async function createPaymentSession(
             externalId: invoice.id,
             name: `Fatura #${invoice.id.slice(0, 8)}`,
             quantity: 1,
-            unitPrice: Math.round(amount * 100), // Em centavos
+            unitPrice: Math.round(amount * 100),
           }],
           returnUrl: `${process.env['PUBLIC_URL'] || 'http://localhost:8080'}/invoices/${invoice.id}`,
           completionUrl: `${process.env['PUBLIC_URL'] || 'http://localhost:8080'}/invoices/${invoice.id}?success=true`,
@@ -66,31 +66,38 @@ export async function createPaymentSession(
         const apData = await response.json();
         const gatewayRef = apData.data.id;
         
-        // Create transaction record
-        const { data: transaction } = await supabaseAdmin
-          .from("transactions")
-          .insert({
-            user_id: userId,
-            invoice_id: invoice.id,
-            amount: amount,
-            gateway: "abacatepay",
-            gateway_reference: gatewayRef,
-            status: "pending",
-            metadata: { method: data.method, checkoutUrl: apData.data.url }
-          })
-          .select()
-          .single();
+        await supabaseAdmin.from("transactions").insert({
+          user_id: userId,
+          invoice_id: invoice.id,
+          amount: amount,
+          gateway: "abacatepay",
+          gateway_reference: gatewayRef,
+          status: "pending",
+          metadata: { method: data.method, checkoutUrl: apData.data.url }
+        });
 
-        return {
-          transactionId: transaction?.id,
-          method: data.method,
-          checkoutUrl: apData.data.url,
-          amount: amount
-        };
+        return { method: data.method, checkoutUrl: apData.data.url, amount };
       }
     } catch (err) {
       console.error("AbacatePay API Error:", err);
     }
+  }
+
+  // STRIPE (Simulated implementation for standard card flow)
+  if (data.gateway === "stripe" && config["stripe_secret_key"]) {
+    // Here we would typically use the stripe sdk: import Stripe from 'stripe'
+    // For now, we simulate the redirect to a Stripe-like checkout
+    const gatewayRef = `st_${Math.random().toString(36).slice(2, 11)}`;
+    await supabaseAdmin.from("transactions").insert({
+      user_id: userId,
+      invoice_id: invoice.id,
+      amount: amount,
+      gateway: "stripe",
+      gateway_reference: gatewayRef,
+      status: "pending",
+      metadata: { method: "credit_card" }
+    });
+    return { method: "credit_card", checkoutUrl: `https://checkout.stripe.com/pay/${gatewayRef}`, amount };
   }
 
   // 3. Fallback to Mock

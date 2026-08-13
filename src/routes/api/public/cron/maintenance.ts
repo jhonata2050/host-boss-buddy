@@ -15,6 +15,7 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
 
         const results = {
           suspensions: 0,
+          deletions: 0,
           remindersSent: 0,
           errors: [] as string[]
         };
@@ -58,7 +59,41 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
             }
           }
 
-          // 2. Lógica para deleção após 30 dias poderia ser adicionada aqui
+          // 2. Lógica para deleção após X dias (default 30)
+          const { data: sysSettings } = await supabaseAdmin
+            .from('system_settings')
+            .select('*')
+            .eq('key', 'auto_delete_days')
+            .maybeSingle();
+            
+          const deleteDays = Number(sysSettings?.value) || 30;
+          const deleteDate = new Date();
+          deleteDate.setDate(deleteDate.getDate() - deleteDays);
+
+          const { data: toDeleteServices } = await supabaseAdmin
+            .from('services')
+            .select('*, servers(*)')
+            .eq('status', 'suspended')
+            .lt('updated_at', deleteDate.toISOString());
+
+          if (toDeleteServices) {
+            const { deleteDAAccount } = await import('@/lib/directadmin.server');
+            for (const s of toDeleteServices as any) {
+              try {
+                if (s.server_id && s.username) {
+                  await deleteDAAccount(s.server_id, s.username);
+                }
+                await supabaseAdmin
+                  .from('services')
+                  .update({ status: 'terminated' } as any)
+                  .eq('id', s.id);
+                results.deletions++;
+              } catch (err: any) {
+                results.errors.push(`Erro ao deletar ${s.id}: ${err.message}`);
+              }
+            }
+          }
+
           // 3. Lógica para lembretes de e-mail (necessita integração com lib/emails.server)
 
           return new Response(JSON.stringify({ 
