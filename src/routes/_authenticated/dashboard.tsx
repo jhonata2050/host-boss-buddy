@@ -39,13 +39,22 @@ function DashboardPage() {
   const stats = useQuery({
     queryKey: ["dashboard-stats", isStaff],
     queryFn: async () => {
-      const [clients, products] = await Promise.all([
+      const [clients, products, invoices, transactions] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("products").select("id", { count: "exact", head: true }),
+        supabase.from("invoices").select("total_amount").eq("status", "pending"),
+        supabase.from("transactions").select("amount"),
       ]);
+
+      const salesTotal = transactions.data?.reduce((acc, curr) => acc + curr.amount, 0) ?? 0;
+      const pendingTotal = invoices.data?.reduce((acc, curr) => acc + curr.total_amount, 0) ?? 0;
+
       return {
         clients: clients.count ?? 0,
         products: products.count ?? 0,
+        salesTotal,
+        transactionCount: transactions.data?.length ?? 0,
+        pendingTotal,
       };
     },
   });
