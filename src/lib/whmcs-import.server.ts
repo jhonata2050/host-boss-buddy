@@ -9,9 +9,8 @@ export type ImportStats = {
 
 /** Parser de CSV simples otimizado para não concatenar strings excessivamente. */
 export function parseCsv(text: any): Record<string, string>[] {
-  if (!text) return [];
-  const content: string = text;
-  const clean = content.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+  if (typeof text !== 'string') return [];
+  const clean = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
   const lines: string[][] = [];
   let currentLine: string[] = [];
   let currentField: string[] = [];
@@ -22,7 +21,7 @@ export function parseCsv(text: any): Record<string, string>[] {
 
     if (inQuotes) {
       if (char === '"') {
-        const nextChar = clean[i + 1];
+        const nextChar = i + 1 < clean.length ? clean[i + 1] : undefined;
         if (nextChar === '"') {
           currentField.push('"');
           i++;
@@ -43,7 +42,7 @@ export function parseCsv(text: any): Record<string, string>[] {
         currentField = [];
         lines.push(currentLine);
         currentLine = [];
-      } else {
+      } else if (char !== undefined) {
         currentField.push(char);
       }
     }
@@ -58,6 +57,7 @@ export function parseCsv(text: any): Record<string, string>[] {
   if (nonEmpty.length === 0) return [];
 
   const firstLine = nonEmpty[0];
+  if (!firstLine) return [];
   if (!firstLine) return [];
   
   const headers = firstLine.map((h) => h.trim().toLowerCase());
