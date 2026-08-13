@@ -7,12 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsStaff, useRoles } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  component: () => (
-    <div className="p-4 border-4 border-red-500 bg-white">
-      <h1 className="text-black">ADMIN LAYOUT MOUNTED</h1>
-      <AdminLayout />
-    </div>
-  ),
+  component: AdminLayout,
 });
 
 function AdminLayout() {
