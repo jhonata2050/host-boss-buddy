@@ -47,10 +47,10 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
                       await supabaseAdmin
                         .from('services')
                         .update({ status: 'suspended' } as any)
-                        .eq('id', service.id);
+                        .eq('id', s.id);
                       results.suspensions++;
                     } catch (err: any) {
-                      results.errors.push(`Erro ao suspender ${service.id}: ${err.message}`);
+                      results.errors.push(`Erro ao suspender ${s.id}: ${err.message}`);
                     }
                   }
                 }
