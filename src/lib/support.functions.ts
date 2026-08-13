@@ -237,10 +237,11 @@ export const updateProduct = createServerFn({ method: "POST" })
       is_visible: z.boolean(),
       sort_order: z.number(),
       prices: z.array(z.object({
-        cycle: z.string(),
+        cycle: z.enum(["monthly", "quarterly", "semiannually", "annually", "biennially"]),
         price: z.number(),
         is_active: z.boolean()
       }))
+
     }).parse(data)
   )
   .handler(async ({ data: input, context }) => {

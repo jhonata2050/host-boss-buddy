@@ -28,8 +28,9 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
       'Authorization': authHeader,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: method === 'POST' ? searchParams.toString() : undefined,
+    body: method === 'POST' ? searchParams.toString() : null,
   });
+
 
   if (!response.ok) {
     const errorText = await response.text();
