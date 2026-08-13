@@ -15,8 +15,11 @@ function AdminLayout() {
   const navigate = useNavigate();
   const loading = isLoading;
 
+  console.log("AdminLayout Auth State:", { loading, isStaff, roles });
+
   useEffect(() => {
     if (!loading && !isStaff) {
+      console.log("Not staff, redirecting to /dashboard");
       void navigate({ to: "/dashboard", replace: true });
     }
   }, [loading, isStaff, navigate]);
