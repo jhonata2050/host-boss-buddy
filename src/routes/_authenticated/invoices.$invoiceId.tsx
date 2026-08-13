@@ -192,106 +192,67 @@ function InvoiceDetailsPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-6 space-y-3">
-                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Selecione o Gateway</p>
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      <Button 
-                        variant={gateway === "abacatepay" ? "default" : "outline"} 
-                        className="rounded-xl text-[10px] h-8 px-1"
-                        onClick={() => { setGateway("abacatepay"); setPaymentMethod("pix"); }}
-                      >
-                        AbacatePay
-                      </Button>
-                      <Button 
-                        variant={gateway === "stripe" ? "default" : "outline"} 
-                        className="rounded-xl text-[10px] h-8 px-1"
-                        onClick={() => { setGateway("stripe"); setPaymentMethod("credit_card"); }}
-                      >
-                        Stripe
-                      </Button>
-                      <Button 
-                        variant={gateway === "mercadopago" ? "default" : "outline"} 
-                        className="rounded-xl text-[10px] h-8 px-1"
-                        onClick={() => { setGateway("mercadopago"); setPaymentMethod("pix"); }}
-                      >
-                        M. Pago
-                      </Button>
-                      <Button 
-                        variant={gateway === "woovi" ? "default" : "outline"} 
-                        className="rounded-xl text-[10px] h-8 px-1"
-                        onClick={() => { setGateway("woovi"); setPaymentMethod("pix"); }}
-                      >
-                        Woovi
-                      </Button>
-                      <Button 
-                        variant={gateway === "paghiper" ? "default" : "outline"} 
-                        className="rounded-xl text-[10px] h-8 px-1"
-                        onClick={() => { setGateway("paghiper"); setPaymentMethod("boleto"); }}
-                      >
-                        PagHiper
-                      </Button>
-                      <Button 
-                        variant={gateway === "cajupay" ? "default" : "outline"} 
-                        className="rounded-xl text-[10px] h-8 px-1"
-                        onClick={() => { setGateway("cajupay"); setPaymentMethod("pix"); }}
-                      >
-                        CajuPay
-                      </Button>
+                  <div className="mt-6 space-y-4">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">Forma de pagamento</p>
+                      <div className="space-y-2">
+                        {METHOD_OPTIONS.map((opt) => {
+                          const Icon = opt.icon;
+                          return (
+                            <button
+                              key={opt.id}
+                              onClick={() => {
+                                setPaymentMethod(opt.id);
+                                const supported = GATEWAYS.filter((g) => g.methods.includes(opt.id));
+                                if (!supported.some((g) => g.id === gateway)) {
+                                  setGateway(supported[0]?.id ?? "abacatepay");
+                                }
+                              }}
+                              className={cn(
+                                "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
+                                paymentMethod === opt.id
+                                  ? "border-brand bg-brand/5 ring-1 ring-brand"
+                                  : "border-border hover:border-brand/50",
+                              )}
+                            >
+                              <Icon className="size-5 shrink-0 text-brand" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold">{METHOD_LABELS[opt.id]}</p>
+                                <p className="text-[10px] uppercase text-muted-foreground">{opt.hint}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                    <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Forma de Pagamento</p>
-                    <button
-                      onClick={() => setPaymentMethod("pix")}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
-                        paymentMethod === "pix" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50",
-                        (gateway === "stripe" || gateway === "paghiper") && "opacity-50 cursor-not-allowed"
-                      )}
-                      disabled={gateway === "stripe" || gateway === "paghiper"}
-                    >
-                      <QrCode className="size-5 text-brand" />
-                      <div>
-                        <p className="font-semibold text-sm">Pix</p>
-                        <p className="text-[10px] text-muted-foreground uppercase">Aprovação imediata</p>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">
+                        Gateways com {METHOD_LABELS[paymentMethod].toLowerCase()}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {GATEWAYS.filter((g) => g.methods.includes(paymentMethod)).map((g) => (
+                          <Button
+                            key={g.id}
+                            variant={gateway === g.id ? "default" : "outline"}
+                            className="h-8 rounded-xl px-1 text-[10px]"
+                            onClick={() => setGateway(g.id)}
+                          >
+                            {g.name}
+                          </Button>
+                        ))}
                       </div>
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod("credit_card")}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
-                        paymentMethod === "credit_card" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50"
-                      )}
-                    >
-                      <CreditCard className="size-5 text-brand" />
-                      <div>
-                        <p className="font-semibold text-sm">Cartão de Crédito</p>
-                        <p className="text-[10px] text-muted-foreground uppercase">Via {gateway === 'stripe' ? 'Stripe' : 'AbacatePay'}</p>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod("boleto")}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
-                        paymentMethod === "boleto" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50",
-                        (gateway === "stripe" || gateway === "woovi") && "opacity-50 cursor-not-allowed"
-                      )}
-                      disabled={gateway === "stripe" || gateway === "woovi"}
-                    >
-                      <FileText className="size-5 text-brand" />
-                      <div>
-                        <p className="font-semibold text-sm">Boleto Bancário</p>
-                        <p className="text-[10px] text-muted-foreground uppercase">Disponível no AbacatePay</p>
-                      </div>
-                    </button>
+                    </div>
 
-                    <Button 
-                      className="mt-4 w-full h-12 rounded-xl text-lg font-semibold"
+                    <Button
+                      className="mt-2 h-12 w-full rounded-xl text-lg font-semibold"
                       onClick={() => paymentMutation.mutate(paymentMethod)}
                       disabled={paymentMutation.isPending}
                     >
                       {paymentMutation.isPending ? "Processando..." : "Pagar agora"}
                     </Button>
                   </div>
+
                 )}
               </div>
             ) : (
