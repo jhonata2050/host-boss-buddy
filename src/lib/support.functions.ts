@@ -222,12 +222,12 @@ export const testDAConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.string().parse(data))
   .handler(async ({ data: serverId }) => {
-    const { getDAPackages } = await import("./directadmin.server");
+    const { testDAConnectionDetails } = await import("./directadmin.server");
     try {
-      await getDAPackages(serverId);
-      return { success: true };
-    } catch (err: any) {
-      throw new Error(`Falha na conexão: ${err.message}`);
+      return await testDAConnectionDetails(serverId);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      throw new Error(`Falha na conexão: ${message}`);
     }
   });
 
