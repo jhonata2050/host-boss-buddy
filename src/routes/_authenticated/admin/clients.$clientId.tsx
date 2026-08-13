@@ -113,7 +113,11 @@ function ClientDetailPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const values = Object.fromEntries(formData.entries());
-    updateProfile.mutate(values);
+    
+    // Garantir que não estamos tentando atualizar o email se ele for o mesmo ou estiver bloqueado
+    // Em alguns provedores, o email é o identificador único.
+    const { email, ...updateValues } = values;
+    updateProfile.mutate(updateValues);
   };
 
   return (
@@ -170,7 +174,8 @@ function ClientDetailPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">E-mail</Label>
-                    <Input id="email" name="email" defaultValue={client.email || ""} disabled={!isEditing} className="rounded-xl h-11" />
+                    <Input id="email" name="email" defaultValue={client.email || ""} disabled={true} className="rounded-xl h-11 bg-muted/30" />
+                    <p className="text-[10px] text-muted-foreground">O e-mail é gerenciado via autenticação e não pode ser alterado aqui.</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="company_name">Empresa</Label>
