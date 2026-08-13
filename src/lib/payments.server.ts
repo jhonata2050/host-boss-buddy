@@ -52,8 +52,8 @@ export async function createPaymentSession(
             quantity: 1,
             unitPrice: Math.round(amount * 100), // Em centavos
           }],
-          returnUrl: `${process.env.PUBLIC_URL || 'http://localhost:8080'}/invoices/${invoice.id}`,
-          completionUrl: `${process.env.PUBLIC_URL || 'http://localhost:8080'}/invoices/${invoice.id}?success=true`,
+          returnUrl: `${process.env['PUBLIC_URL'] || 'http://localhost:8080'}/invoices/${invoice.id}`,
+          completionUrl: `${process.env['PUBLIC_URL'] || 'http://localhost:8080'}/invoices/${invoice.id}?success=true`,
           customer: {
             name: profile?.full_name || "Cliente HostPanel",
             email: profile?.email || "cliente@exemplo.com",
