@@ -241,7 +241,7 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
       const username = pick(row, ["username", "usuario", "login", "user"]);
       const nextDue = toDate(pick(row, ["nextduedate", "next_due_date", "vencimento", "next_due"]));
 
-      const { error } = await supabaseAdmin.from("services").insert({
+      const { error } = await (supabaseAdmin.from("services") as any).insert({
         user_id: userId,
         product_id: productId,
         whmcs_id: serviceWhmcsId || null,
@@ -254,6 +254,7 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 
       if (error) throw new Error(error.message);
       stats.services.created++;
+
     } catch (e) {
       stats.services.failed++;
       if (stats.errors.length < 50) {
