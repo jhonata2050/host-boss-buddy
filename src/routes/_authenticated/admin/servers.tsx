@@ -25,7 +25,7 @@ function AdminServersPage() {
   });
 
   const createServerMutation = useMutation({
-    mutationFn: (newServer: any) => createServerDA(newServer),
+    mutationFn: (newServer: any) => createServerDA({ data: newServer }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-servers"] });
       toast.success("Servidor adicionado com sucesso!");
