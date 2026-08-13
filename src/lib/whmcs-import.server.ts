@@ -8,9 +8,10 @@ export type ImportStats = {
 };
 
 /** Parser de CSV simples otimizado para não concatenar strings excessivamente. */
-export function parseCsv(text: string | undefined): Record<string, string>[] {
+export function parseCsv(text: string | null | undefined): Record<string, string>[] {
   if (!text) return [];
-  const clean = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+  const content: string = text;
+  const clean = content.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
   const lines: string[][] = [];
   let currentLine: string[] = [];
   let currentField: string[] = [];
