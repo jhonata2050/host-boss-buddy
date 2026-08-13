@@ -173,7 +173,7 @@ function TicketDetailsPage() {
                 </div>
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground">Aberto em</label>
-                  <p className="text-sm text-foreground">{new Date(ticket.created_at).toLocaleDateString("pt-BR")}</p>
+                  <p className="text-sm text-foreground">{new Date(ticket.created_at || "").toLocaleDateString("pt-BR")}</p>
                 </div>
                 <div>
                   <label className="text-[10px] uppercase font-bold text-muted-foreground">Última Atividade</label>
