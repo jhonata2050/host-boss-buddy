@@ -121,8 +121,8 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <div id="phase-status" className="fixed bottom-4 right-4 z-50 max-w-xs rounded-2xl bg-brand px-4 py-3 text-xs font-bold text-brand-foreground shadow-xl animate-bounce">
-          continue o desenvolvimento da plataforma loja na area do clinete para ele adquirir os produtos atraves dos planos,  area de  meus servicos, etc. area admin, planos, tickets, suporte, smtp externo,  templates de email etc.
+        <div id="phase-status" className="fixed bottom-4 right-4 z-50 max-w-xs rounded-2xl bg-brand px-4 py-3 text-xs font-bold text-brand-foreground shadow-xl animate-bounce text-center">
+          Implemente a área de cliente da plataforma loja para eu adquirir produtos e planos, com fluxo de pagamento e histórico de compras.
         </div>
         {children}
         <Scripts />
