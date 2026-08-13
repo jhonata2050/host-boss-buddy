@@ -34,6 +34,13 @@ export const Route = createFileRoute("/_authenticated/invoices/$invoiceId")({
 
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
+const METHOD_OPTIONS: { id: PaymentMethod; hint: string; icon: typeof QrCode }[] = [
+  { id: "pix", hint: "Aprovação imediata", icon: QrCode },
+  { id: "credit_card", hint: "Renovação automática", icon: CreditCard },
+  { id: "boleto", hint: "Vence em 3 dias", icon: FileText },
+];
+
+
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: "Pendente", color: "bg-warning text-warning-foreground" },
   paid: { label: "Paga", color: "bg-success text-success-foreground" },
