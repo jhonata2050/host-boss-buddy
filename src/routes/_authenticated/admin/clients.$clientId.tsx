@@ -103,8 +103,8 @@ function ClientDetailPage() {
     }
   });
 
-  if (clientQuery.isLoading) return <AppShell area="admin">Carregando...</AppShell>;
-  if (!clientQuery.data) return <AppShell area="admin">Cliente não encontrado</AppShell>;
+  if (clientQuery.isLoading) return <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Carregando...</span>}>Carregando...</AppShell>;
+  if (!clientQuery.data) return <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Erro</span>}>Cliente não encontrado</AppShell>;
 
   const client = clientQuery.data;
 
