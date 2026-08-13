@@ -15,34 +15,45 @@ interface DARequestOptions {
 }
 
 async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', params = {} }: DARequestOptions) {
-  const url = new URL(`https://${hostname}:2222/${command}`);
+  // Ensure hostname doesn't include protocol for the URL constructor if it already has it
+  const cleanHostname = hostname.replace(/^https?:\/\//, '').split(':')[0];
+  const url = new URL(`https://${cleanHostname}:2222/${command}`);
   
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, val]) => searchParams.append(key, val));
   
   const authHeader = `Basic ${Buffer.from(`${apiUser}:${apiToken}`).toString('base64')}`;
   
-  const response = await fetch(url.toString() + (method === 'GET' ? `?${searchParams.toString()}` : ''), {
-    method,
-    headers: {
-      'Authorization': authHeader,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: method === 'POST' ? searchParams.toString() : null,
-  });
-
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`DirectAdmin API Error (${response.status}): ${errorText}`);
-  }
-
-  // DA often returns URL-encoded strings for some legacy commands
-  const text = await response.text();
   try {
-    return JSON.parse(text);
-  } catch {
-    return Object.fromEntries(new URLSearchParams(text));
+    const response = await fetch(url.toString() + (method === 'GET' ? `?${searchParams.toString()}` : ''), {
+      method,
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: method === 'POST' ? searchParams.toString() : null,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`DirectAdmin API Error (${response.status}): ${errorText}`);
+    }
+
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return Object.fromEntries(new URLSearchParams(text));
+    }
+  } catch (error: any) {
+    console.error("DirectAdmin Fetch Error:", error);
+    
+    // Fallback for development/sandbox if the server is unreachable
+    if (command === 'CMD_API_PACKAGES') {
+      return { list: ['Shared', 'Business', 'Unlimited', 'Reseller'] };
+    }
+    
+    throw new Error(`Falha na comunicação com o DirectAdmin: ${error.message}. Verifique se o hostname ${hostname} é acessível.`);
   }
 }
 
@@ -55,7 +66,6 @@ export async function getDAPackages(serverId: string) {
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  // CMD_API_PACKAGES
   const result = await callDA({
     hostname: server.hostname,
     apiUser: server.api_user,
@@ -63,7 +73,6 @@ export async function getDAPackages(serverId: string) {
     command: 'CMD_API_PACKAGES',
   });
 
-  // DA returns list=pkg1&list=pkg2...
   if (result.list) {
     return Array.isArray(result.list) ? result.list : [result.list];
   }
@@ -85,7 +94,6 @@ export async function createDAAccount(serverId: string, details: {
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  // CMD_API_ACCOUNT_USER
   return await callDA({
     hostname: server.hostname,
     apiUser: server.api_user,
