@@ -58,6 +58,7 @@ function useNav() {
           icon: Store,
           links: [
             { label: "Meus dados", to: "/profile", icon: UserIcon },
+            { label: "Meus serviços", to: "/services", icon: LayoutPanelLeft },
             { label: "Minhas faturas", to: "/invoices", icon: Receipt },
           ],
         },
