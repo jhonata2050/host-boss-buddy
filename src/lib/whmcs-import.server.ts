@@ -76,8 +76,8 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
 
   // 1. Tenta buscar pelo whmcs_id no banco de perfis (mais preciso)
   if (cleanWhmcsId) {
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
+    const { data: profile } = await (supabaseAdmin
+      .from("profiles") as any)
       .select("id")
       .eq("whmcs_id", cleanWhmcsId)
       .maybeSingle();
@@ -105,6 +105,7 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
 
   return null;
 }
+
 
 /** Importa clientes do WHMCS (tblclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
