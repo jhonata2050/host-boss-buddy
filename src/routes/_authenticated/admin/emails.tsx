@@ -22,7 +22,7 @@ function AdminSettingsPage() {
   });
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (vars: Record<string, any>) => updateSystemSettings(vars),
+    mutationFn: (vars: Record<string, any>) => updateSystemSettings({ data: vars }),
     onSuccess: () => {
       toast.success("Configurações salvas!");
       queryClient.invalidateQueries({ queryKey: ["system-settings"] });
