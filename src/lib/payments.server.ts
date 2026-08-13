@@ -19,12 +19,82 @@ export async function createPaymentSession(
   if (iError || !invoice) throw new Error("Fatura não encontrada");
   if (invoice.status === "paid") throw new Error("Fatura já está paga");
 
-  // 2. Mock Gateway Logic (AbacatePay)
-  // In a real scenario, we would call the AbacatePay API here.
+  // 2. Gateway Logic (AbacatePay Real vs Mock)
+  const { data: settings } = await supabaseAdmin
+    .from("system_settings")
+    .select("*")
+    .in("key", ["abacatepay_api_key"]);
+  
+  const apiKey = settings?.find(s => s.key === "abacatepay_api_key")?.value;
   const amount = Number(invoice.total_amount);
-  const gatewayRef = `mock_${Math.random().toString(36).slice(2, 11)}`;
 
-  // 3. Create transaction record
+  if (typeof apiKey === 'string' && apiKey && !apiKey.includes("placeholder")) {
+    try {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      // Real AbacatePay API Call
+      const response = await fetch("https://api.abacatepay.com/v1/billing/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          frequency: "ONE_TIME",
+          methods: [data.method.toUpperCase()],
+          products: [{
+            externalId: invoice.id,
+            name: `Fatura #${invoice.id.slice(0, 8)}`,
+            quantity: 1,
+            unitPrice: Math.round(amount * 100), // Em centavos
+          }],
+          returnUrl: `${process.env.PUBLIC_URL || 'http://localhost:8080'}/invoices/${invoice.id}`,
+          completionUrl: `${process.env.PUBLIC_URL || 'http://localhost:8080'}/invoices/${invoice.id}?success=true`,
+          customer: {
+            name: profile?.full_name || "Cliente HostPanel",
+            email: profile?.email || "cliente@exemplo.com",
+            taxId: profile?.tax_id || "000.000.000-00",
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const apData = await response.json();
+        const gatewayRef = apData.data.id;
+        
+        // Create transaction record
+        const { data: transaction } = await supabaseAdmin
+          .from("transactions")
+          .insert({
+            user_id: userId,
+            invoice_id: invoice.id,
+            amount: amount,
+            gateway: "abacatepay",
+            gateway_reference: gatewayRef,
+            status: "pending",
+            metadata: { method: data.method, checkoutUrl: apData.data.url }
+          })
+          .select()
+          .single();
+
+        return {
+          transactionId: transaction?.id,
+          method: data.method,
+          checkoutUrl: apData.data.url,
+          amount: amount
+        };
+      }
+    } catch (err) {
+      console.error("AbacatePay API Error:", err);
+    }
+  }
+
+  // 3. Fallback to Mock
+  const gatewayRef = `mock_${Math.random().toString(36).slice(2, 11)}`;
   const { data: transaction, error: tError } = await supabaseAdmin
     .from("transactions")
     .insert({
@@ -41,8 +111,6 @@ export async function createPaymentSession(
 
   if (tError || !transaction) throw new Error("Erro ao criar transação");
 
-  // 4. Return payment info
-  // For Pix, we might return a copy-paste code or QR code URL
   if (data.method === "pix") {
     return {
       transactionId: transaction.id,
@@ -53,7 +121,6 @@ export async function createPaymentSession(
     };
   }
 
-  // Mock redirect for other methods
   return {
     transactionId: transaction.id,
     method: data.method,
