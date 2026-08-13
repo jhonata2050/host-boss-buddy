@@ -33,8 +33,9 @@ function AdminLayout() {
           <p className="mt-1 text-sm text-muted-foreground">
             Você está logado como: {roles?.join(", ") || "cliente"}
             <br />
-            Esta área é exclusiva da administração da plataforma.
+            {error ? `Falha ao carregar permissões: ${error.message}` : "Esta área é exclusiva da administração da plataforma."}
           </p>
+
           <Button onClick={() => navigate({ to: "/dashboard" })} className="mt-4 rounded-xl">
             Voltar para o Painel
           </Button>
