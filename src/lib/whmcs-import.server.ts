@@ -284,7 +284,7 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
       const paidAt = toDate(pick(row, ["datepaid", "paid_at", "data_pagamento", "date_paid"]));
       const method = pick(row, ["paymentmethod", "payment_method", "metodo", "gateway"]);
 
-      const { error } = await supabaseAdmin.from("invoices").insert({
+      const { error } = await (supabaseAdmin.from("invoices") as any).insert({
         user_id: userId,
         whmcs_id: invoiceWhmcsId || null,
         subtotal,
@@ -300,6 +300,7 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
 
       if (error) throw new Error(error.message);
       stats.invoices.created++;
+
     } catch (e) {
       stats.invoices.failed++;
       if (stats.errors.length < 50) {
