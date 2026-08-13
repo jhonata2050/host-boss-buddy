@@ -153,64 +153,101 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
 
 async function resolveProductId(name: string): Promise<string | null> {
   if (!name) return null;
+  // Normaliza o nome para busca
+  const cleanName = name.trim();
+  
   const { data: existing } = await supabaseAdmin
     .from("products")
     .select("id")
-    .ilike("name", name)
+    .ilike("name", cleanName)
     .maybeSingle();
   if (existing) return existing.id;
 
   const slug =
-    name
+    cleanName
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "") || `whmcs-${Date.now()}`;
 
+  // Se não existe, cria um produto "rascunho" invisível
   const { data: created, error } = await supabaseAdmin
     .from("products")
     .insert({
-      name,
+      name: cleanName,
       slug,
-      description: "Produto importado do WHMCS",
+      description: "Produto importado automaticamente do WHMCS",
       is_visible: false,
       auto_provision: false,
+      // Assume um preço 0 para não quebrar, o admin deve configurar depois
     })
     .select("id")
     .single();
-  if (error) return null;
+
+  if (error) {
+    console.error("Erro ao criar produto na importação:", error);
+    return null;
+  }
   return created.id;
 }
 
 /** Importa serviços/hospedagens do WHMCS (tblhosting export). */
 async function importServices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail"]).toLowerCase();
-    if (!email) continue; // Skip rows that aren't services
+    // Tenta encontrar o e-mail do cliente em diversas colunas possíveis
+    const email = pick(row, [
+      "email",
+      "client_email",
+      "e-mail",
+      "user_email",
+      "mail",
+      "clientemail",
+      "userid_email",
+    ]).toLowerCase();
+
+    // Se não tiver e-mail na linha, tenta o userid (WHMCS usa IDs numéricos internamente)
+    // Se o dump for de uma tabela relacional, o e-mail pode estar em outra tabela,
+    // mas o usuário pode ter incluído o e-mail no CSV via JOIN ou export customizado.
+    if (!email) {
+      const userIdWhmcs = pick(row, ["userid", "clientid", "user_id", "client_id"]);
+      if (!userIdWhmcs) continue;
+      // Nota: Não temos o mapeamento ID WHMCS -> ID HostPanel aqui se o dump for parcial.
+      // O ideal é que o CSV de serviços contenha o e-mail para correlação.
+      continue;
+    }
+
     try {
       const userId = await resolveUserId(email);
-      if (!userId) continue; // Skip if client not yet imported
+      if (!userId) {
+        // Tenta buscar pelo nome do cliente se o e-mail falhar (fallback arriscado mas útil em dumps manuais)
+        continue;
+      }
 
-      const productName = pick(row, ["product", "produto", "packagename", "product_name"]);
+      const productName = pick(row, ["product", "produto", "packagename", "product_name", "package"]);
       const productId = await resolveProductId(productName || "Plano Importado");
       if (!productId) throw new Error("não foi possível resolver o produto");
 
-      const cycle =
-        CYCLE_MAP[pick(row, ["billingcycle", "billing_cycle", "ciclo"]).toLowerCase()] ??
-        "monthly";
-      const status =
-        SERVICE_STATUS_MAP[pick(row, ["status", "domainstatus"]).toLowerCase()] ?? "active";
+      const cycleRaw = pick(row, ["billingcycle", "billing_cycle", "ciclo"]).toLowerCase();
+      const cycle = CYCLE_MAP[cycleRaw] ?? "monthly";
+      
+      const statusRaw = pick(row, ["status", "domainstatus", "state"]).toLowerCase();
+      const status = SERVICE_STATUS_MAP[statusRaw] ?? "active";
+
+      const domain = pick(row, ["domain", "dominio", "host", "hostname"]);
+      const username = pick(row, ["username", "usuario", "login", "user"]);
+      const nextDue = toDate(pick(row, ["nextduedate", "next_due_date", "vencimento", "next_due"]));
 
       const { error } = await supabaseAdmin.from("services").insert({
         user_id: userId,
         product_id: productId,
-        domain: pick(row, ["domain", "dominio"]) || null,
-        username: pick(row, ["username", "usuario"]) || null,
-        billing_cycle: cycle as never,
-        status: status as never,
-        next_due_date: toDate(pick(row, ["nextduedate", "next_due_date", "vencimento"])),
+        domain: domain || null,
+        username: username || null,
+        billing_cycle: cycle as any,
+        status: status as any,
+        next_due_date: nextDue,
       });
+
       if (error) throw new Error(error.message);
       stats.services.created++;
     } catch (e) {
@@ -225,31 +262,44 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 /** Importa faturas do WHMCS (tblinvoices export). */
 async function importInvoices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail"]).toLowerCase();
-    if (!email) continue; // Skip rows without email
+    const email = pick(row, [
+      "email",
+      "client_email",
+      "e-mail",
+      "user_email",
+      "mail",
+      "clientemail",
+    ]).toLowerCase();
+    
+    if (!email) continue;
+    
     try {
       const userId = await resolveUserId(email);
-      if (!userId) continue; // Skip if client not found
+      if (!userId) continue;
 
-      const total = toNumber(pick(row, ["total", "valor", "amount"]));
+      const total = toNumber(pick(row, ["total", "valor", "amount", "total_amount"]));
       const subtotal = toNumber(pick(row, ["subtotal"])) || total;
-      const status =
-        INVOICE_STATUS_MAP[pick(row, ["status"]).toLowerCase()] ?? "unpaid";
-      const dueDate =
-        toDate(pick(row, ["duedate", "due_date", "vencimento"])) ?? new Date().toISOString();
+      const statusRaw = pick(row, ["status", "invoice_status"]).toLowerCase();
+      const status = INVOICE_STATUS_MAP[statusRaw] ?? "unpaid";
+      
+      const dueDate = toDate(pick(row, ["duedate", "due_date", "vencimento", "date"])) ?? new Date().toISOString();
+      const paidAt = toDate(pick(row, ["datepaid", "paid_at", "data_pagamento", "date_paid"]));
+      const method = pick(row, ["paymentmethod", "payment_method", "metodo", "gateway"]);
+      const externalId = pick(row, ["id", "invoiceid", "invoicenum", "number"]);
 
       const { error } = await supabaseAdmin.from("invoices").insert({
         user_id: userId,
         subtotal,
         total_amount: total,
-        tax_amount: toNumber(pick(row, ["tax", "taxa"])),
-        discount_amount: toNumber(pick(row, ["credit", "desconto", "discount"])),
-        status: status as never,
+        tax_amount: toNumber(pick(row, ["tax", "taxa", "taxamount"])),
+        discount_amount: toNumber(pick(row, ["credit", "desconto", "discount", "discountamount"])),
+        status: status as any,
         due_date: dueDate,
-        paid_at: toDate(pick(row, ["datepaid", "paid_at", "data_pagamento"])),
-        payment_method: pick(row, ["paymentmethod", "payment_method"]) || null,
-        notes: `Importado do WHMCS (fatura #${pick(row, ["id", "invoiceid", "invoicenum"]) || "?"})`,
+        paid_at: paidAt,
+        payment_method: method || null,
+        notes: `Importado do WHMCS (fatura #${externalId || "?"})`,
       });
+
       if (error) throw new Error(error.message);
       stats.invoices.created++;
     } catch (e) {
