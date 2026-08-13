@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createDAAccount } from "./directadmin.server";
+
 
 export type BillingCycle =
   | "monthly"
@@ -125,3 +127,67 @@ export async function fetchInvoiceDetails(userId: string, id: string) {
   if (error || !invoice) throw new Error("Fatura não encontrada");
   return invoice;
 }
+
+export async function processProvisioning(invoiceId: string) {
+  const { data: invoice, error: iError } = await supabaseAdmin
+    .from("invoices")
+    .select("*, invoice_items(*, services(*, products(*)))")
+    .eq("id", invoiceId)
+    .single();
+
+  if (iError || !invoice) throw new Error("Fatura não encontrada");
+  if (invoice.status !== "paid") return { success: false, message: "Fatura não está paga" };
+
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("*")
+    .eq("id", invoice.user_id)
+    .single();
+
+  for (const item of (invoice as any).invoice_items) {
+    const service = item.services;
+    const product = service?.products;
+
+    if (service && service.status === "pending" && product?.directadmin_package) {
+      // Find a server to provision
+      const { data: server } = await supabaseAdmin
+        .from("servers")
+        .select("*")
+        .limit(1)
+        .single();
+
+      if (server) {
+        try {
+          const username = `u${Math.random().toString(36).slice(-7)}`;
+          const domain = service.domain || `${username}.temp.hostpanel.app`;
+          
+          await createDAAccount(server.id, {
+            username,
+            domain,
+            email: profile?.email || "user@example.com",
+            package: product.directadmin_package
+          });
+
+          await supabaseAdmin
+            .from("services")
+            .update({
+              status: "active",
+              username,
+              server_id: server.id,
+              domain,
+              next_due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            } as any)
+            .eq("id", service.id);
+
+
+          console.log(`Provisioned service ${service.id} on server ${server.name}`);
+        } catch (err: any) {
+          console.error(`Provisioning error: ${err.message}`);
+        }
+      }
+    }
+  }
+
+  return { success: true };
+}
+

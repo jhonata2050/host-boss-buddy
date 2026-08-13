@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Package, Plus, Search, Store } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Package, Plus, Search, Store, Edit2, Save, X, Server } from "lucide-react";
 import { useState } from "react";
 
 import { AppShell } from "@/components/app/AppShell";
@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { updateProduct, getServers, getDAPackagesList } from "@/lib/support.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/products")({
   head: () => ({
@@ -18,10 +25,6 @@ export const Route = createFileRoute("/_authenticated/admin/products")({
         name: "description",
         content: "Gerencie os planos de hospedagem, pacotes do DirectAdmin e preços por ciclo de cobrança.",
       },
-      { property: "og:title", content: "Produtos e planos — HostPanel" },
-      { property: "og:description", content: "Gerencie planos de hospedagem, pacotes e preços." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ProductsPage,
@@ -39,6 +42,9 @@ const CYCLE_LABELS: Record<string, string> = {
 
 function ProductsPage() {
   const [term, setTerm] = useState("");
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [selectedServer, setSelectedServer] = useState<string>("");
+  const queryClient = useQueryClient();
 
   const products = useQuery({
     queryKey: ["admin-products"],
@@ -46,7 +52,7 @@ function ProductsPage() {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, slug, description, directadmin_package, disk_quota_mb, is_visible, sort_order, product_groups(name), product_prices(cycle, price)",
+          "id, name, slug, description, directadmin_package, disk_quota_mb, is_visible, sort_order, product_groups(name), product_prices(cycle, price, is_active)",
         )
         .order("sort_order");
       if (error) throw error;
@@ -54,9 +60,55 @@ function ProductsPage() {
     },
   });
 
+  const servers = useQuery({
+    queryKey: ["admin-servers"],
+    queryFn: () => getServers(),
+  });
+
+  const daPackages = useQuery({
+    queryKey: ["da-packages", selectedServer],
+    queryFn: () => getDAPackagesList({ data: selectedServer }),
+    enabled: !!selectedServer,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => updateProduct({ data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      setEditingProduct(null);
+      toast.success("Produto atualizado com sucesso!");
+    },
+    onError: (err: any) => {
+      toast.error("Erro ao atualizar: " + err.message);
+    }
+  });
+
   const filtered = (products.data ?? []).filter((p) =>
     p.name.toLowerCase().includes(term.trim().toLowerCase()),
   );
+
+  const handleEdit = (product: any) => {
+    setEditingProduct({
+      ...product,
+      prices: product.product_prices || []
+    });
+  };
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      id: editingProduct.id,
+      name: editingProduct.name,
+      description: editingProduct.description,
+      directadmin_package: editingProduct.directadmin_package,
+      is_visible: editingProduct.is_visible,
+      sort_order: editingProduct.sort_order,
+      prices: editingProduct.prices.map((p: any) => ({
+        cycle: p.cycle,
+        price: Number(p.price),
+        is_active: p.is_active
+      }))
+    });
+  };
 
   return (
     <AppShell
@@ -104,9 +156,9 @@ function ProductsPage() {
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((product) => {
-            const monthly = product.product_prices?.find((p) => p.cycle === "monthly");
+            const monthly = product.product_prices?.find((p) => p.cycle === "monthly" && p.is_active);
             return (
-              <article key={product.id} className="rounded-2xl border border-border p-5">
+              <article key={product.id} className="group relative rounded-2xl border border-border p-5 transition-all hover:shadow-[var(--shadow-card)]">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h2 className="font-semibold">{product.name}</h2>
@@ -114,9 +166,19 @@ function ProductsPage() {
                       {product.product_groups?.name ?? "Sem grupo"}
                     </p>
                   </div>
-                  <Badge variant={product.is_visible ? "default" : "secondary"}>
-                    {product.is_visible ? "Visível" : "Oculto"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={product.is_visible ? "default" : "secondary"}>
+                      {product.is_visible ? "Visível" : "Oculto"}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="size-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleEdit(product)}
+                    >
+                      <Edit2 className="size-4" />
+                    </Button>
+                  </div>
                 </div>
                 <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{product.description}</p>
                 <dl className="mt-4 space-y-1 text-xs text-muted-foreground">
@@ -131,12 +193,12 @@ function ProductsPage() {
                     </dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt>Ciclos configurados</dt>
-                    <dd className="text-foreground">{product.product_prices?.length ?? 0}</dd>
+                    <dt>Preços ativos</dt>
+                    <dd className="text-foreground">{product.product_prices?.filter(p => p.is_active).length ?? 0}</dd>
                   </div>
                 </dl>
                 <p className="mt-4 text-lg font-semibold">
-                  {monthly ? brl.format(Number(monthly.price)) : "Sem preço"}
+                  {monthly ? brl.format(Number(monthly.price)) : "Sem preço mensal"}
                   <span className="text-sm font-normal text-muted-foreground">
                     {monthly ? ` /${CYCLE_LABELS[monthly.cycle]}` : ""}
                   </span>
@@ -146,6 +208,159 @@ function ProductsPage() {
           })}
         </div>
       )}
+
+      {/* Modal de Edição */}
+      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
+        <DialogContent className="max-w-2xl rounded-3xl border-none shadow-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Editar Produto</DialogTitle>
+          </DialogHeader>
+          
+          {editingProduct && (
+            <div className="space-y-6 py-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Nome do Plano</Label>
+                  <Input 
+                    value={editingProduct.name} 
+                    onChange={e => setEditingProduct({...editingProduct, name: e.target.value})}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Ordem de Exibição</Label>
+                  <Input 
+                    type="number"
+                    value={editingProduct.sort_order} 
+                    onChange={e => setEditingProduct({...editingProduct, sort_order: Number(e.target.value)})}
+                    className="rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <Textarea 
+                  value={editingProduct.description || ""} 
+                  onChange={e => setEditingProduct({...editingProduct, description: e.target.value})}
+                  className="rounded-xl min-h-[80px]"
+                />
+              </div>
+
+              <div className="rounded-2xl border border-border p-4 bg-muted/30">
+                <div className="flex items-center gap-2 mb-4 text-sm font-bold uppercase text-muted-foreground">
+                  <Server className="size-4" />
+                  Integração DirectAdmin
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Servidor para Sincronização</Label>
+                    <Select value={selectedServer} onValueChange={setSelectedServer}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione um servidor" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-none shadow-xl">
+                        {servers.data?.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Pacote no Servidor</Label>
+                    <Select 
+                      value={editingProduct.directadmin_package || ""} 
+                      onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val})}
+                    >
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder={daPackages.isLoading ? "Carregando..." : "Selecione um pacote"} />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-none shadow-xl">
+                        {daPackages.data?.map((pkg: string) => (
+                          <SelectItem key={pkg} value={pkg}>{pkg}</SelectItem>
+                        ))}
+                        {(!daPackages.data || daPackages.data.length === 0) && !daPackages.isLoading && (
+                          <div className="p-2 text-xs text-center text-muted-foreground">Nenhum pacote encontrado ou servidor não selecionado</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="font-bold">Ciclos de Cobrança</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Produto Visível</span>
+                    <Switch 
+                      checked={editingProduct.is_visible} 
+                      onCheckedChange={val => setEditingProduct({...editingProduct, is_visible: val})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid gap-3">
+                  {Object.keys(CYCLE_LABELS).map(cycle => {
+                    const priceObj = editingProduct.prices.find((p: any) => p.cycle === cycle) || { cycle, price: 0, is_active: false };
+                    return (
+                      <div key={cycle} className="flex items-center gap-4 rounded-xl border border-border p-3 bg-white">
+                        <div className="flex-1">
+                          <Label className="capitalize text-xs">{CYCLE_LABELS[cycle]}</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold">R$</span>
+                          <Input 
+                            type="number" 
+                            value={priceObj.price}
+                            onChange={e => {
+                              const newPrices = [...editingProduct.prices];
+                              const idx = newPrices.findIndex(p => p.cycle === cycle);
+                              if (idx > -1) {
+                                newPrices[idx] = {...newPrices[idx], price: e.target.value};
+                              } else {
+                                newPrices.push({ cycle, price: e.target.value, is_active: true });
+                              }
+                              setEditingProduct({...editingProduct, prices: newPrices});
+                            }}
+                            className="w-24 h-8 rounded-lg"
+                          />
+                        </div>
+                        <Switch 
+                          checked={priceObj.is_active}
+                          onCheckedChange={val => {
+                            const newPrices = [...editingProduct.prices];
+                            const idx = newPrices.findIndex(p => p.cycle === cycle);
+                            if (idx > -1) {
+                              newPrices[idx] = {...newPrices[idx], is_active: val};
+                            } else {
+                              newPrices.push({ cycle, price: 0, is_active: val });
+                            }
+                            setEditingProduct({...editingProduct, prices: newPrices});
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="mt-6 flex flex-row gap-2">
+            <Button variant="outline" className="flex-1 rounded-2xl" onClick={() => setEditingProduct(null)}>
+              Cancelar
+            </Button>
+            <Button 
+              className="flex-1 rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90"
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <p className="mt-8 text-xs text-muted-foreground">
         Precisa ver a loja pública? <Link to="/" className="text-brand underline">Abrir catálogo</Link>
