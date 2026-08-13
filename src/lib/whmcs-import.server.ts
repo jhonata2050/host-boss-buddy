@@ -328,19 +328,19 @@ export async function runWhmcsImport(input: {
     .single();
 
   try {
-    if (input.clientsCsv?.trim()) {
+    if (input.clientsCsv && input.clientsCsv.trim()) {
       const rows = parseCsv(input.clientsCsv);
-      input.clientsCsv = undefined; // Libera memória da string bruta
+      input.clientsCsv = undefined;
       await importClients(rows, stats);
     }
-    if (input.servicesCsv?.trim()) {
+    if (input.servicesCsv && input.servicesCsv.trim()) {
       const rows = parseCsv(input.servicesCsv);
-      input.servicesCsv = undefined; // Libera memória
+      input.servicesCsv = undefined;
       await importServices(rows, stats);
     }
-    if (input.invoicesCsv?.trim()) {
+    if (input.invoicesCsv && input.invoicesCsv.trim()) {
       const rows = parseCsv(input.invoicesCsv);
-      input.invoicesCsv = undefined; // Libera memória
+      input.invoicesCsv = undefined;
       await importInvoices(rows, stats);
     }
 
