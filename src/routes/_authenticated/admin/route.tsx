@@ -10,10 +10,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminLayout() {
-  const { isLoading, isPending } = useRoles();
+  const { data: roles } = useRoles();
   const { isStaff } = useIsStaff();
   const navigate = useNavigate();
-  const loading = isLoading || isPending;
+  const loading = roles === undefined;
 
   useEffect(() => {
     if (!loading && !isStaff) {
