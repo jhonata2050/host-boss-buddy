@@ -36,6 +36,7 @@ function AdminSettingsPage() {
       company_name: formData.get("company_name"),
       support_email: formData.get("support_email"),
       resend_api_key: formData.get("resend_api_key"),
+      abacatepay_api_key: formData.get("abacatepay_api_key"),
       auto_suspend: formData.get("auto_suspend") === "on",
     };
     updateSettingsMutation.mutate(data);
