@@ -71,21 +71,30 @@ const INVOICE_STATUS_MAP: Record<string, string> = {
 };
 
 async function resolveUserId(email: string, whmcsClientId?: string): Promise<string | null> {
-  if (!email && !whmcsClientId) return null;
   const cleanEmail = email?.trim().toLowerCase();
+  const cleanWhmcsId = whmcsClientId?.toString().trim();
+
+  // 1. Tenta buscar pelo whmcs_id no banco de perfis (mais preciso)
+  if (cleanWhmcsId) {
+    const { data: profile } = await (supabaseAdmin
+      .from("profiles") as any)
+      .select("id")
+      .eq("whmcs_id", cleanWhmcsId)
+      .maybeSingle();
+    if (profile?.id) return profile.id;
+  }
   
-  // 1. Tenta buscar pelo e-mail no banco de perfis
+  // 2. Tenta buscar pelo e-mail no banco de perfis
   if (cleanEmail) {
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("id")
       .ilike("email", cleanEmail)
       .maybeSingle();
-    
     if (profile?.id) return profile.id;
   }
 
-  // 2. Caso não esteja no perfil, busca no auth.users
+  // 3. Fallback: busca no auth.users
   if (cleanEmail) {
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
@@ -94,17 +103,16 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     }
   }
 
-  // 3. Fallback: Tenta buscar por metadados de importação se disponíveis
-  // (Futuramente poderíamos salvar o whmcs_id nos perfis para maior precisão)
-
   return null;
 }
 
 
-/** Importa clientes do WHMCS (tbclients export). */
+/** Importa clientes do WHMCS (tblclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
     const email = pick(row, ["email", "e-mail", "email_address", "mail", "client_email", "clientemail"]).toLowerCase();
+    const whmcsId = pick(row, ["id", "userid", "clientid", "uid"]);
+    
     if (!email) continue;
 
     const fullName =
@@ -114,6 +122,7 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
     const profile = {
       full_name: fullName || null,
       email,
+      whmcs_id: whmcsId || null,
       company_name: pick(row, ["companyname", "company_name", "empresa"]) || null,
       tax_id: pick(row, ["tax_id", "taxid", "cpf", "cnpj", "documento"]) || null,
       phone: pick(row, ["phonenumber", "phone", "telefone"]) || null,
@@ -123,14 +132,14 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
       state: pick(row, ["state", "estado"]) || null,
       postal_code: pick(row, ["postcode", "postal_code", "cep"]) || null,
       country: pick(row, ["country", "pais"]) || "BR",
-      notes: "Importado do WHMCS",
+      notes: "Importado do WHMCS" + (whmcsId ? ` (ID WHMCS: ${whmcsId})` : ""),
     };
 
     try {
-      const existing = await resolveUserId(email);
+      const existing = await resolveUserId(email, whmcsId);
       if (existing) {
-        const { error } = await supabaseAdmin
-          .from("profiles")
+        const { error } = await (supabaseAdmin
+          .from("profiles") as any)
           .update(profile)
           .eq("id", existing);
         if (error) throw new Error(error.message);
@@ -143,17 +152,18 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
           email,
           email_confirm: true,
           password: crypto.randomUUID() + "Aa1!",
-          user_metadata: { full_name: fullName, imported_from: "whmcs" },
+          user_metadata: { full_name: fullName, imported_from: "whmcs", whmcs_id: whmcsId },
         });
 
       if (authError || !created.user) {
         throw new Error(authError?.message ?? "Falha ao criar usuário");
       }
 
-      const { error: profileError } = await supabaseAdmin
-        .from("profiles")
+      const { error: profileError } = await (supabaseAdmin
+        .from("profiles") as any)
         .upsert({ id: created.user.id, ...profile }, { onConflict: "id" });
       if (profileError) throw new Error(profileError.message);
+
 
       await supabaseAdmin
         .from("user_roles")
@@ -171,7 +181,6 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
 
 async function resolveProductId(name: string): Promise<string | null> {
   if (!name) return null;
-  // Normaliza o nome para busca
   const cleanName = name.trim();
   
   const { data: existing } = await supabaseAdmin
@@ -189,7 +198,6 @@ async function resolveProductId(name: string): Promise<string | null> {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "") || `whmcs-${Date.now()}`;
 
-  // Se não existe, cria um produto "rascunho" invisível
   const { data: created, error } = await supabaseAdmin
     .from("products")
     .insert({
@@ -198,35 +206,20 @@ async function resolveProductId(name: string): Promise<string | null> {
       description: "Produto importado automaticamente do WHMCS",
       is_visible: false,
       auto_provision: false,
-      // Assume um preço 0 para não quebrar, o admin deve configurar depois
     })
     .select("id")
     .single();
 
-  if (error) {
-    console.error("Erro ao criar produto na importação:", error);
-    return null;
-  }
+  if (error) return null;
   return created.id;
 }
 
 /** Importa serviços/hospedagens do WHMCS (tblhosting export). */
 async function importServices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    // Tenta encontrar o e-mail do cliente em diversas colunas possíveis
-    const email = pick(row, [
-      "email",
-      "client_email",
-      "e-mail",
-      "user_email",
-      "mail",
-      "clientemail",
-      "userid_email",
-      "username_email",
-      "user",
-    ]).toLowerCase();
-
-    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id"]);
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail"]).toLowerCase();
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id"]);
+    const serviceWhmcsId = pick(row, ["id", "serviceid", "hostingid"]);
 
     try {
       const userId = await resolveUserId(email, whmcsClientId);
@@ -248,9 +241,10 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
       const username = pick(row, ["username", "usuario", "login", "user"]);
       const nextDue = toDate(pick(row, ["nextduedate", "next_due_date", "vencimento", "next_due"]));
 
-      const { error } = await supabaseAdmin.from("services").insert({
+      const { error } = await (supabaseAdmin.from("services") as any).insert({
         user_id: userId,
         product_id: productId,
+        whmcs_id: serviceWhmcsId || null,
         domain: domain || null,
         username: username || null,
         billing_cycle: cycle as any,
@@ -260,10 +254,11 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 
       if (error) throw new Error(error.message);
       stats.services.created++;
+
     } catch (e) {
       stats.services.failed++;
       if (stats.errors.length < 50) {
-        stats.errors.push(`Serviço ${email}: ${(e as Error).message}`);
+        stats.errors.push(`Serviço ${serviceWhmcsId || email}: ${(e as Error).message}`);
       }
     }
   }
@@ -272,16 +267,9 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 /** Importa faturas do WHMCS (tblinvoices export). */
 async function importInvoices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, [
-      "email",
-      "client_email",
-      "e-mail",
-      "user_email",
-      "mail",
-      "clientemail",
-    ]).toLowerCase();
-    
-    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id"]);
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail"]).toLowerCase();
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id"]);
+    const invoiceWhmcsId = pick(row, ["id", "invoiceid", "invoicenum", "number"]);
     
     try {
       const userId = await resolveUserId(email, whmcsClientId);
@@ -295,10 +283,10 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
       const dueDate = toDate(pick(row, ["duedate", "due_date", "vencimento", "date"])) ?? new Date().toISOString();
       const paidAt = toDate(pick(row, ["datepaid", "paid_at", "data_pagamento", "date_paid"]));
       const method = pick(row, ["paymentmethod", "payment_method", "metodo", "gateway"]);
-      const externalId = pick(row, ["id", "invoiceid", "invoicenum", "number"]);
 
-      const { error } = await supabaseAdmin.from("invoices").insert({
+      const { error } = await (supabaseAdmin.from("invoices") as any).insert({
         user_id: userId,
+        whmcs_id: invoiceWhmcsId || null,
         subtotal,
         total_amount: total,
         tax_amount: toNumber(pick(row, ["tax", "taxa", "taxamount"])),
@@ -307,21 +295,21 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
         due_date: dueDate,
         paid_at: paidAt,
         payment_method: method || null,
-        notes: `Importado do WHMCS (fatura #${externalId || "?"})`,
+        notes: `Importado do WHMCS (ID: ${invoiceWhmcsId || "?"})`,
       });
 
       if (error) throw new Error(error.message);
       stats.invoices.created++;
+
     } catch (e) {
       stats.invoices.failed++;
       if (stats.errors.length < 50) {
-        stats.errors.push(`Fatura ${email}: ${(e as Error).message}`);
+        stats.errors.push(`Fatura ${invoiceWhmcsId || email}: ${(e as Error).message}`);
       }
     }
   }
 }
 
-/** Cria um job de importação e retorna seu id. */
 export async function startImportJob(): Promise<string | null> {
   const { data } = await supabaseAdmin
     .from("whmcs_imports")
@@ -331,7 +319,6 @@ export async function startImportJob(): Promise<string | null> {
   return data?.id ?? null;
 }
 
-/** Processa um lote de linhas já convertidas no navegador. */
 export async function importBatch(
   kind: "clients" | "services" | "invoices",
   rows: Record<string, string>[],
@@ -343,7 +330,6 @@ export async function importBatch(
   return stats;
 }
 
-/** Finaliza o job registrando as estatísticas agregadas. */
 export async function finishImportJob(
   jobId: string,
   stats: ImportStats,
@@ -358,3 +344,4 @@ export async function finishImportJob(
     })
     .eq("id", jobId);
 }
+
