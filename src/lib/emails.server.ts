@@ -18,7 +18,11 @@ export async function sendEmail({
     .in("key", ["resend_api_key", "support_email", "company_name"]);
 
   const config: Record<string, string> = {};
-  settings?.forEach((s) => (config[s.key] = s.value));
+  settings?.forEach((s) => {
+    if (typeof s.value === 'string') {
+      config[s.key] = s.value;
+    }
+  });
 
   const apiKey = config["resend_api_key"];
   const fromEmail = config["support_email"] || "no-reply@hostpanel.app";
