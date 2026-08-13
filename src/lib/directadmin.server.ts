@@ -176,3 +176,25 @@ export async function suspendDAAccount(serverId: string, username: string) {
     }
   });
 }
+export async function deleteDAAccount(serverId: string, username: string) {
+  const { data: server, error } = await supabaseAdmin
+    .from("servers")
+    .select("*")
+    .eq("id", serverId)
+    .single();
+
+  if (error || !server) throw new Error("Servidor não encontrado");
+
+  return await callDA({
+    hostname: server.hostname,
+    apiUser: server.api_user,
+    apiToken: server.api_token,
+    command: 'CMD_API_SELECT_USERS',
+    method: 'POST',
+    params: {
+      location: 'users',
+      delete: 'Delete',
+      select0: username
+    }
+  });
+}
