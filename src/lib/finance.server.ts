@@ -176,8 +176,9 @@ export async function processProvisioning(invoiceId: string) {
               server_id: server.id,
               domain,
               next_due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            })
+            } as any)
             .eq("id", service.id);
+
 
           console.log(`Provisioned service ${service.id} on server ${server.name}`);
         } catch (err: any) {
