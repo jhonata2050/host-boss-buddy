@@ -122,7 +122,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         <div id="phase-status" className="fixed bottom-4 right-4 z-50 max-w-sm rounded-2xl bg-brand px-4 py-3 text-[10px] font-bold text-brand-foreground shadow-xl animate-bounce text-left whitespace-pre-line">
-          antes de continuarmos , migre o usuario jhonatavs@proton.me para admin, pois como estou logado como cliente nao tenho acesso ao admin para verificar se esta tudo correto por la, assim usarei um usario para admin e outro para o cliente, assim validamos tudo antes de ir para producao
+          agora continue com o desenvolvimento do sistema
         </div>
         {children}
         <Scripts />
