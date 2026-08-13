@@ -37,7 +37,7 @@ export const Route = createFileRoute('/api/public/webhooks/abacatepay')({
               const { data: invoice } = await supabaseAdmin
                 .from('invoices')
                 .update({ status: 'paid', paid_at: new Date().toISOString() })
-                .eq('id', transaction.invoice_id)
+                .eq('id', transaction.invoice_id!)
                 .select()
                 .single();
                 

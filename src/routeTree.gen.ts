@@ -30,6 +30,7 @@ import { Route as AuthenticatedCheckoutProductIdRouteImport } from './routes/_au
 import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
 import { Route as AuthenticatedTicketsTicketIdRouteImport } from './routes/_authenticated/tickets.$ticketId'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
+import { Route as ApiPublicWebhooksAbacatepayRouteImport } from './routes/api/public/webhooks/abacatepay'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -146,6 +147,12 @@ const ApiPublicCronMaintenanceRoute =
     path: '/api/public/cron/maintenance',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhooksAbacatepayRoute =
+  ApiPublicWebhooksAbacatepayRouteImport.update({
+    id: '/api/public/webhooks/abacatepay',
+    path: '/api/public/webhooks/abacatepay',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -213,6 +222,7 @@ export interface FileRoutesById {
   '/_authenticated/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/tickets/$ticketId'
     | '/admin/'
     | '/api/public/cron/maintenance'
+    | '/api/public/webhooks/abacatepay'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/tickets/$ticketId'
     | '/admin'
     | '/api/public/cron/maintenance'
+    | '/api/public/webhooks/abacatepay'
   id:
     | '__root__'
     | '/'
@@ -281,6 +293,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tickets/$ticketId'
     | '/_authenticated/admin/'
     | '/api/public/cron/maintenance'
+    | '/api/public/webhooks/abacatepay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -288,6 +301,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
+  ApiPublicWebhooksAbacatepayRoute: typeof ApiPublicWebhooksAbacatepayRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -439,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronMaintenanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/abacatepay': {
+      id: '/api/public/webhooks/abacatepay'
+      path: '/api/public/webhooks/abacatepay'
+      fullPath: '/api/public/webhooks/abacatepay'
+      preLoaderRoute: typeof ApiPublicWebhooksAbacatepayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -522,6 +543,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
+  ApiPublicWebhooksAbacatepayRoute: ApiPublicWebhooksAbacatepayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
