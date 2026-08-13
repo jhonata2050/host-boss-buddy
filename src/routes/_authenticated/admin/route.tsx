@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,15 +15,6 @@ function AdminLayout() {
   const { isStaff } = useIsStaff();
   const navigate = useNavigate();
   const loading = isLoading;
-
-  console.log("AdminLayout Auth State:", { loading, isStaff, roles });
-
-  useEffect(() => {
-    if (!loading && !isStaff) {
-      console.log("Not staff, redirecting to /dashboard");
-      void navigate({ to: "/dashboard", replace: true });
-    }
-  }, [loading, isStaff, navigate]);
 
   if (loading) {
     return (
@@ -40,8 +32,13 @@ function AdminLayout() {
           <ShieldAlert className="mx-auto size-8 text-muted-foreground" />
           <h1 className="mt-3 text-lg font-semibold">Área restrita</h1>
           <p className="mt-1 text-sm text-muted-foreground">
+            Você está logado como: {roles?.join(", ") || "cliente"}
+            <br />
             Esta área é exclusiva da administração da plataforma.
           </p>
+          <Button onClick={() => navigate({ to: "/dashboard" })} className="mt-4">
+            Voltar para o Painel
+          </Button>
         </div>
       </div>
     );
