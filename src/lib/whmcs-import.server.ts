@@ -199,12 +199,22 @@ async function resolveProductId(name: string): Promise<string | null> {
     .maybeSingle();
   if (existing) return existing.id;
 
+  const slug =
+    name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") || `whmcs-${Date.now()}`;
+
   const { data: created, error } = await supabaseAdmin
     .from("products")
     .insert({
       name,
+      slug,
       description: "Produto importado do WHMCS",
-      is_active: true,
+      is_visible: false,
+      auto_provision: false,
     })
     .select("id")
     .single();
