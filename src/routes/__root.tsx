@@ -122,7 +122,8 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         <div id="phase-status" className="fixed bottom-4 right-4 z-50 max-w-sm rounded-2xl bg-brand px-4 py-3 text-[10px] font-bold text-brand-foreground shadow-xl animate-bounce text-left whitespace-pre-line">
-          agora continue com o desenvolvimento do sistema
+          Fase 2 e 3: Correções de Acesso Admin e Performance Concluídas.
+          Iniciando Fase 4: Automação DirectAdmin.
         </div>
         {children}
         <Scripts />

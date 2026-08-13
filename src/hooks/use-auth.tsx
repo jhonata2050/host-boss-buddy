@@ -103,9 +103,16 @@ export function useRoles() {
         .from("user_roles")
         .select("role")
         .eq("user_id", user!.id);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Erro ao buscar papéis:", error);
+        throw error;
+      }
       return (data ?? []).map((row) => row.role as AppRole);
     },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+    retry: 1,
   });
 }
 
@@ -113,9 +120,11 @@ export function useIsStaff() {
   const { loading: authLoading, user } = useAuth();
   const { data: roles, isPending, isFetching } = useRoles();
   const list = roles ?? [];
-  // Enquanto a sessão carrega (ou a query está desabilitada por falta de user),
-  // não podemos concluir que o usuário não é staff.
-  const isLoading = authLoading || (Boolean(user) && (isPending || isFetching)) || (!user && !roles);
+  
+  // Consideramos carregando se a sessão ainda está sendo verificada 
+  // OU se o usuário está logado mas os papéis ainda não foram buscados.
+  const isLoading = authLoading || (Boolean(user) && isPending);
+  
   return {
     isAdmin: list.includes("admin"),
     isStaff: list.includes("admin") || list.includes("staff"),

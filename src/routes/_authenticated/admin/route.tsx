@@ -10,9 +10,11 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminLayout() {
-  const { data: roles, error } = useRoles();
-  const { isStaff, isLoading: loading } = useIsStaff();
+  const { data: roles, error, isLoading: rolesLoading } = useRoles();
+  const { isStaff, isLoading: staffLoading } = useIsStaff();
   const navigate = useNavigate();
+
+  const loading = staffLoading || rolesLoading;
 
   if (loading) {
     return (
