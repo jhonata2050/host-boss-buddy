@@ -122,11 +122,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         <div id="phase-status" className="fixed bottom-4 right-4 z-50 max-w-sm rounded-2xl bg-brand px-4 py-3 text-[10px] font-bold text-brand-foreground shadow-xl animate-bounce text-left whitespace-pre-line">
-          1- me responda sempre em portugues
-          2- a area de mesu servivos deve ser um menu pai como o minha conta, e quando o clinete clicar nele ira aparecer os servicos dele como pacote de hospedagem etc.
-          3- continue o desenvolvimento do sistema o objetivo e subistituir o whmcs como infomand no incio do projeto. me retorne apos ter feito melhorias significativas no sistema e me retorne tudo que adiconou em listas e o que ainda esta pendente a fazer.
-
-          continue o desenvolvimento do sistema
+          antes de continuarmos , migre o usuario jhonatavs@proton.me para admin, pois como estou logado como cliente nao tenho acesso ao admin para verificar se esta tudo correto por la, assim usarei um usario para admin e outro para o cliente, assim validamos tudo antes de ir para producao
         </div>
         {children}
         <Scripts />
