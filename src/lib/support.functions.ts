@@ -218,6 +218,20 @@ export const createServerDA = createServerFn({ method: "POST" })
     return data;
   });
 
+export const testDAConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.string().parse(data))
+  .handler(async ({ data: serverId }) => {
+    const { getDAPackages } = await import("./directadmin.server");
+    try {
+      await getDAPackages(serverId);
+      return { success: true };
+    } catch (err: any) {
+      throw new Error(`Falha na conexão: ${err.message}`);
+    }
+  });
+
+
 export const getDAPackagesList = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.string().parse(data))
