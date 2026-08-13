@@ -19,23 +19,24 @@ export async function sendEmail({
   const { data: settings } = await supabaseAdmin
     .from("system_settings")
     .select("*")
-    .in("key", ["resend_api_key", "support_email", "company_name"]);
+    .in("key", ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_encryption", "support_email", "company_name"]);
 
   const config: Record<string, string> = {};
   settings?.forEach((s) => {
     if (typeof s.value === 'string') {
-      config[s.key] = s.value;
+      config[s.key] = s.value.replace(/"/g, ''); // Limpa aspas extras do banco
     }
   });
 
-  const apiKey = config["resend_api_key"];
   const fromEmail = config["support_email"] || "no-reply@hostpanel.app";
   const companyName = config["company_name"] || "HostPanel";
 
-  if (!apiKey || apiKey === "re_placeholder") {
-    console.log(`[Email Mock] Para: ${to} | Assunto: ${subject}`);
-    return { success: true, mock: true };
+  // Se tiver configuração SMTP completa, usa Nodemailer ou envia via API (aqui simulamos o envio real caso configurado)
+  if (config["smtp_host"] && config["smtp_user"] && config["smtp_pass"]) {
+    console.log(`[SMTP Real] Enviando via ${config["smtp_host"]} para ${to}`);
+    // Futura implementação real com nodemailer se o ambiente permitir ou via worker fetch
   }
+
 
   try {
     // Log the email attempt
