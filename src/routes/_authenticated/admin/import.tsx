@@ -36,21 +36,21 @@ type Slot = "clientsCsv" | "servicesCsv" | "invoicesCsv";
 const SLOTS: { key: Slot; title: string; icon: typeof Users; hint: string }[] = [
   {
     key: "clientsCsv",
-    title: "Clientes (tblclients)",
+    title: "Tabela de Clientes",
     icon: Users,
-    hint: "Colunas aceitas: email, firstname, lastname, companyname, phonenumber, address1, city, state, postcode, country",
+    hint: "Ex: tblclients.csv. O sistema filtrará automaticamente os campos relevantes.",
   },
   {
     key: "servicesCsv",
-    title: "Serviços (tblhosting)",
+    title: "Tabela de Serviços / Hospedagem",
     icon: Server,
-    hint: "Colunas aceitas: email, product, domain, username, billingcycle, status, nextduedate",
+    hint: "Ex: tblhosting.csv. Vincula ao cliente pelo e-mail.",
   },
   {
     key: "invoicesCsv",
-    title: "Faturas (tblinvoices)",
+    title: "Tabela de Faturas",
     icon: Receipt,
-    hint: "Colunas aceitas: email, subtotal, total, tax, status, duedate, datepaid, paymentmethod",
+    hint: "Ex: tblinvoices.csv. Vincula ao cliente pelo e-mail.",
   },
 ];
 
@@ -109,13 +109,12 @@ function AdminWHMCSImportPage() {
             <div className="flex gap-4">
               <AlertCircle className="h-6 w-6 text-warning shrink-0" />
               <div className="text-sm space-y-2">
-                <p className="font-bold text-warning-foreground">Como exportar do WHMCS</p>
+                <p className="font-bold text-warning-foreground">Importação Simplificada</p>
                 <p className="text-muted-foreground">
-                  No WHMCS acesse <strong>Utilities → SQL Console</strong> (ou phpMyAdmin) e exporte
-                  as tabelas <code>tblclients</code>, <code>tblhosting</code> e{" "}
-                  <code>tblinvoices</code> em CSV. Importe os clientes primeiro — serviços e faturas
-                  são vinculados pelo e-mail do cliente. Os clientes importados recebem uma senha
-                  aleatória e devem usar "esqueci minha senha" no primeiro acesso.
+                  Você pode exportar as tabelas <strong>completas</strong> (todos os campos) do WHMCS em formato CSV. 
+                  O sistema irá identificar automaticamente o que é necessário. 
+                  Dica: No phpMyAdmin, selecione a tabela e use a aba "Exportar" com formato CSV.
+                  Importe primeiro os Clientes, depois Serviços e Faturas.
                 </p>
               </div>
             </div>
