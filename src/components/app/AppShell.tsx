@@ -66,6 +66,7 @@ function useNav() {
             { label: "Meus dados", to: "/profile", icon: UserIcon },
             { label: "Meus serviços", to: "/services", icon: LayoutPanelLeft },
             { label: "Minhas faturas", to: "/invoices", icon: Receipt },
+            { label: "Suporte", to: "/tickets", icon: LifeBuoy },
           ],
         },
       ];
