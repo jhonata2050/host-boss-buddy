@@ -122,7 +122,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         <div id="phase-status" className="fixed bottom-4 right-4 z-50 rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground shadow-lg animate-bounce">
-          Implement Fase 2 to manage invoices and orders for my hosting customers.
+          continue
         </div>
         {children}
         <Scripts />
