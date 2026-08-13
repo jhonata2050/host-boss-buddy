@@ -77,7 +77,8 @@ function AdminTicketsPage() {
               return (
                 <Link 
                   key={ticket.id}
-                  to={`/tickets`} // TODO: Criar rota de detalhes
+                  to="/tickets/$ticketId"
+                  params={{ ticketId: ticket.id }}
                   className="block group"
                 >
                   <Card className="rounded-3xl border-none shadow-sm hover:shadow-md transition-all overflow-hidden group-hover:bg-brand/[0.02]">

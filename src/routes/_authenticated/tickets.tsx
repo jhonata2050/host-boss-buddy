@@ -169,7 +169,7 @@ function ClientTicketsPage() {
                   <Badge variant="outline" className={cn("rounded-full border-none px-3 py-1 text-[10px] font-bold uppercase", status.color)}>
                     {status.label}
                   </Badge>
-                  <Link to={`/tickets/${ticket.id}`}>
+                  <Link to="/tickets/$ticketId" params={{ ticketId: ticket.id }}>
                     <Button variant="outline" size="sm" className="rounded-xl border-brand/20 text-brand hover:bg-brand hover:text-brand-foreground font-bold">
                       Ver Detalhes
                     </Button>
