@@ -5,12 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSystemSettings, updateSystemSettings } from "@/lib/support.functions";
-import { Save, CreditCard, Wallet, Landmark, Zap, Gift, Coins } from "lucide-react";
+import { Save, Gift, Wallet, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { GATEWAYS, METHOD_LABELS, isGatewayConfigured } from "@/lib/gateways";
 
 export const Route = createFileRoute("/_authenticated/admin/finance")({
+  head: () => ({
+    meta: [
+      { title: "Financeiro e Gateways — HostPanel" },
+      { name: "description", content: "Configure gateways de pagamento, credenciais de API e automação de faturamento." },
+      { property: "og:title", content: "Financeiro e Gateways — HostPanel" },
+      { property: "og:description", content: "Configure gateways de pagamento e automação de faturamento." },
+    ],
+  }),
   component: AdminFinanceSettingsPage,
 });
 
@@ -27,6 +37,7 @@ function AdminFinanceSettingsPage() {
       toast.success("Configurações financeiras salvas!");
       queryClient.invalidateQueries({ queryKey: ["system-settings"] });
     },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
@@ -35,13 +46,12 @@ function AdminFinanceSettingsPage() {
     const data: Record<string, any> = {
       auto_suspend: formData.get("auto_suspend") === "on",
       auto_delete_days: Number(formData.get("auto_delete_days")) || 30,
-      abacatepay_api_key: formData.get("abacatepay_api_key"),
-      stripe_secret_key: formData.get("stripe_secret_key"),
-      mercadopago_access_token: formData.get("mercadopago_access_token"),
-      woovi_api_key: formData.get("woovi_api_key"),
-      paghiper_api_key: formData.get("paghiper_api_key"),
-      cajupay_api_key: formData.get("cajupay_api_key"),
     };
+    for (const gateway of GATEWAYS) {
+      for (const field of gateway.fields) {
+        data[field.key] = formData.get(field.key) ?? "";
+      }
+    }
     updateSettingsMutation.mutate(data);
   };
 
@@ -49,11 +59,11 @@ function AdminFinanceSettingsPage() {
 
   return (
     <AppShell area="admin" breadcrumb={<span>Sistema / Financeiro e Gateways</span>}>
-      <div className="space-y-8 max-w-4xl mx-auto">
+      <div className="space-y-8 max-w-5xl mx-auto">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Configurações Financeiras</h1>
           <p className="text-muted-foreground mt-2">
-            Gerencie seus gateways de pagamento e regras de faturamento automático.
+            Cada gateway usa exatamente as credenciais exigidas pela sua documentação oficial (muitos exigem par de chaves).
           </p>
         </div>
 
@@ -67,7 +77,7 @@ function AdminFinanceSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between py-2 border-b border-muted">
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium">Suspensão Automática</p>
                   <p className="text-xs text-muted-foreground">Suspender serviços com faturas vencidas há mais de 3 dias.</p>
                 </div>
@@ -81,95 +91,68 @@ function AdminFinanceSettingsPage() {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* AbacatePay */}
-            <Card className="rounded-3xl border-none shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-                <Zap className="h-5 w-5 text-[#A3E635]" />
-                <CardTitle className="text-lg">AbacatePay</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>API Key</Label>
-                  <Input name="abacatepay_api_key" type="password" placeholder="abacatepay_..." defaultValue={settings?.["abacatepay_api_key"]} className="rounded-xl" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Stripe */}
-            <Card className="rounded-3xl border-none shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-                <CreditCard className="h-5 w-5 text-[#6366f1]" />
-                <CardTitle className="text-lg">Stripe</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Secret Key</Label>
-                  <Input name="stripe_secret_key" type="password" placeholder="sk_..." defaultValue={settings?.["stripe_secret_key"]} className="rounded-xl" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Mercado Pago */}
-            <Card className="rounded-3xl border-none shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-                <Landmark className="h-5 w-5 text-[#009ee3]" />
-                <CardTitle className="text-lg">Mercado Pago</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Access Token</Label>
-                  <Input name="mercadopago_access_token" type="password" placeholder="APP_USR-..." defaultValue={settings?.["mercadopago_access_token"]} className="rounded-xl" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Woovi */}
-            <Card className="rounded-3xl border-none shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-                <Zap className="h-5 w-5 text-[#03d69d]" />
-                <CardTitle className="text-lg">Woovi (OpenPix)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>API Key</Label>
-                  <Input name="woovi_api_key" type="password" defaultValue={settings?.["woovi_api_key"]} className="rounded-xl" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* PagHiper */}
-            <Card className="rounded-3xl border-none shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-                <Coins className="h-5 w-5 text-[#f58220]" />
-                <CardTitle className="text-lg">PagHiper</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>API Key / Token</Label>
-                  <Input name="paghiper_api_key" type="password" defaultValue={settings?.["paghiper_api_key"]} className="rounded-xl" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* CajuPay */}
-            <Card className="rounded-3xl border-none shadow-sm">
-              <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-                <Wallet className="h-5 w-5 text-[#e52e5e]" />
-                <CardTitle className="text-lg">CajuPay</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>API Key</Label>
-                  <Input name="cajupay_api_key" type="password" defaultValue={settings?.["cajupay_api_key"]} className="rounded-xl" />
-                </div>
-              </CardContent>
-            </Card>
+            {GATEWAYS.map((gateway) => {
+              const configured = isGatewayConfigured(gateway.id, settings as Record<string, unknown>);
+              return (
+                <Card key={gateway.id} className="rounded-3xl border-none shadow-sm">
+                  <CardHeader className="space-y-3">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Wallet className="h-5 w-5 shrink-0 text-brand" />
+                        <CardTitle className="truncate text-lg">{gateway.name}</CardTitle>
+                      </div>
+                      <Badge
+                        variant={configured ? "default" : "secondary"}
+                        className="shrink-0 rounded-full text-[10px] uppercase"
+                      >
+                        {configured ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {gateway.methods.map((m) => (
+                        <span key={m} className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">
+                          {METHOD_LABELS[m]}
+                        </span>
+                      ))}
+                      <a
+                        href={gateway.docs}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="ml-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                      >
+                        Docs <ExternalLink className="size-3" />
+                      </a>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {gateway.fields.map((field) => (
+                      <div key={field.key} className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          {field.label}
+                          {field.optional && <span className="text-[10px] text-muted-foreground">(opcional)</span>}
+                        </Label>
+                        <Input
+                          name={field.key}
+                          type={field.secret ? "password" : "text"}
+                          placeholder={field.placeholder}
+                          defaultValue={(settings?.[field.key] as string) ?? ""}
+                          className="rounded-xl"
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" className="rounded-2xl px-8">Cancelar</Button>
-            <Button type="submit" disabled={updateSettingsMutation.isPending} className="bg-brand text-brand-foreground hover:bg-brand/90 rounded-2xl px-12 font-bold shadow-lg shadow-brand/20">
-              <Save className="mr-2 h-4 w-4" /> 
+            <Button
+              type="submit"
+              disabled={updateSettingsMutation.isPending}
+              className="bg-brand text-brand-foreground hover:bg-brand/90 rounded-2xl px-12 font-bold shadow-lg shadow-brand/20"
+            >
+              <Save className="mr-2 h-4 w-4" />
               {updateSettingsMutation.isPending ? "Salvando..." : "Salvar Configurações"}
             </Button>
           </div>

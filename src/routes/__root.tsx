@@ -121,9 +121,6 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <div id="phase-status" className="fixed bottom-4 right-4 z-50 max-w-sm rounded-2xl bg-brand px-4 py-3 text-[10px] font-bold text-brand-foreground shadow-xl animate-bounce text-left whitespace-pre-line">
-          Fase 5 Implementada: SMTP Real (Resend), Gateway (AbacatePay) e Cron de Manutenção prontos para chaves de API.
-        </div>
         {children}
         <Scripts />
       </body>
