@@ -12,8 +12,8 @@ export async function placeOrder(
   data: {
     productId: string;
     billingCycle: BillingCycle;
-    couponCode?: string;
-    domain?: string;
+    couponCode?: string | undefined;
+    domain?: string | undefined;
   },
 ) {
   const { data: product, error: pError } = await supabaseAdmin
