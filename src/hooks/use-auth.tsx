@@ -103,9 +103,16 @@ export function useRoles() {
         .from("user_roles")
         .select("role")
         .eq("user_id", user!.id);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Erro ao buscar papéis:", error);
+        throw error;
+      }
       return (data ?? []).map((row) => row.role as AppRole);
     },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+    retry: 1,
   });
 }
 
