@@ -3,9 +3,9 @@ import { AppShell } from "@/components/app/AppShell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getServers, createServerDA, testDAConnection } from "@/lib/support.functions";
+import { getServers, createServerDA, testDAConnection, getDAPackagesList } from "@/lib/support.functions";
 
-import { Plus, Server, Globe, Shield, Activity, Trash2 } from "lucide-react";
+import { Plus, Server, Globe, Shield, Activity, Trash2, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/admin/servers")({
 
 function AdminServersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [syncResults, setSyncResults] = useState<Record<string, { packages: string[]; syncedAt: string }>>({});
   const queryClient = useQueryClient();
 
   const { data: servers, isLoading } = useQuery({
@@ -39,12 +40,29 @@ function AdminServersPage() {
 
   const testMutation = useMutation({
     mutationFn: (serverId: string) => testDAConnection({ data: serverId }),
-    onSuccess: () => {
-      toast.success("Conexão bem-sucedida!");
+    onSuccess: (result) => {
+      setSyncResults((current) => ({
+        ...current,
+        [testMutation.variables ?? ""]: { packages: result.packages, syncedAt: new Date().toISOString() },
+      }));
+      toast.success(`Conexão validada: ${result.packageCount} pacotes encontrados.`);
     },
     onError: (err: any) => {
       toast.error(err.message);
     }
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: (serverId: string) => getDAPackagesList({ data: serverId }),
+    onSuccess: (packages, serverId) => {
+      setSyncResults((current) => ({
+        ...current,
+        [serverId]: { packages, syncedAt: new Date().toISOString() },
+      }));
+      queryClient.setQueryData(["da-packages", serverId], packages);
+      toast.success(`${packages.length} pacotes sincronizados com sucesso.`);
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
 
@@ -135,7 +153,7 @@ function AdminServersPage() {
                       <Server className="h-5 w-5 text-brand" />
                     </div>
                     <div className="flex items-center gap-2 text-xs font-semibold text-brand px-2 py-1 rounded-full bg-brand/10">
-                      <Activity className="h-3 w-3" /> Online
+                      <Activity className="h-3 w-3" /> Configurado
                     </div>
                   </div>
                   <CardTitle className="mt-4 text-xl font-bold">{server.name}</CardTitle>
@@ -153,16 +171,38 @@ function AdminServersPage() {
                   <div className="w-full bg-muted rounded-full h-2">
                     <div className="bg-brand h-2 rounded-full w-[2%]" />
                   </div>
-                  <div className="flex gap-2 pt-2">
+                  {(() => {
+                    const syncResult = syncResults[server.id];
+                    if (!syncResult) return null;
+                    return (
+                    <div className="rounded-2xl border border-brand/20 bg-brand/5 p-3">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <CheckCircle2 className="h-4 w-4 text-brand" />
+                        {syncResult.packages.length} pacotes sincronizados
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground break-words">
+                        {syncResult.packages.join(", ")}
+                      </p>
+                    </div>
+                    );
+                  })()}
+                  <div className="grid grid-cols-2 gap-2 pt-2">
                     <Button 
                       variant="outline" 
-                      className="flex-1 rounded-2xl border-brand/20 text-brand hover:bg-brand/5"
+                      className="rounded-2xl border-brand/20 text-brand hover:bg-brand/5"
                       onClick={() => testMutation.mutate(server.id)}
                       disabled={testMutation.isPending && testMutation.variables === server.id}
                     >
                       {testMutation.isPending && testMutation.variables === server.id ? "Testando..." : "Testar Conexão"}
                     </Button>
-
+                    <Button
+                      className="rounded-2xl bg-brand text-brand-foreground hover:bg-brand/90"
+                      onClick={() => syncMutation.mutate(server.id)}
+                      disabled={syncMutation.isPending && syncMutation.variables === server.id}
+                    >
+                      <RefreshCw className={`mr-2 h-4 w-4 ${syncMutation.isPending && syncMutation.variables === server.id ? "animate-spin" : ""}`} />
+                      {syncMutation.isPending && syncMutation.variables === server.id ? "Sincronizando..." : "Sincronizar pacotes"}
+                    </Button>
                     <Button variant="ghost" size="icon" className="rounded-xl text-destructive hover:bg-destructive/5"><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </CardContent>

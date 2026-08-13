@@ -14,6 +14,14 @@ interface DARequestOptions {
   params?: Record<string, string>;
 }
 
+interface DAConnectionResult {
+  success: true;
+  hostname: string;
+  apiUser: string;
+  packageCount: number;
+  packages: string[];
+}
+
 async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', params = {} }: DARequestOptions) {
   // Limpa o hostname e garante o uso da porta 2222
   const cleanHostname = hostname.replace(/^https?:\/\//, '').split(':')[0];
@@ -25,15 +33,23 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
   const authHeader = `Basic ${Buffer.from(`${apiUser}:${apiToken}`).toString('base64')}`;
   
   try {
+    if (method === 'GET') searchParams.set('json', 'yes');
+
     const response = await fetch(url + (method === 'GET' ? `?${searchParams.toString()}` : ''), {
       method,
       headers: {
         'Authorization': authHeader,
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'text/plain, application/json'
+        'Accept': 'application/json, text/plain',
       },
       body: method === 'POST' ? searchParams.toString() : null,
+      signal: AbortSignal.timeout(15_000),
+      redirect: 'manual',
     });
+
+    if (response.status >= 300 && response.status < 400) {
+      throw new Error(`A API redirecionou para ${response.headers.get('location') ?? 'a tela de login'}. Verifique o comando e as permissões da chave.`);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -44,18 +60,24 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
     try {
       return JSON.parse(text);
     } catch {
+      if (text.trimStart().startsWith('<!DOCTYPE html') || text.includes('<html')) {
+        throw new Error('O DirectAdmin retornou a tela de login em vez dos dados da API. Verifique as permissões da chave de acesso.');
+      }
       return Object.fromEntries(new URLSearchParams(text));
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("DirectAdmin Fetch Error:", error);
-    
-    // Fallback for development/sandbox if the server is unreachable
-    if (command === 'CMD_API_PACKAGES') {
-      return { list: ['Shared', 'Business', 'Unlimited', 'Reseller'] };
-    }
-    
-    throw new Error(`Falha na comunicação com o DirectAdmin: ${error.message}. Verifique se o hostname ${hostname} é acessível.`);
+    const message = error instanceof Error ? error.message : 'Erro desconhecido';
+    throw new Error(`Falha na comunicação com o DirectAdmin: ${message}. Verifique o hostname e as permissões da chave no servidor ${hostname}.`);
   }
+}
+
+function normalizePackageList(result: unknown): string[] {
+  if (Array.isArray(result)) return result.filter((item): item is string => typeof item === 'string');
+  if (!result || typeof result !== 'object' || !('list' in result)) return [];
+  const list = result.list;
+  if (Array.isArray(list)) return list.filter((item): item is string => typeof item === 'string');
+  return typeof list === 'string' ? [list] : [];
 }
 
 export async function getDAPackages(serverId: string) {
@@ -71,14 +93,30 @@ export async function getDAPackages(serverId: string) {
     hostname: server.hostname,
     apiUser: server.api_user,
     apiToken: server.api_token,
-    command: 'CMD_API_PACKAGES',
+    command: 'CMD_API_PACKAGES_USER',
   });
 
-  if (result.list) {
-    return Array.isArray(result.list) ? result.list : [result.list];
-  }
-  
-  return [];
+  const packages = normalizePackageList(result);
+  if (packages.length === 0) throw new Error('A conexão foi aceita, mas nenhum pacote de usuário foi retornado pelo DirectAdmin.');
+  return packages;
+}
+
+export async function testDAConnectionDetails(serverId: string): Promise<DAConnectionResult> {
+  const { data: server, error } = await supabaseAdmin
+    .from('servers')
+    .select('hostname, api_user')
+    .eq('id', serverId)
+    .single();
+
+  if (error || !server) throw new Error('Servidor não encontrado');
+  const packages = await getDAPackages(serverId);
+  return {
+    success: true,
+    hostname: server.hostname,
+    apiUser: server.api_user,
+    packageCount: packages.length,
+    packages,
+  };
 }
 
 export async function createDAAccount(serverId: string, details: {
