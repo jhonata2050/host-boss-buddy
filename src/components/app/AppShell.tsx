@@ -3,6 +3,7 @@ import {
   Bell,
   ChevronDown,
   Code2,
+  CreditCard,
   LayoutPanelLeft,
   LifeBuoy,
   LogOut,
@@ -10,7 +11,9 @@ import {
   Package,
   PanelsTopLeft,
   Plug,
+  Receipt,
   Store,
+  Ticket,
   User as UserIcon,
   Users,
 } from "lucide-react";
