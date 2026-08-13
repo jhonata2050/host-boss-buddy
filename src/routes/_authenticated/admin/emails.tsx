@@ -36,6 +36,7 @@ function AdminSettingsPage() {
       company_name: formData.get("company_name"),
       support_email: formData.get("support_email"),
       resend_api_key: formData.get("resend_api_key"),
+      abacatepay_api_key: formData.get("abacatepay_api_key"),
       auto_suspend: formData.get("auto_suspend") === "on",
     };
     updateSettingsMutation.mutate(data);
@@ -118,6 +119,10 @@ function AdminSettingsPage() {
                   <p className="text-xs text-muted-foreground">Suspender serviços com faturas vencidas há mais de 3 dias.</p>
                 </div>
                 <Switch name="auto_suspend" defaultChecked={settings?.["auto_suspend"] === true} />
+              </div>
+              <div className="space-y-2">
+                <Label>API Key (AbacatePay)</Label>
+                <Input name="abacatepay_api_key" type="password" placeholder="abacatepay_..." defaultValue={settings?.["abacatepay_api_key"]} className="rounded-xl" />
               </div>
               <div className="space-y-2">
                 <Label>Moeda Padrão</Label>
