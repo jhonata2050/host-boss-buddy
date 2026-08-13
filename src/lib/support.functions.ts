@@ -4,20 +4,30 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getSystemSettings = createServerFn({ method: "GET" })
-  .handler(async () => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+
+    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
+
     const { data, error } = await supabaseAdmin
       .from("system_settings")
       .select("*");
 
     if (error) throw new Error(error.message);
-    
+
     const settings: Record<string, any> = {};
     data.forEach(s => {
       settings[s.key] = s.value;
     });
-    
+
     return settings;
   });
+
 
 export const updateSystemSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
