@@ -217,3 +217,73 @@ export const createServerDA = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return data;
   });
+
+export const getDAPackagesList = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.string().parse(data))
+  .handler(async ({ data: serverId }) => {
+    const { getDAPackages } = await import("./directadmin.server");
+    return await getDAPackages(serverId);
+  });
+
+export const updateProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => 
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      description: z.string().nullable(),
+      directadmin_package: z.string().nullable(),
+      is_visible: z.boolean(),
+      sort_order: z.number(),
+      prices: z.array(z.object({
+        cycle: z.string(),
+        price: z.number(),
+        is_active: z.boolean()
+      }))
+    }).parse(data)
+  )
+  .handler(async ({ data: input, context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
+
+    const { error: prodError } = await context.supabase
+      .from("products")
+      .update({
+        name: input.name,
+        description: input.description,
+        directadmin_package: input.directadmin_package,
+        is_visible: input.is_visible,
+        sort_order: input.sort_order
+      })
+      .eq("id", input.id);
+
+    if (prodError) throw new Error(prodError.message);
+
+    // Update prices - delete and re-insert for simplicity in this turn
+    await context.supabase
+      .from("product_prices")
+      .delete()
+      .eq("product_id", input.id);
+
+    const pricesToInsert = input.prices.map(p => ({
+      product_id: input.id,
+      cycle: p.cycle,
+      price: p.price,
+      is_active: p.is_active
+    }));
+
+    const { error: priceError } = await context.supabase
+      .from("product_prices")
+      .insert(pricesToInsert);
+
+    if (priceError) throw new Error(priceError.message);
+
+    return { success: true };
+  });
+
