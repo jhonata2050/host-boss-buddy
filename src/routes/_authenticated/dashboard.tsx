@@ -126,7 +126,7 @@ function DashboardPage() {
   );
 }
 
-function KpiCard({ label, value }: { label: string; value?: string }) {
+function KpiCard({ label, value }: { label: string; value?: string | undefined }) {
   return (
     <div className="rounded-2xl border border-border bg-secondary/40 p-5">
       <p className="text-sm text-muted-foreground">{label}</p>
