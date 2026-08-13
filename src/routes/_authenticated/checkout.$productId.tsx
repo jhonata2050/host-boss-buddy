@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { createOrder } from "@/lib/finance.functions";
@@ -58,7 +59,7 @@ function CheckoutPage() {
         }
       });
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Pedido realizado com sucesso!");
       navigate({ to: "/invoices" }); // Or a specific invoice page if we had one
     },
@@ -174,8 +175,4 @@ function CheckoutPage() {
       </div>
     </AppShell>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
 }
