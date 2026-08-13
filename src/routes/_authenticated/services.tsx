@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { LayoutPanelLeft, Search, Store } from "lucide-react";
+import { LayoutPanelLeft, Search, Store, ExternalLink } from "lucide-react";
 import { useState } from "react";
 
 import { AppShell } from "@/components/app/AppShell";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { getDASSOUrl } from "@/lib/support.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/services")({
   head: () => ({
@@ -142,10 +144,28 @@ function ClientServicesPage() {
                   </div>
                 </div>
 
-                <div className="bg-secondary/30 p-4">
-                  <button className="w-full rounded-xl bg-background border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent group-hover:border-brand/50">
-                    Gerenciar Serviço
+                <div className="bg-secondary/30 p-4 flex gap-2">
+                  <button className="flex-1 rounded-xl bg-background border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent group-hover:border-brand/50">
+                    Gerenciar
                   </button>
+                  {svc.status === 'active' && svc.username && svc.server_id && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-xl border-brand/20 text-brand hover:bg-brand/5"
+                      onClick={async () => {
+                        try {
+                          const url = await getDASSOUrl({ data: { serverId: svc.server_id, username: svc.username } });
+                          window.open(url, '_blank');
+                        } catch (err: any) {
+                          toast.error("Erro ao gerar acesso: " + err.message);
+                        }
+                      }}
+                    >
+                      <ExternalLink className="size-3 mr-1" />
+                      Painel
+                    </Button>
+                  )}
                 </div>
               </div>
             );
