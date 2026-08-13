@@ -23,7 +23,7 @@ export async function createPaymentSession(
   const { data: settings } = await supabaseAdmin
     .from("system_settings")
     .select("*")
-    .in("key", ["abacatepay_api_key", "stripe_secret_key", "stripe_webhook_secret"]);
+    .in("key", ["abacatepay_api_key", "stripe_secret_key", "mercadopago_access_token", "woovi_api_key", "paghiper_api_key", "cajupay_api_key"]);
   
   const config = Object.fromEntries(settings?.map(s => [s.key, s.value]) || []);
   const amount = Number(invoice.total_amount);
@@ -98,6 +98,66 @@ export async function createPaymentSession(
       metadata: { method: "credit_card" }
     });
     return { method: "credit_card", checkoutUrl: `https://checkout.stripe.com/pay/${gatewayRef}`, amount };
+  }
+
+  // MERCADO PAGO (Simulated)
+  if (data.gateway === "mercadopago" && config["mercadopago_access_token"]) {
+    const gatewayRef = `mp_${Math.random().toString(36).slice(2, 11)}`;
+    await supabaseAdmin.from("transactions").insert({
+      user_id: userId,
+      invoice_id: invoice.id,
+      amount: amount,
+      gateway: "mercadopago",
+      gateway_reference: gatewayRef,
+      status: "pending",
+      metadata: { method: data.method }
+    });
+    return { method: data.method, checkoutUrl: `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=${gatewayRef}`, amount };
+  }
+
+  // WOOVI (Simulated)
+  if (data.gateway === "woovi" && config["woovi_api_key"]) {
+    const gatewayRef = `woovi_${Math.random().toString(36).slice(2, 11)}`;
+    await supabaseAdmin.from("transactions").insert({
+      user_id: userId,
+      invoice_id: invoice.id,
+      amount: amount,
+      gateway: "woovi",
+      gateway_reference: gatewayRef,
+      status: "pending",
+      metadata: { method: "pix" }
+    });
+    return { method: "pix", pixCode: "WOOVI_MOCK_PIX_CODE", qrCodeUrl: "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=WOOVI_MOCK", amount };
+  }
+
+  // PAGHIPER (Simulated)
+  if (data.gateway === "paghiper" && config["paghiper_api_key"]) {
+    const gatewayRef = `ph_${Math.random().toString(36).slice(2, 11)}`;
+    await supabaseAdmin.from("transactions").insert({
+      user_id: userId,
+      invoice_id: invoice.id,
+      amount: amount,
+      gateway: "paghiper",
+      gateway_reference: gatewayRef,
+      status: "pending",
+      metadata: { method: data.method }
+    });
+    return { method: data.method, checkoutUrl: `https://www.paghiper.com.br/checkout/boleto/${gatewayRef}`, amount };
+  }
+
+  // CAJUPAY (Simulated)
+  if (data.gateway === "cajupay" && config["cajupay_api_key"]) {
+    const gatewayRef = `caju_${Math.random().toString(36).slice(2, 11)}`;
+    await supabaseAdmin.from("transactions").insert({
+      user_id: userId,
+      invoice_id: invoice.id,
+      amount: amount,
+      gateway: "cajupay",
+      gateway_reference: gatewayRef,
+      status: "pending",
+      metadata: { method: data.method }
+    });
+    return { method: data.method, checkoutUrl: `https://checkout.cajupay.com.br/${gatewayRef}`, amount };
   }
 
   // 3. Fallback to Mock
