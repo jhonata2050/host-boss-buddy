@@ -25,11 +25,12 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
   const authHeader = `Basic ${Buffer.from(`${apiUser}:${apiToken}`).toString('base64')}`;
   
   try {
-    const response = await fetch(url.toString() + (method === 'GET' ? `?${searchParams.toString()}` : ''), {
+    const response = await fetch(url + (method === 'GET' ? `?${searchParams.toString()}` : ''), {
       method,
       headers: {
         'Authorization': authHeader,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'text/plain, application/json'
       },
       body: method === 'POST' ? searchParams.toString() : null,
     });
