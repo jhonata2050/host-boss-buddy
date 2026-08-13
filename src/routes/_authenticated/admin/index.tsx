@@ -32,12 +32,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: () => (
-    <div className="border-4 border-blue-500">
-      <h1 className="text-blue-500 font-bold p-2 bg-white">ADMIN DASHBOARD COMPONENT MOUNTED</h1>
-      <AdminDashboardPage />
-    </div>
-  ),
+  component: AdminDashboardPage,
 });
 
 const PERIODS = ["Hoje", "Esse mês", "Últimos 30 dias", "Últimos 90 dias", "Todo o período"];

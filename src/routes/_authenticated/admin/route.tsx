@@ -14,9 +14,8 @@ function AdminLayout() {
   const { data: roles, isLoading } = useRoles();
   const { isStaff } = useIsStaff();
   const navigate = useNavigate();
-  const loading = isLoading;
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen space-y-4 p-6">
         <Skeleton className="h-10 w-56 rounded-xl" />
@@ -27,8 +26,8 @@ function AdminLayout() {
 
   if (!isStaff) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="max-w-sm text-center">
+      <div className="flex min-h-screen items-center justify-center px-4 text-center">
+        <div className="max-w-sm">
           <ShieldAlert className="mx-auto size-8 text-muted-foreground" />
           <h1 className="mt-3 text-lg font-semibold">Área restrita</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -36,7 +35,7 @@ function AdminLayout() {
             <br />
             Esta área é exclusiva da administração da plataforma.
           </p>
-          <Button onClick={() => navigate({ to: "/dashboard" })} className="mt-4">
+          <Button onClick={() => navigate({ to: "/dashboard" })} className="mt-4 rounded-xl">
             Voltar para o Painel
           </Button>
         </div>
