@@ -72,13 +72,28 @@ const INVOICE_STATUS_MAP: Record<string, string> = {
 
 async function resolveUserId(email: string): Promise<string | null> {
   if (!email) return null;
-  const { data } = await supabaseAdmin
+  const cleanEmail = email.trim().toLowerCase();
+  
+  // Primeiro tenta buscar no banco de perfis
+  const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("id")
-    .ilike("email", email)
+    .ilike("email", cleanEmail)
     .maybeSingle();
-  return data?.id ?? null;
+  
+  if (profile?.id) return profile.id;
+
+  // Caso não esteja no perfil (ex: falha na inserção anterior ou inconsistência), 
+  // tenta buscar diretamente na tabela auth.users via admin API
+  const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+  if (!error && users) {
+    const user = users.find(u => u.email?.toLowerCase() === cleanEmail);
+    if (user) return user.id;
+  }
+
+  return null;
 }
+
 
 /** Importa clientes do WHMCS (tbclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
@@ -201,18 +216,21 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
       "mail",
       "clientemail",
       "userid_email",
+      "username_email",
+      "user",
     ]).toLowerCase();
 
     // Se não tiver e-mail na linha, tenta o userid (WHMCS usa IDs numéricos internamente)
     // Se o dump for de uma tabela relacional, o e-mail pode estar em outra tabela,
     // mas o usuário pode ter incluído o e-mail no CSV via JOIN ou export customizado.
     if (!email) {
-      const userIdWhmcs = pick(row, ["userid", "clientid", "user_id", "client_id"]);
-      if (!userIdWhmcs) continue;
-      // Nota: Não temos o mapeamento ID WHMCS -> ID HostPanel aqui se o dump for parcial.
-      // O ideal é que o CSV de serviços contenha o e-mail para correlação.
+      // Tenta processar mesmo assim se houver colunas que pareçam domínios
+      const hasDomain = pick(row, ["domain", "dominio"]);
+      if (!hasDomain) continue;
+      // Se não tem e-mail, infelizmente não temos como associar ao usuário
       continue;
     }
+
 
     try {
       const userId = await resolveUserId(email);
