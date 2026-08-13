@@ -83,12 +83,9 @@ async function resolveUserId(email: string): Promise<string | null> {
 /** Importa clientes do WHMCS (tbclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    // WHMCS tables usually have 'email' but we search for synonyms
-    const email = pick(row, ["email", "e-mail", "email_address", "mail"]).toLowerCase();
-    if (!email) {
-      // In a "full DB" dump, some rows might not be clients. Skip silently if no email.
-      continue;
-    }
+    const email = pick(row, ["email", "e-mail", "email_address", "mail", "client_email", "clientemail"]).toLowerCase();
+    if (!email) continue;
+
     const fullName =
       pick(row, ["full_name", "name", "nome"]) ||
       `${pick(row, ["firstname", "first_name"])} ${pick(row, ["lastname", "last_name"])}`.trim();
