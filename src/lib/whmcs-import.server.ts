@@ -138,8 +138,8 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
     try {
       const existing = await resolveUserId(email, whmcsId);
       if (existing) {
-        const { error } = await supabaseAdmin
-          .from("profiles")
+        const { error } = await (supabaseAdmin
+          .from("profiles") as any)
           .update(profile)
           .eq("id", existing);
         if (error) throw new Error(error.message);
@@ -159,10 +159,11 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
         throw new Error(authError?.message ?? "Falha ao criar usuário");
       }
 
-      const { error: profileError } = await supabaseAdmin
-        .from("profiles")
+      const { error: profileError } = await (supabaseAdmin
+        .from("profiles") as any)
         .upsert({ id: created.user.id, ...profile }, { onConflict: "id" });
       if (profileError) throw new Error(profileError.message);
+
 
       await supabaseAdmin
         .from("user_roles")
