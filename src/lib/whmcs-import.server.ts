@@ -123,9 +123,10 @@ async function resolveUserId(email: string): Promise<string | null> {
 /** Importa clientes do WHMCS (tbclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "e-mail"]).toLowerCase();
+    // WHMCS tables usually have 'email' but we search for synonyms
+    const email = pick(row, ["email", "e-mail", "email_address", "mail"]).toLowerCase();
     if (!email) {
-      stats.clients.failed++;
+      // In a "full DB" dump, some rows might not be clients. Skip silently if no email.
       continue;
     }
     const fullName =
@@ -225,10 +226,11 @@ async function resolveProductId(name: string): Promise<string | null> {
 /** Importa serviços/hospedagens do WHMCS (tblhosting export). */
 async function importServices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail"]).toLowerCase();
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail"]).toLowerCase();
+    if (!email) continue; // Skip rows that aren't services
     try {
       const userId = await resolveUserId(email);
-      if (!userId) throw new Error("cliente não encontrado (importe clientes primeiro)");
+      if (!userId) continue; // Skip if client not yet imported
 
       const productName = pick(row, ["product", "produto", "packagename", "product_name"]);
       const productId = await resolveProductId(productName || "Plano Importado");
@@ -263,10 +265,11 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 /** Importa faturas do WHMCS (tblinvoices export). */
 async function importInvoices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail"]).toLowerCase();
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail"]).toLowerCase();
+    if (!email) continue; // Skip rows without email
     try {
       const userId = await resolveUserId(email);
-      if (!userId) throw new Error("cliente não encontrado (importe clientes primeiro)");
+      if (!userId) continue; // Skip if client not found
 
       const total = toNumber(pick(row, ["total", "valor", "amount"]));
       const subtotal = toNumber(pick(row, ["subtotal"])) || total;
