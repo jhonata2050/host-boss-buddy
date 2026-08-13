@@ -50,7 +50,13 @@ function useNav() {
             { label: "Faturas", to: "/admin/invoices", icon: Receipt },
           ],
         },
-        { label: "Integração", icon: Plug, links: [] },
+        {
+          label: "Integração",
+          icon: Plug,
+          links: [
+            { label: "Tickets", to: "/admin/tickets", icon: LifeBuoy },
+          ]
+        },
       ]
     : [
         {
