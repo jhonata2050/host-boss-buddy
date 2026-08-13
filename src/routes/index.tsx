@@ -132,7 +132,7 @@ function Index() {
                     </li>
                   </ul>
                   <Button asChild className="mt-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Link to="/checkout/$productId" params={{ productId: plan.id }}>Contratar</Link>
+                    <Link to="/auth">Contratar</Link>
                   </Button>
                 </article>
               );
