@@ -8,6 +8,7 @@ import { RefreshCw, Database, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/import")({
   component: AdminWHMCSImportPage,
