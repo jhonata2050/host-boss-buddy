@@ -18,6 +18,7 @@ export function parseCsv(text: any): Record<string, string>[] {
 
   for (let i = 0; i < clean.length; i++) {
     const char = clean[i];
+    if (char === undefined) continue;
 
     if (inQuotes) {
       if (char === '"') {
@@ -42,7 +43,7 @@ export function parseCsv(text: any): Record<string, string>[] {
         currentField = [];
         lines.push(currentLine);
         currentLine = [];
-      } else if (char !== undefined) {
+      } else {
         currentField.push(char);
       }
     }
