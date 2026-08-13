@@ -3,19 +3,23 @@ import {
   Bell,
   ChevronDown,
   Code2,
-  CreditCard,
+  Cog,
+  Gauge,
   LayoutPanelLeft,
   LifeBuoy,
   LogOut,
+  Mail,
   MoreVertical,
   Package,
   PanelsTopLeft,
-  Plug,
   Receipt,
+  Server,
+  ShoppingBag,
   Store,
   Ticket,
   User as UserIcon,
   Users,
+  Wallet,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -32,53 +36,64 @@ import { useAuth, useIsStaff, useProfile } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-type NavLink = { label: string; to: string; icon?: any };
-type NavSection = { label: string; icon: any; links: NavLink[] };
+type IconType = typeof Package;
+type NavLink = { label: string; to: string; icon?: IconType };
+type NavSection = { label: string; icon: IconType; links: NavLink[] };
 
-function useNav() {
-  const { isStaff } = useIsStaff();
+const ADMIN_SECTIONS: NavSection[] = [
+  {
+    label: "Catálogo",
+    icon: ShoppingBag,
+    links: [
+      { label: "Produtos e planos", to: "/admin/products", icon: Package },
+      { label: "Cupons e promoções", to: "/admin/coupons", icon: Ticket },
+    ],
+  },
+  {
+    label: "Financeiro",
+    icon: Wallet,
+    links: [{ label: "Faturas", to: "/admin/invoices", icon: Receipt }],
+  },
+  {
+    label: "Clientes",
+    icon: Users,
+    links: [{ label: "Contas de clientes", to: "/admin/clients", icon: Users }],
+  },
+  {
+    label: "Atendimento",
+    icon: LifeBuoy,
+    links: [{ label: "Tickets", to: "/admin/tickets", icon: LifeBuoy }],
+  },
+  {
+    label: "Sistema",
+    icon: Cog,
+    links: [
+      { label: "Servidores DirectAdmin", to: "/admin/servers", icon: Server },
+      { label: "E-mails e SMTP", to: "/admin/emails", icon: Mail },
+    ],
+  },
+];
 
-  const sections: NavSection[] = isStaff
-    ? [
-        {
-          label: "Sua Loja",
-          icon: Store,
-          links: [
-            { label: "Produtos", to: "/admin/products", icon: Package },
-            { label: "Cupons", to: "/admin/coupons", icon: Ticket },
-            { label: "Clientes", to: "/admin/clients", icon: Users },
-            { label: "Faturas", to: "/admin/invoices", icon: Receipt },
-          ],
-        },
-        {
-          label: "Integração",
-          icon: Plug,
-          links: [
-            { label: "Tickets", to: "/admin/tickets", icon: LifeBuoy },
-          ]
-        },
-      ]
-    : [
-        {
-          label: "Meus serviços",
-          icon: LayoutPanelLeft,
-          links: [
-            { label: "Gerenciar", to: "/services", icon: LayoutPanelLeft },
-          ],
-        },
-        {
-          label: "Minha conta",
-          icon: UserIcon,
-          links: [
-            { label: "Meus dados", to: "/profile", icon: UserIcon },
-            { label: "Minhas faturas", to: "/invoices", icon: Receipt },
-            { label: "Suporte", to: "/tickets", icon: LifeBuoy },
-          ],
-        },
-      ];
-
-  return { sections };
-}
+const CLIENT_SECTIONS: NavSection[] = [
+  {
+    label: "Meus serviços",
+    icon: Server,
+    links: [{ label: "Hospedagens", to: "/services", icon: LayoutPanelLeft }],
+  },
+  {
+    label: "Financeiro",
+    icon: Wallet,
+    links: [{ label: "Minhas faturas", to: "/invoices", icon: Receipt }],
+  },
+  {
+    label: "Minha conta",
+    icon: UserIcon,
+    links: [
+      { label: "Meus dados", to: "/profile", icon: UserIcon },
+      { label: "Suporte", to: "/tickets", icon: LifeBuoy },
+    ],
+  },
+];
 
 function SidebarSection({ section, pathname }: { section: NavSection; pathname: string }) {
   const hasActive = section.links.some((l) => pathname.startsWith(l.to));
@@ -129,17 +144,24 @@ export function AppShell({
   breadcrumb,
   children,
   sandbox = true,
+  area,
 }: {
   breadcrumb: ReactNode;
   children: ReactNode;
   sandbox?: boolean;
+  /** Força a área do layout. Por padrão é inferido pelo papel do usuário. */
+  area?: "admin" | "client";
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { sections } = useNav();
+  const { isStaff } = useIsStaff();
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const [devMode, setDevMode] = useState(true);
+
+  const isAdminArea = area ? area === "admin" : isStaff;
+  const sections = isAdminArea ? ADMIN_SECTIONS : CLIENT_SECTIONS;
+  const homeTo = isAdminArea ? "/admin" : "/dashboard";
 
   const name = profile?.full_name ?? user?.email ?? "Conta";
   const initials = name.slice(0, 2).toUpperCase();
@@ -176,32 +198,59 @@ export function AppShell({
 
           <div className="border-y border-sidebar-border py-3">
             <div className="rounded-xl px-2 py-1">
-              <p className="text-sm font-semibold text-sidebar-foreground">
-                {profile?.company_name ?? "Minha empresa"}
-              </p>
-              <p className="text-xs text-muted-foreground">{profile?.tax_id ?? "Sem CNPJ cadastrado"}</p>
+              {isAdminArea ? (
+                <>
+                  <p className="text-sm font-semibold text-sidebar-foreground">Administração</p>
+                  <p className="text-xs text-muted-foreground">Acesso master da plataforma</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-semibold text-sidebar-foreground">
+                    {profile?.company_name ?? profile?.full_name ?? "Minha conta"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{profile?.tax_id ?? "Sem CPF/CNPJ cadastrado"}</p>
+                </>
+              )}
             </div>
           </div>
 
           <nav className="mt-3 flex-1 space-y-1 overflow-y-auto">
             <Link
-              to="/dashboard"
+              to={homeTo}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
-                pathname === "/dashboard"
+                pathname === homeTo
                   ? "bg-primary font-medium text-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent",
               )}
             >
-              <LayoutPanelLeft className="size-4" />
-              Painel
+              <Gauge className="size-4" />
+              {isAdminArea ? "Painel administrativo" : "Painel"}
             </Link>
+            {!isAdminArea && (
+              <Link
+                to="/"
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+              >
+                <Store className="size-4" />
+                Contratar planos
+              </Link>
+            )}
             {sections.map((section) => (
               <SidebarSection key={section.label} section={section} pathname={pathname} />
             ))}
           </nav>
 
           <div className="space-y-1 border-t border-sidebar-border pt-3">
+            {isStaff && (
+              <Link
+                to={isAdminArea ? "/dashboard" : "/admin"}
+                className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent"
+              >
+                <PanelsTopLeft className="size-4 text-muted-foreground" />
+                {isAdminArea ? "Ver como cliente" : "Ir para administração"}
+              </Link>
+            )}
             <div className="flex items-center justify-between rounded-xl px-3 py-2 text-sm">
               <span className="flex items-center gap-3 text-sidebar-foreground">
                 <Code2 className="size-4 text-muted-foreground" />
@@ -209,13 +258,6 @@ export function AppShell({
               </span>
               <Switch checked={devMode} onCheckedChange={setDevMode} aria-label="Modo de desenvolvedor" />
             </div>
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent"
-            >
-              <LifeBuoy className="size-4 text-muted-foreground" />
-              Suporte
-            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
