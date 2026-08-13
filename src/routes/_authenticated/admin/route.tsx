@@ -2,8 +2,8 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIsStaff, useRoles, useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
+import { useIsStaff, useRoles } from "@/hooks/use-auth";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
