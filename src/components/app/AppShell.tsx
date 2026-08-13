@@ -12,6 +12,7 @@ import {
   Package,
   PanelsTopLeft,
   Receipt,
+  RefreshCw,
   Server,
   ShoppingBag,
   Store,
