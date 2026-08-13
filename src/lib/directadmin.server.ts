@@ -15,9 +15,9 @@ interface DARequestOptions {
 }
 
 async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', params = {} }: DARequestOptions) {
-  // Ensure hostname doesn't include protocol for the URL constructor if it already has it
+  // Limpa o hostname e garante o uso da porta 2222
   const cleanHostname = hostname.replace(/^https?:\/\//, '').split(':')[0];
-  const url = new URL(`https://${cleanHostname}:2222/${command}`);
+  const url = `https://${cleanHostname}:2222/${command}`;
   
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, val]) => searchParams.append(key, val));
