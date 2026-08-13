@@ -14,16 +14,254 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      product_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_visible: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      product_prices: {
+        Row: {
+          created_at: string
+          currency: string
+          cycle: Database["public"]["Enums"]["billing_cycle"]
+          id: string
+          is_active: boolean
+          price: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          cycle: Database["public"]["Enums"]["billing_cycle"]
+          id?: string
+          is_active?: boolean
+          price: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          cycle?: Database["public"]["Enums"]["billing_cycle"]
+          id?: string
+          is_active?: boolean
+          price?: number
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          auto_provision: boolean
+          bandwidth_quota_mb: number | null
+          created_at: string
+          database_limit: number | null
+          description: string | null
+          directadmin_package: string | null
+          disk_quota_mb: number | null
+          domains_limit: number | null
+          email_accounts_limit: number | null
+          group_id: string | null
+          id: string
+          is_featured: boolean
+          is_visible: boolean
+          name: string
+          product_type: string
+          setup_fee: number
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          auto_provision?: boolean
+          bandwidth_quota_mb?: number | null
+          created_at?: string
+          database_limit?: number | null
+          description?: string | null
+          directadmin_package?: string | null
+          disk_quota_mb?: number | null
+          domains_limit?: number | null
+          email_accounts_limit?: number | null
+          group_id?: string | null
+          id?: string
+          is_featured?: boolean
+          is_visible?: boolean
+          name: string
+          product_type?: string
+          setup_fee?: number
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_provision?: boolean
+          bandwidth_quota_mb?: number | null
+          created_at?: string
+          database_limit?: number | null
+          description?: string | null
+          directadmin_package?: string | null
+          disk_quota_mb?: number | null
+          domains_limit?: number | null
+          email_accounts_limit?: number | null
+          group_id?: string | null
+          id?: string
+          is_featured?: boolean
+          is_visible?: boolean
+          name?: string
+          product_type?: string
+          setup_fee?: number
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address_line: string | null
+          address_line2: string | null
+          city: string | null
+          company_name: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          state: string | null
+          status: string
+          tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_line?: string | null
+          address_line2?: string | null
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          status?: string
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_line?: string | null
+          address_line2?: string | null
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          status?: string
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "staff" | "client"
+      billing_cycle:
+        | "monthly"
+        | "quarterly"
+        | "semiannually"
+        | "annually"
+        | "biennially"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +388,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "staff", "client"],
+      billing_cycle: [
+        "monthly",
+        "quarterly",
+        "semiannually",
+        "annually",
+        "biennially",
+      ],
+    },
   },
 } as const
