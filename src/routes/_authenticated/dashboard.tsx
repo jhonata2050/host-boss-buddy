@@ -86,9 +86,9 @@ function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <KpiCard label="Total em vendas" value={brl.format(0)} />
-        <KpiCard label="Total de transações" value="0" />
-        <KpiCard label="Faturas em aberto" value={brl.format(0)} />
+        <KpiCard label="Total em vendas" value={stats.isLoading ? undefined : brl.format(stats.data?.salesTotal ?? 0)} />
+        <KpiCard label="Total de transações" value={stats.isLoading ? undefined : String(stats.data?.transactionCount ?? 0)} />
+        <KpiCard label="Faturas em aberto" value={stats.isLoading ? undefined : brl.format(stats.data?.pendingTotal ?? 0)} />
       </div>
 
       <div className="mt-6 rounded-2xl border border-border p-4 lg:p-6">
