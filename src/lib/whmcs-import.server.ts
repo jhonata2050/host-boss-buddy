@@ -8,7 +8,7 @@ export type ImportStats = {
 };
 
 /** Parser de CSV simples otimizado para não concatenar strings excessivamente. */
-export function parseCsv(text: string | null | undefined): Record<string, string>[] {
+export function parseCsv(text: any): Record<string, string>[] {
   if (!text) return [];
   const content: string = text;
   const clean = content.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
@@ -335,20 +335,17 @@ export async function runWhmcsImport(input: {
 
   try {
     if (input.clientsCsv && input.clientsCsv.trim()) {
-      const csvData = input.clientsCsv;
-      const rows = parseCsv(csvData);
+      const rows = parseCsv(input.clientsCsv);
       input.clientsCsv = ""; 
       await importClients(rows, stats);
     }
     if (input.servicesCsv && input.servicesCsv.trim()) {
-      const csvData = input.servicesCsv;
-      const rows = parseCsv(csvData);
+      const rows = parseCsv(input.servicesCsv);
       input.servicesCsv = "";
       await importServices(rows, stats);
     }
     if (input.invoicesCsv && input.invoicesCsv.trim()) {
-      const csvData = input.invoicesCsv;
-      const rows = parseCsv(csvData);
+      const rows = parseCsv(input.invoicesCsv);
       input.invoicesCsv = "";
       await importInvoices(rows, stats);
     }
