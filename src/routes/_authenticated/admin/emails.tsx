@@ -121,6 +121,10 @@ function AdminSettingsPage() {
                 <Switch name="auto_suspend" defaultChecked={settings?.["auto_suspend"] === true} />
               </div>
               <div className="space-y-2">
+                <Label>API Key (AbacatePay)</Label>
+                <Input name="abacatepay_api_key" type="password" placeholder="abacatepay_..." defaultValue={settings?.["abacatepay_api_key"]} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
                 <Label>Moeda Padrão</Label>
                 <Input defaultValue="BRL" className="rounded-xl" disabled />
               </div>
