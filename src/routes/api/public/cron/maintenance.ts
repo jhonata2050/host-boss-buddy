@@ -40,9 +40,10 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
                     .eq('id', item.service_id)
                     .single();
 
-                  if (service && service.status === 'active' && service.username && service.server_id) {
+                  const s = service as any;
+                  if (s && s.status === 'active' && s.username && s.server_id) {
                     try {
-                      await suspendDAAccount(service.server_id, service.username);
+                      await suspendDAAccount(s.server_id, s.username);
                       await supabaseAdmin
                         .from('services')
                         .update({ status: 'suspended' } as any)
