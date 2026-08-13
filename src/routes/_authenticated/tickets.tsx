@@ -40,7 +40,7 @@ function ClientTicketsPage() {
   });
 
   const createTicketMutation = useMutation({
-    mutationFn: (data: any) => createTicket(data),
+    mutationFn: (data: any) => createTicket({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-tickets"] });
       toast.success("Ticket criado com sucesso!");
