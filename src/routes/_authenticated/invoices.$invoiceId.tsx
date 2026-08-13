@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { getInvoiceDetails } from "@/lib/finance.functions";
+import { GATEWAYS, METHOD_LABELS, type PaymentMethod } from "@/lib/gateways";
+
 import { initializePayment } from "@/lib/payments.functions";
 import { useServerFn } from "@tanstack/react-start";
 
