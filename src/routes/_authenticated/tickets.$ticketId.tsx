@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getTicketDetails, replyTicket } from "@/lib/support.functions";
+import { useIsStaff } from "@/hooks/use-auth";
 import { MessageSquare, Send, User, Shield, ArrowLeft, Clock, AlertCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +25,7 @@ const STATUS_MAP = {
 };
 
 function TicketDetailsPage() {
+  const { isStaff } = useIsStaff();
   const { ticketId } = Route.useParams();
   const [message, setMessage] = useState("");
   const queryClient = useQueryClient();
@@ -66,10 +68,10 @@ function TicketDetailsPage() {
 
   return (
     <AppShell 
-      area="client" 
+      area={isStaff ? "admin" : "client"} 
       breadcrumb={
         <>
-          <Link to="/tickets" className="hover:text-brand transition-colors">Tickets</Link>
+          <Link to={isStaff ? "/admin/tickets" : "/tickets"} className="hover:text-brand transition-colors">Tickets</Link>
           <span>/</span>
           <span className="font-medium text-foreground truncate max-w-[200px]">{ticket.subject}</span>
         </>
@@ -78,7 +80,7 @@ function TicketDetailsPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link to="/tickets">
+            <Link to={isStaff ? "/admin/tickets" : "/tickets"}>
               <Button variant="outline" size="icon" className="rounded-xl border-brand/20 text-brand">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
