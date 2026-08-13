@@ -2,13 +2,13 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { ALL_GATEWAY_SETTING_KEYS, gatewayById, type PaymentMethod } from "./gateways";
 
 type PaymentResult = {
-  transactionId?: string;
+  transactionId?: string | undefined;
   method: PaymentMethod;
   gateway: string;
   amount: number;
-  checkoutUrl?: string;
-  pixCode?: string;
-  qrCodeUrl?: string;
+  checkoutUrl?: string | undefined;
+  pixCode?: string | undefined;
+  qrCodeUrl?: string | undefined;
 };
 
 function publicUrl() {
@@ -235,7 +235,7 @@ export async function createPaymentSession(
     case "woovi": {
       const res = await fetch("https://api.woovi.com/api/openpix/v1/charge", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: cfg["woovi_app_id"] },
+        headers: { "Content-Type": "application/json", Authorization: cfg["woovi_app_id"] ?? "" },
         body: JSON.stringify({
           correlationID: `invoice-${ref}`,
           value: cents,
@@ -291,8 +291,8 @@ export async function createPaymentSession(
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          "api-key": cfg["paghiper_api_key"],
-          token: cfg["paghiper_token"],
+          "api-key": cfg["paghiper_api_key"] ?? "",
+          token: cfg["paghiper_token"] ?? "",
         },
         body: JSON.stringify({ ...payload, token: cfg["paghiper_token"] }),
       });
