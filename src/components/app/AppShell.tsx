@@ -32,8 +32,8 @@ import { useAuth, useIsStaff, useProfile } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-type NavLink = { label: string; to: string; icon?: typeof Package };
-type NavSection = { label: string; icon: typeof Store; links: NavLink[] };
+type NavLink = { label: string; to: string; icon?: any };
+type NavSection = { label: string; icon: any; links: NavLink[] };
 
 function useNav() {
   const { isStaff } = useIsStaff();
@@ -60,11 +60,17 @@ function useNav() {
       ]
     : [
         {
+          label: "Meus serviços",
+          icon: LayoutPanelLeft,
+          links: [
+            { label: "Gerenciar", to: "/services", icon: LayoutPanelLeft },
+          ],
+        },
+        {
           label: "Minha conta",
-          icon: Store,
+          icon: UserIcon,
           links: [
             { label: "Meus dados", to: "/profile", icon: UserIcon },
-            { label: "Meus serviços", to: "/services", icon: LayoutPanelLeft },
             { label: "Minhas faturas", to: "/invoices", icon: Receipt },
             { label: "Suporte", to: "/tickets", icon: LifeBuoy },
           ],
