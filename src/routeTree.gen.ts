@@ -16,6 +16,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticated/invoices'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedAdminClientsRouteImport } from './routes/_authenticated/admin.clients'
+import { Route as AuthenticatedAdminCouponsRouteImport } from './routes/_authenticated/admin.coupons'
 import { Route as AuthenticatedAdminInvoicesRouteImport } from './routes/_authenticated/admin.invoices'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 
@@ -54,6 +55,12 @@ const AuthenticatedAdminClientsRoute =
     path: '/admin/clients',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminCouponsRoute =
+  AuthenticatedAdminCouponsRouteImport.update({
+    id: '/admin/coupons',
+    path: '/admin/coupons',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminInvoicesRoute =
   AuthenticatedAdminInvoicesRouteImport.update({
     id: '/admin/invoices',
@@ -74,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/invoices': typeof AuthenticatedAdminInvoicesRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof AuthenticatedInvoicesRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/invoices': typeof AuthenticatedAdminInvoicesRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
 }
@@ -96,6 +105,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/_authenticated/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/_authenticated/admin/invoices': typeof AuthenticatedAdminInvoicesRoute
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
 }
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/profile'
     | '/admin/clients'
+    | '/admin/coupons'
     | '/admin/invoices'
     | '/admin/products'
   fileRoutesByTo: FileRoutesByTo
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/profile'
     | '/admin/clients'
+    | '/admin/coupons'
     | '/admin/invoices'
     | '/admin/products'
   id:
@@ -129,6 +141,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices'
     | '/_authenticated/profile'
     | '/_authenticated/admin/clients'
+    | '/_authenticated/admin/coupons'
     | '/_authenticated/admin/invoices'
     | '/_authenticated/admin/products'
   fileRoutesById: FileRoutesById
@@ -190,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClientsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/coupons': {
+      id: '/_authenticated/admin/coupons'
+      path: '/admin/coupons'
+      fullPath: '/admin/coupons'
+      preLoaderRoute: typeof AuthenticatedAdminCouponsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/invoices': {
       id: '/_authenticated/admin/invoices'
       path: '/admin/invoices'
@@ -212,6 +232,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedAdminClientsRoute: typeof AuthenticatedAdminClientsRoute
+  AuthenticatedAdminCouponsRoute: typeof AuthenticatedAdminCouponsRoute
   AuthenticatedAdminInvoicesRoute: typeof AuthenticatedAdminInvoicesRoute
   AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRoute
 }
@@ -221,6 +242,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedAdminClientsRoute: AuthenticatedAdminClientsRoute,
+  AuthenticatedAdminCouponsRoute: AuthenticatedAdminCouponsRoute,
   AuthenticatedAdminInvoicesRoute: AuthenticatedAdminInvoicesRoute,
   AuthenticatedAdminProductsRoute: AuthenticatedAdminProductsRoute,
 }
