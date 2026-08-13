@@ -3,7 +3,8 @@ import { AppShell } from "@/components/app/AppShell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getServers, createServerDA } from "@/lib/support.functions";
+import { getServers, createServerDA, testDAConnection } from "@/lib/support.functions";
+
 import { Plus, Server, Globe, Shield, Activity, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -35,6 +36,17 @@ function AdminServersPage() {
       toast.error("Erro ao adicionar servidor: " + err.message);
     },
   });
+
+  const testMutation = useMutation({
+    mutationFn: (serverId: string) => testDAConnection({ data: serverId }),
+    onSuccess: () => {
+      toast.success("Conexão bem-sucedida!");
+    },
+    onError: (err: any) => {
+      toast.error(err.message);
+    }
+  });
+
 
   const handleAddServer = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -142,7 +154,15 @@ function AdminServersPage() {
                     <div className="bg-brand h-2 rounded-full w-[2%]" />
                   </div>
                   <div className="flex gap-2 pt-2">
-                    <Button variant="outline" className="flex-1 rounded-2xl border-brand/20 text-brand hover:bg-brand/5">Testar Conexão</Button>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 rounded-2xl border-brand/20 text-brand hover:bg-brand/5"
+                      onClick={() => testMutation.mutate(server.id)}
+                      disabled={testMutation.isPending && testMutation.variables === server.id}
+                    >
+                      {testMutation.isPending && testMutation.variables === server.id ? "Testando..." : "Testar Conexão"}
+                    </Button>
+
                     <Button variant="ghost" size="icon" className="rounded-xl text-destructive hover:bg-destructive/5"><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </CardContent>
