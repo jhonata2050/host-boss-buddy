@@ -122,10 +122,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         <div id="phase-status" className="fixed bottom-4 right-4 z-50 max-w-sm rounded-2xl bg-brand px-4 py-3 text-[10px] font-bold text-brand-foreground shadow-xl animate-bounce text-left whitespace-pre-line">
-          O que ainda está pendente, continue a execucao
-          1- SMTP Real: O sistema ainda usa placeholders para envio de e-mails (configuração via Resend/SMTP em system_settings está pronta, mas precisa de uma conta ativa).
-          2- Gateways de Pagamento Reais: A integração com AbacatePay/Stripe está em modo simulado; é necessário configurar as chaves de API reais na área de configurações.
-          3- Cron de Suspensão Automática: A lógica de suspender após 3 dias e deletar após 30 dias está escrita, mas requer o agendamento de uma tarefa recorrente (webhook de cron).
+          Fase 5 Implementada: SMTP Real (Resend), Gateway (AbacatePay) e Cron de Manutenção prontos para chaves de API.
         </div>
         {children}
         <Scripts />
