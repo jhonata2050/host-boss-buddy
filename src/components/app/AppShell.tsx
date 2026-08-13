@@ -144,12 +144,10 @@ function SidebarSection({ section, pathname }: { section: NavSection; pathname: 
 export function AppShell({
   breadcrumb,
   children,
-  sandbox = true,
   area,
 }: {
   breadcrumb: ReactNode;
   children: ReactNode;
-  sandbox?: boolean;
   /** Força a área do layout. Por padrão é inferido pelo papel do usuário. */
   area?: "admin" | "client";
 }) {
@@ -158,7 +156,6 @@ export function AppShell({
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const navigate = useNavigate();
-  const [devMode, setDevMode] = useState(true);
 
   const isAdminArea = area ? area === "admin" : isStaff;
   const sections = isAdminArea ? ADMIN_SECTIONS : CLIENT_SECTIONS;
@@ -174,20 +171,6 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      {sandbox && (
-        <div className="flex flex-wrap items-center justify-between gap-2 bg-warning px-4 py-2.5 text-sm text-warning-foreground">
-          <span className="font-medium">Modo Sandbox</span>
-          <span className="hidden sm:block">Você está em um ambiente de teste</span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 rounded-full border-warning-foreground/30 bg-transparent text-xs text-warning-foreground hover:bg-warning-foreground/10"
-          >
-            Ir para produção
-          </Button>
-        </div>
-      )}
-
       <div className="flex">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
           <div className="flex items-center justify-between px-2 pb-4">
@@ -252,13 +235,6 @@ export function AppShell({
                 {isAdminArea ? "Ver como cliente" : "Ir para administração"}
               </Link>
             )}
-            <div className="flex items-center justify-between rounded-xl px-3 py-2 text-sm">
-              <span className="flex items-center gap-3 text-sidebar-foreground">
-                <Code2 className="size-4 text-muted-foreground" />
-                Modo de desenvolvedor
-              </span>
-              <Switch checked={devMode} onCheckedChange={setDevMode} aria-label="Modo de desenvolvedor" />
-            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
