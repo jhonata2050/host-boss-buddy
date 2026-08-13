@@ -45,7 +45,9 @@ function useNav() {
           icon: Store,
           links: [
             { label: "Produtos", to: "/admin/products", icon: Package },
+            { label: "Cupons", to: "/admin/coupons", icon: Ticket },
             { label: "Clientes", to: "/admin/clients", icon: Users },
+            { label: "Faturas", to: "/admin/invoices", icon: Receipt },
           ],
         },
         { label: "Integração", icon: Plug, links: [] },
@@ -54,7 +56,10 @@ function useNav() {
         {
           label: "Minha conta",
           icon: Store,
-          links: [{ label: "Meus dados", to: "/profile", icon: UserIcon }],
+          links: [
+            { label: "Meus dados", to: "/profile", icon: UserIcon },
+            { label: "Minhas faturas", to: "/invoices", icon: Receipt },
+          ],
         },
       ];
 
