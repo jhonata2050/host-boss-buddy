@@ -194,20 +194,48 @@ function InvoiceDetailsPage() {
                 ) : (
                   <div className="mt-6 space-y-3">
                     <p className="text-xs font-medium text-muted-foreground uppercase mb-1">Selecione o Gateway</p>
-                    <div className="flex gap-2 mb-4">
+                    <div className="grid grid-cols-2 gap-2 mb-4">
                       <Button 
                         variant={gateway === "abacatepay" ? "default" : "outline"} 
-                        className="flex-1 rounded-xl text-xs h-9"
+                        className="rounded-xl text-[10px] h-8 px-1"
                         onClick={() => { setGateway("abacatepay"); setPaymentMethod("pix"); }}
                       >
                         AbacatePay
                       </Button>
                       <Button 
                         variant={gateway === "stripe" ? "default" : "outline"} 
-                        className="flex-1 rounded-xl text-xs h-9"
+                        className="rounded-xl text-[10px] h-8 px-1"
                         onClick={() => { setGateway("stripe"); setPaymentMethod("credit_card"); }}
                       >
                         Stripe
+                      </Button>
+                      <Button 
+                        variant={gateway === "mercadopago" ? "default" : "outline"} 
+                        className="rounded-xl text-[10px] h-8 px-1"
+                        onClick={() => { setGateway("mercadopago"); setPaymentMethod("pix"); }}
+                      >
+                        M. Pago
+                      </Button>
+                      <Button 
+                        variant={gateway === "woovi" ? "default" : "outline"} 
+                        className="rounded-xl text-[10px] h-8 px-1"
+                        onClick={() => { setGateway("woovi"); setPaymentMethod("pix"); }}
+                      >
+                        Woovi
+                      </Button>
+                      <Button 
+                        variant={gateway === "paghiper" ? "default" : "outline"} 
+                        className="rounded-xl text-[10px] h-8 px-1"
+                        onClick={() => { setGateway("paghiper"); setPaymentMethod("boleto"); }}
+                      >
+                        PagHiper
+                      </Button>
+                      <Button 
+                        variant={gateway === "cajupay" ? "default" : "outline"} 
+                        className="rounded-xl text-[10px] h-8 px-1"
+                        onClick={() => { setGateway("cajupay"); setPaymentMethod("pix"); }}
+                      >
+                        CajuPay
                       </Button>
                     </div>
 
@@ -217,9 +245,9 @@ function InvoiceDetailsPage() {
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
                         paymentMethod === "pix" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50",
-                        gateway === "stripe" && "opacity-50 cursor-not-allowed"
+                        (gateway === "stripe" || gateway === "paghiper") && "opacity-50 cursor-not-allowed"
                       )}
-                      disabled={gateway === "stripe"}
+                      disabled={gateway === "stripe" || gateway === "paghiper"}
                     >
                       <QrCode className="size-5 text-brand" />
                       <div>
@@ -245,9 +273,9 @@ function InvoiceDetailsPage() {
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all",
                         paymentMethod === "boleto" ? "border-brand bg-brand/5 ring-1 ring-brand" : "border-border hover:border-brand/50",
-                        gateway === "stripe" && "opacity-50 cursor-not-allowed"
+                        (gateway === "stripe" || gateway === "woovi") && "opacity-50 cursor-not-allowed"
                       )}
-                      disabled={gateway === "stripe"}
+                      disabled={gateway === "stripe" || gateway === "woovi"}
                     >
                       <FileText className="size-5 text-brand" />
                       <div>

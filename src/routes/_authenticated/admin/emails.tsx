@@ -36,11 +36,6 @@ function AdminSettingsPage() {
       company_name: formData.get("company_name"),
       support_email: formData.get("support_email"),
       resend_api_key: formData.get("resend_api_key"),
-      abacatepay_api_key: formData.get("abacatepay_api_key"),
-      stripe_secret_key: formData.get("stripe_secret_key"),
-      stripe_webhook_secret: formData.get("stripe_webhook_secret"),
-      auto_suspend: formData.get("auto_suspend") === "on",
-      auto_delete_days: Number(formData.get("auto_delete_days")) || 30,
     };
     updateSettingsMutation.mutate(data);
   };
@@ -111,34 +106,11 @@ function AdminSettingsPage() {
           <Card className="rounded-3xl border-none shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <CreditCard className="h-5 w-5 text-brand" />
-                <CardTitle>Configurações de Faturamento</CardTitle>
+                <Globe className="h-5 w-5 text-brand" />
+                <CardTitle>Localização</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between py-2 border-b border-muted">
-                <div>
-                  <p className="font-medium">Suspensão Automática</p>
-                  <p className="text-xs text-muted-foreground">Suspender serviços com faturas vencidas há mais de 3 dias.</p>
-                </div>
-                <Switch name="auto_suspend" defaultChecked={settings?.["auto_suspend"] === true} />
-              </div>
-              <div className="space-y-2">
-                <Label>Prazo para Deleção (dias)</Label>
-                <Input name="auto_delete_days" type="number" defaultValue={settings?.["auto_delete_days"] || 30} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>API Key (AbacatePay)</Label>
-                <Input name="abacatepay_api_key" type="password" placeholder="abacatepay_..." defaultValue={settings?.["abacatepay_api_key"]} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Stripe Secret Key</Label>
-                <Input name="stripe_secret_key" type="password" placeholder="sk_..." defaultValue={settings?.["stripe_secret_key"]} className="rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <Label>Stripe Webhook Secret</Label>
-                <Input name="stripe_webhook_secret" type="password" placeholder="whsec_..." defaultValue={settings?.["stripe_webhook_secret"]} className="rounded-xl" />
-              </div>
               <div className="space-y-2">
                 <Label>Moeda Padrão</Label>
                 <Input defaultValue="BRL" className="rounded-xl" disabled />
