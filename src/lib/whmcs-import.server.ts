@@ -12,7 +12,7 @@ export function parseCsv(text: string): Record<string, string>[] {
   const clean = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
   const lines: string[][] = [];
   let currentLine: string[] = [];
-  let currentField: string[] = []; // Array de caracteres para evitar concatenação de strings
+  let currentField: string[] = [];
   let inQuotes = false;
 
   for (let i = 0; i < clean.length; i++) {
