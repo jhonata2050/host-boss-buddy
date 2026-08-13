@@ -37,7 +37,10 @@ function AdminSettingsPage() {
       support_email: formData.get("support_email"),
       resend_api_key: formData.get("resend_api_key"),
       abacatepay_api_key: formData.get("abacatepay_api_key"),
+      stripe_secret_key: formData.get("stripe_secret_key"),
+      stripe_webhook_secret: formData.get("stripe_webhook_secret"),
       auto_suspend: formData.get("auto_suspend") === "on",
+      auto_delete_days: Number(formData.get("auto_delete_days")) || 30,
     };
     updateSettingsMutation.mutate(data);
   };
@@ -121,8 +124,20 @@ function AdminSettingsPage() {
                 <Switch name="auto_suspend" defaultChecked={settings?.["auto_suspend"] === true} />
               </div>
               <div className="space-y-2">
+                <Label>Prazo para Deleção (dias)</Label>
+                <Input name="auto_delete_days" type="number" defaultValue={settings?.["auto_delete_days"] || 30} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
                 <Label>API Key (AbacatePay)</Label>
                 <Input name="abacatepay_api_key" type="password" placeholder="abacatepay_..." defaultValue={settings?.["abacatepay_api_key"]} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label>Stripe Secret Key</Label>
+                <Input name="stripe_secret_key" type="password" placeholder="sk_..." defaultValue={settings?.["stripe_secret_key"]} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label>Stripe Webhook Secret</Label>
+                <Input name="stripe_webhook_secret" type="password" placeholder="whsec_..." defaultValue={settings?.["stripe_webhook_secret"]} className="rounded-xl" />
               </div>
               <div className="space-y-2">
                 <Label>Moeda Padrão</Label>
