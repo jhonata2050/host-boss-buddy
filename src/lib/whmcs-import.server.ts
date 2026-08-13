@@ -21,7 +21,8 @@ export function parseCsv(text: string | undefined): Record<string, string>[] {
 
     if (inQuotes) {
       if (char === '"') {
-        if (clean[i + 1] === '"') {
+        const nextChar = clean[i + 1];
+        if (nextChar === '"') {
           currentField.push('"');
           i++;
         } else {
