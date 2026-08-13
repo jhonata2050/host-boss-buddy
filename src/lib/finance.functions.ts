@@ -46,7 +46,7 @@ export const createOrder = createServerFn({ method: "POST" })
       if (!cError && coupon) {
         // Simple validation: check date
         const isValidDate = !coupon.valid_until || new Date(coupon.valid_until) > new Date();
-        const isValidUses = !coupon.max_uses || coupon.used_count < coupon.max_uses;
+        const isValidUses = !coupon.max_uses || (coupon.used_count || 0) < coupon.max_uses;
 
         if (isValidDate && isValidUses) {
           couponId = coupon.id;
@@ -82,7 +82,7 @@ export const createOrder = createServerFn({ method: "POST" })
         product_id: data.productId,
         order_id: order.id,
         status: "pending",
-        domain: data.domain,
+        domain: data.domain || null,
         billing_cycle: data.billingCycle,
       })
       .select()
@@ -117,7 +117,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // 7. Update coupon use count if applicable
     if (couponId) {
-      await supabaseAdmin.rpc("increment_coupon_uses", { _coupon_id: couponId });
+      await supabaseAdmin.rpc("increment_coupon_uses" as any, { _coupon_id: couponId });
     }
 
     return { orderId: order.id, invoiceId: invoice.id };
