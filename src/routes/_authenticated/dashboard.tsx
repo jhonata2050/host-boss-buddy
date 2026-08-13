@@ -46,8 +46,8 @@ function DashboardPage() {
         supabase.from("transactions").select("amount"),
       ]);
 
-      const salesTotal = transactions.data?.reduce((acc, curr) => acc + curr.amount, 0) ?? 0;
-      const pendingTotal = invoices.data?.reduce((acc, curr) => acc + curr.total_amount, 0) ?? 0;
+      const salesTotal = transactions.data?.reduce((acc, curr) => acc + Number(curr.amount), 0) ?? 0;
+      const pendingTotal = invoices.data?.reduce((acc, curr) => acc + Number(curr.total_amount), 0) ?? 0;
 
       return {
         clients: clients.count ?? 0,

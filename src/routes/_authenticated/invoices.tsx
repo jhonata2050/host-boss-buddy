@@ -121,9 +121,11 @@ function ClientInvoicesPage() {
                       {status.label}
                     </Badge>
                   </div>
-                  <Button variant={inv.status === 'paid' ? "outline" : "default"} size="sm" className="rounded-xl h-9">
-                    {inv.status === 'paid' ? "Ver recibo" : "Pagar agora"}
-                  </Button>
+                  <Link to="/invoices/$invoiceId" params={{ invoiceId: inv.id }}>
+                    <Button variant={inv.status === 'paid' ? "outline" : "default"} size="sm" className="rounded-xl h-9">
+                      {inv.status === 'paid' ? "Ver recibo" : "Pagar agora"}
+                    </Button>
+                  </Link>
                 </div>
               </div>
             );
