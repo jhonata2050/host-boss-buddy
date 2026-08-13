@@ -77,6 +77,10 @@ function ClientDetailPage() {
         supabase.from("email_logs").select("*").eq("user_id", clientId).order("created_at", { ascending: false })
       ]);
 
+      // Não silencia falhas de permissão: elas precisam aparecer para o admin.
+      const firstError = invoices.error || services.error || tickets.error || emailLogs.error;
+      if (firstError) throw new Error(firstError.message);
+
       return {
         invoices: invoices.data || [],
         services: services.data || [],
@@ -104,8 +108,54 @@ function ClientDetailPage() {
     }
   });
 
-  if (clientQuery.isLoading) return <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Carregando...</span>}>Carregando...</AppShell>;
-  if (!clientQuery.data) return <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Erro</span>}>Cliente não encontrado</AppShell>;
+  if (clientQuery.isLoading) {
+    return (
+      <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Carregando...</span>}>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-64 rounded-xl" />
+          <Skeleton className="h-96 w-full rounded-3xl" />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (clientQuery.error) {
+    return (
+      <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Erro</span>}>
+        <Card className="rounded-3xl border-none shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="size-5 text-destructive" /> Não foi possível carregar o cliente
+            </CardTitle>
+            <CardDescription>{(clientQuery.error as Error).message}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link to="/admin/clients">Voltar para clientes</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </AppShell>
+    );
+  }
+
+  if (!clientQuery.data) {
+    return (
+      <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Não encontrado</span>}>
+        <Card className="rounded-3xl border-none shadow-sm">
+          <CardHeader>
+            <CardTitle>Cliente não encontrado</CardTitle>
+            <CardDescription>O registro pode ter sido removido.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link to="/admin/clients">Voltar para clientes</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </AppShell>
+    );
+  }
 
   const client = clientQuery.data;
 
