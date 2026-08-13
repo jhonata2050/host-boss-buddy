@@ -4,6 +4,7 @@ import {
   ChevronDown,
   Cog,
   Gauge,
+  Globe,
   LayoutPanelLeft,
   LifeBuoy,
   LogOut,
