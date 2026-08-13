@@ -44,7 +44,7 @@ export async function sendEmail({
         user_id: userId,
         to_email: to,
         subject,
-        template_name: templateName,
+        template_name: templateName ?? null,
         status: "sent"
       });
     }
