@@ -50,6 +50,7 @@ function ClientTicketsPage() {
 
   return (
     <AppShell
+      area="client"
       breadcrumb={
         <>
           <span className="flex items-center gap-2">Suporte</span>

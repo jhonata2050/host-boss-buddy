@@ -47,6 +47,7 @@ function AdminCouponsPage() {
 
   return (
     <AppShell
+      area="admin"
       breadcrumb={
         <>
           <span className="flex items-center gap-2">

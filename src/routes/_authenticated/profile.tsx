@@ -121,6 +121,7 @@ function ProfilePage() {
 
   return (
     <AppShell
+      area="client"
       breadcrumb={
         <span className="flex items-center gap-2 text-base font-medium text-foreground">
           <UserIcon className="size-4" />

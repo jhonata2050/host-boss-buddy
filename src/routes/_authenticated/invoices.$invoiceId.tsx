@@ -78,6 +78,7 @@ function InvoiceDetailsPage() {
 
   return (
     <AppShell
+      area="client"
       breadcrumb={
         <>
           <Link to="/invoices" className="flex items-center gap-2 hover:text-foreground">

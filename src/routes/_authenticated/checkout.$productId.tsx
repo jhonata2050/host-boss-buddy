@@ -75,6 +75,7 @@ function CheckoutPage() {
 
   return (
     <AppShell
+      area="client"
       breadcrumb={
         <>
           <span className="flex items-center gap-2">
