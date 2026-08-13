@@ -1,35 +1,39 @@
-# Phase 2 & 3: Financial System Completion & Payments
+# Plano de Desenvolvimento: HostPanel (Fase 4 e 5)
 
-Finish the financial system (Phase 2) and implement the multi-gateway payment layer (Phase 3) with a focus on AbacatePay.
+Finalização da estrutura base e implementação das integrações críticas para substituição do WHMCS.
 
-## User Experience
-- **Invoice Details**: High-fidelity page for viewing and paying an invoice.
-- **Payment Flow**: Selection of payment methods (Pix, Credit Card, Boleto) via AbacatePay and others.
-- **Service Management**: "My Services" page for clients to see active hosting plans.
-- **Admin Dashboard**: Real-time sales metrics and financial status.
+## Experiência do Usuário
+- **Integração DirectAdmin**: Painel de controle simplificado para o cliente (mudar senha, ver estatísticas, gerenciar DNS básico).
+- **Sistema de Tickets**: Interface de chat/mensagens em tempo real entre cliente e suporte.
+- **Automação de E-mails**: Notificações automáticas de boas-vindas, faturas vencidas e suspensão de serviço.
+- **Área Administrativa**: Gestão completa de servidores DirectAdmin e configurações globais do sistema.
 
-## Technical Details
+## Detalhes Técnicos
 
-### Database & Security
-- Ensure `transactions` table tracks gateway references and metadata.
-- RLS policies for `services` to allow users to view their own services.
-- `GRANT` statements for any new tables or functions.
+### Infraestrutura & Segurança (Banco de Dados)
+- Nova tabela `servers` para gerenciar credenciais de servidores DirectAdmin (criptografadas).
+- Tabela `ticket_messages` e `tickets` com RLS para comunicação segura.
+- Tabela `email_templates` e `settings` para personalização do sistema.
+- `GRANT` e RLS rigorosos para separar Admin de Cliente/Revenda.
 
-### Server Functions (`src/lib/payments.functions.ts`)
-- `initializePayment`: Creates a checkout session or returns payment details (Pix QR, etc.) for a specific gateway.
-- `getPaymentStatus`: Polls or checks the current status of a transaction.
-- `handleWebhook`: (Route handler) Processes asynchronous payment notifications.
+### Server Functions (`src/lib/directadmin.functions.ts` & `src/lib/tickets.functions.ts`)
+- `provisionService`: Chamada à API do DirectAdmin para criar conta após pagamento.
+- `suspendService` / `unsuspendService`: Automação de suspensão por inadimplência.
+- `createTicket` / `replyTicket`: Lógica de processamento de suporte.
+- `sendTransactionalEmail`: Wrapper para envio de e-mails via provedor configurado.
 
-### Frontend
-- `src/routes/_authenticated/invoices.$invoiceId.tsx`: Detailed view with itemized list and "Pay" buttons.
-- `src/routes/_authenticated/services.tsx`: Client-facing services list.
-- Integration of `AbacatePay` UI references (lime branding, specific icons).
+### Frontend & UI (Estética AbacatePay)
+- `src/routes/_authenticated/admin/servers.tsx`: Configuração de múltiplos servidores.
+- `src/routes/_authenticated/admin/settings.tsx`: Configurações de marca e financeiro.
+- `src/routes/_authenticated/services.$serviceId.tsx`: Detalhes técnicos do serviço (Dashboard DirectAdmin).
+- Refinamento do `AppShell` para garantir menus contextuais perfeitos.
 
-### Integrations
-- **AbacatePay**: Primary gateway implementation using their public API/SDK.
-- **Stripe/Woovi/others**: Placeholders for future expansion.
+### Integrações
+- **DirectAdmin API**: Conector principal para gerenciamento de contas.
+- **SMTP/Resend/SendGrid**: Integração para disparo de e-mails transacionais.
+- **Webhooks**: Captura de eventos externos para atualizar status de serviços.
 
-## Components
-- `InvoiceDetailCard`: Reusable component for showing invoice status and items.
-- `PaymentMethodSelector`: UI for choosing between Pix, Card, etc.
-- `ServiceCard`: List item for active/suspended services.
+## Componentes
+- `ServerStatusCard`: Monitoramento básico de saúde do servidor.
+- `TicketThread`: Componente de conversa fluida.
+- `DirectAdminQuickActions`: Botões de atalho (Login SSO, Mudar Senha, Webmail).
