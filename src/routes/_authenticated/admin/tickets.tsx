@@ -1,144 +1,135 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { MessageSquare, Plus, Search, User } from "lucide-react";
-import { useState } from "react";
-
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { getTickets } from "@/lib/support.functions";
+import { 
+  MessageSquare, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle,
+  Search,
+  Filter,
+  Plus
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/admin/tickets")({
-  head: () => ({
-    meta: [{ title: "Tickets de Suporte — Admin HostPanel" }],
-  }),
   component: AdminTicketsPage,
 });
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  open: { label: "Aberto", color: "bg-success text-success-foreground" },
-  answered: { label: "Respondido", color: "bg-brand text-brand-foreground" },
-  customer_reply: { label: "Replica", color: "bg-warning text-warning-foreground" },
-  closed: { label: "Fechado", color: "bg-muted text-muted-foreground" },
+const STATUS_MAP = {
+  open: { label: "Aberto", color: "bg-brand/10 text-brand border-brand/20", icon: AlertCircle },
+  answered: { label: "Respondido", color: "bg-blue-500/10 text-blue-600 border-blue-500/20", icon: CheckCircle2 },
+  "customer-reply": { label: "Réplica", color: "bg-orange-500/10 text-orange-600 border-orange-500/20", icon: MessageSquare },
+  closed: { label: "Fechado", color: "bg-muted text-muted-foreground border-muted-foreground/20", icon: CheckCircle2 },
 };
 
 function AdminTicketsPage() {
-  const [term, setTerm] = useState("");
-
-  const tickets = useQuery({
+  const { data: tickets, isLoading } = useQuery({
     queryKey: ["admin-tickets"],
-    queryFn: async () => {
-      // In a real app, we'd have a tickets table. 
-      // Mocking data for now since we focus on UI/UX flow.
-      return [
-        { 
-          id: "1", 
-          subject: "Erro ao acessar DirectAdmin", 
-          status: "open", 
-          last_reply: new Date().toISOString(),
-          user: { full_name: "João Silva", email: "joao@exemplo.com" }
-        },
-        { 
-          id: "2", 
-          subject: "Dúvida sobre upgrade de plano", 
-          status: "answered", 
-          last_reply: new Date().toISOString(),
-          user: { full_name: "Maria Oliveira", email: "maria@exemplo.com" }
-        }
-      ];
-    },
+    queryFn: () => getTickets(),
   });
 
-  const filtered = (tickets.data ?? []).filter((t) =>
-    t.subject.toLowerCase().includes(term.trim().toLowerCase()) ||
-    t.user.full_name.toLowerCase().includes(term.trim().toLowerCase())
-  );
-
   return (
-    <AppShell
-      area="admin"
-      breadcrumb={
-        <>
-          <span className="flex items-center gap-2">Suporte</span>
-          <span>/</span>
-          <span className="font-medium text-foreground">Tickets</span>
-        </>
-      }
-    >
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Tickets de Suporte</h1>
-      </div>
+    <AppShell area="admin" breadcrumb={<span>Atendimento / Tickets</span>}>
+      <div className="space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Gestão de Tickets</h1>
+            <p className="text-muted-foreground mt-2">
+              Responda e gerencie as solicitações de suporte de todos os clientes.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="rounded-2xl border-brand/20 text-brand hover:bg-brand/5">
+              <Filter className="mr-2 h-4 w-4" /> Filtros
+            </Button>
+            <Button className="bg-brand text-brand-foreground hover:bg-brand/90 rounded-2xl px-6">
+              <Plus className="mr-2 h-4 w-4" /> Novo Ticket
+            </Button>
+          </div>
+        </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-56">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={term}
-            onChange={(e) => setTerm(e.target.value)}
-            placeholder="Pesquisar por assunto ou cliente..."
-            className="h-11 rounded-xl pl-9"
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Buscar por assunto, cliente ou ID..." 
+            className="pl-11 rounded-2xl border-none bg-muted/50 h-12"
           />
         </div>
-      </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-border bg-secondary/30 text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium">Ticket</th>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Assunto</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Última Resp.</th>
-                <th className="px-4 py-3 font-medium text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {tickets.isLoading ? (
-                [0, 1].map((i) => (
-                  <tr key={i}>
-                    <td colSpan={6} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td>
-                  </tr>
-                ))
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Nenhum ticket encontrado</td>
-                </tr>
-              ) : (
-                filtered.map((ticket) => {
-                  const status = STATUS_LABELS[ticket.status] || { label: ticket.status, color: "bg-muted" };
-                  return (
-                    <tr key={ticket.id} className="hover:bg-sidebar-accent/50">
-                      <td className="px-4 py-4 font-medium">#{ticket.id}</td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-foreground">{ticket.user.full_name}</span>
-                          <span className="text-xs text-muted-foreground">{ticket.user.email}</span>
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
+            ))}
+          </div>
+        ) : tickets && tickets.length > 0 ? (
+          <div className="space-y-3">
+            {tickets.map((ticket) => {
+              const status = STATUS_MAP[ticket.status as keyof typeof STATUS_MAP] || STATUS_MAP.open;
+              const StatusIcon = status.icon;
+
+              return (
+                <Link 
+                  key={ticket.id}
+                  to="/tickets/$ticketId"
+                  params={{ ticketId: ticket.id }}
+                  className="block group"
+                >
+                  <Card className="rounded-3xl border-none shadow-sm hover:shadow-md transition-all overflow-hidden group-hover:bg-brand/[0.02]">
+                    <CardContent className="p-0">
+                      <div className="flex items-center p-6 gap-6">
+                        <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shrink-0", status.color)}>
+                          <StatusIcon className="h-6 w-6" />
                         </div>
-                      </td>
-                      <td className="px-4 py-4 text-foreground">{ticket.subject}</td>
-                      <td className="px-4 py-4">
-                        <Badge className={cn("rounded-full border-none px-3 font-medium", status.color)}>
-                          {status.label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-4 text-muted-foreground">
-                        {new Date(ticket.last_reply).toLocaleDateString("pt-BR")}
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <button className="text-brand hover:underline font-medium">Responder</button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-lg truncate">{ticket.subject}</h3>
+                            <Badge variant="outline" className={cn("rounded-full font-bold uppercase text-[10px]", status.color)}>
+                              {status.label}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="font-medium text-foreground">
+                              {ticket.profile?.full_name || "Cliente"}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              {new Date(ticket.updated_at || "").toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                            <span className="capitalize">{ticket.priority} prioridade</span>
+                          </div>
+                        </div>
+
+                        <div className="hidden md:flex items-center gap-2">
+                           <Button variant="ghost" className="rounded-xl font-bold text-brand group-hover:bg-brand group-hover:text-brand-foreground">
+                             Ver Ticket
+                           </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 bg-muted/30 rounded-3xl border-2 border-dashed border-muted">
+            <MessageSquare className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+            <p className="text-muted-foreground font-medium">Nenhum ticket encontrado.</p>
+          </div>
+        )}
       </div>
     </AppShell>
   );

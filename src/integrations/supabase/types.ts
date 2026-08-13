@@ -409,6 +409,45 @@ export type Database = {
         }
         Relationships: []
       }
+      servers: {
+        Row: {
+          api_token: string
+          api_user: string
+          created_at: string | null
+          hostname: string
+          id: string
+          ip_address: string | null
+          is_active: boolean | null
+          max_accounts: number | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_token: string
+          api_user: string
+          created_at?: string | null
+          hostname: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          max_accounts?: number | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_token?: string
+          api_user?: string
+          created_at?: string | null
+          hostname?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          max_accounts?: number | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
@@ -465,6 +504,100 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      ticket_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_staff_reply: boolean | null
+          message: string
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_staff_reply?: boolean | null
+          message: string
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_staff_reply?: boolean | null
+          message?: string
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          created_at: string | null
+          id: string
+          priority: string | null
+          status: string | null
+          subject: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

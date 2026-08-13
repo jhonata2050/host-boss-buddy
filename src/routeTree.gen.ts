@@ -28,6 +28,7 @@ import { Route as AuthenticatedAdminServersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminTicketsRouteImport } from './routes/_authenticated/admin/tickets'
 import { Route as AuthenticatedCheckoutProductIdRouteImport } from './routes/_authenticated/checkout.$productId'
 import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
+import { Route as AuthenticatedTicketsTicketIdRouteImport } from './routes/_authenticated/tickets.$ticketId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -132,6 +133,12 @@ const AuthenticatedInvoicesInvoiceIdRoute =
     path: '/$invoiceId',
     getParentRoute: () => AuthenticatedInvoicesRoute,
   } as any)
+const AuthenticatedTicketsTicketIdRoute =
+  AuthenticatedTicketsTicketIdRouteImport.update({
+    id: '/$ticketId',
+    path: '/$ticketId',
+    getParentRoute: () => AuthenticatedTicketsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -141,7 +148,7 @@ export interface FileRoutesByFullPath {
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
-  '/tickets': typeof AuthenticatedTicketsRoute
+  '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/admin/clients': typeof AuthenticatedAdminClientsRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/admin/tickets': typeof AuthenticatedAdminTicketsRoute
   '/checkout/$productId': typeof AuthenticatedCheckoutProductIdRoute
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
+  '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -160,7 +168,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
-  '/tickets': typeof AuthenticatedTicketsRoute
+  '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/admin/clients': typeof AuthenticatedAdminClientsRoute
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/admin/tickets': typeof AuthenticatedAdminTicketsRoute
   '/checkout/$productId': typeof AuthenticatedCheckoutProductIdRoute
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
+  '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -182,7 +191,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/services': typeof AuthenticatedServicesRoute
-  '/_authenticated/tickets': typeof AuthenticatedTicketsRoute
+  '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRoute
   '/_authenticated/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -192,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/tickets': typeof AuthenticatedAdminTicketsRoute
   '/_authenticated/checkout/$productId': typeof AuthenticatedCheckoutProductIdRoute
   '/_authenticated/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
+  '/_authenticated/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/admin/tickets'
     | '/checkout/$productId'
     | '/invoices/$invoiceId'
+    | '/tickets/$ticketId'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/tickets'
     | '/checkout/$productId'
     | '/invoices/$invoiceId'
+    | '/tickets/$ticketId'
     | '/admin'
   id:
     | '__root__'
@@ -254,6 +266,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/tickets'
     | '/_authenticated/checkout/$productId'
     | '/_authenticated/invoices/$invoiceId'
+    | '/_authenticated/tickets/$ticketId'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -398,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvoicesInvoiceIdRouteImport
       parentRoute: typeof AuthenticatedInvoicesRoute
     }
+    '/_authenticated/tickets/$ticketId': {
+      id: '/_authenticated/tickets/$ticketId'
+      path: '/$ticketId'
+      fullPath: '/tickets/$ticketId'
+      preLoaderRoute: typeof AuthenticatedTicketsTicketIdRouteImport
+      parentRoute: typeof AuthenticatedTicketsRoute
+    }
   }
 }
 
@@ -442,13 +462,24 @@ const AuthenticatedInvoicesRouteWithChildren =
     AuthenticatedInvoicesRouteChildren,
   )
 
+interface AuthenticatedTicketsRouteChildren {
+  AuthenticatedTicketsTicketIdRoute: typeof AuthenticatedTicketsTicketIdRoute
+}
+
+const AuthenticatedTicketsRouteChildren: AuthenticatedTicketsRouteChildren = {
+  AuthenticatedTicketsTicketIdRoute: AuthenticatedTicketsTicketIdRoute,
+}
+
+const AuthenticatedTicketsRouteWithChildren =
+  AuthenticatedTicketsRoute._addFileChildren(AuthenticatedTicketsRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedServicesRoute: typeof AuthenticatedServicesRoute
-  AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
+  AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRouteWithChildren
   AuthenticatedCheckoutProductIdRoute: typeof AuthenticatedCheckoutProductIdRoute
 }
 
@@ -458,7 +489,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedServicesRoute: AuthenticatedServicesRoute,
-  AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
+  AuthenticatedTicketsRoute: AuthenticatedTicketsRouteWithChildren,
   AuthenticatedCheckoutProductIdRoute: AuthenticatedCheckoutProductIdRoute,
 }
 
