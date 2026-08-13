@@ -5,11 +5,19 @@ import { AppShell } from "@/components/app/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, AlertCircle, Users, Server, Receipt, CheckCircle2 } from "lucide-react";
+import { RefreshCw, AlertCircle, Users, Server, Receipt, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { importWhmcsCsv, listWhmcsImports } from "@/lib/whmcs.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_authenticated/admin/import")({
   component: AdminWHMCSImportPage,
@@ -56,6 +64,7 @@ const SLOTS: { key: Slot; title: string; icon: typeof Users; hint: string }[] = 
 
 function AdminWHMCSImportPage() {
   const [files, setFiles] = useState<Partial<Record<Slot, { name: string; content: string }>>>({});
+  const [showStatus, setShowStatus] = useState(false);
   const runImport = useServerFn(importWhmcsCsv);
   const fetchImports = useServerFn(listWhmcsImports);
   const queryClient = useQueryClient();
@@ -67,6 +76,7 @@ function AdminWHMCSImportPage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      setShowStatus(true);
       const payload: Record<string, string> = {};
       for (const slot of SLOTS) {
         const file = files[slot.key];
@@ -76,14 +86,19 @@ function AdminWHMCSImportPage() {
     },
     onSuccess: (stats) => {
       toast.success(
-        `Importação concluída: ${stats.clients.created} clientes criados, ${stats.services.created} serviços, ${stats.invoices.created} faturas.`,
+        `Importação concluída: ${stats.clients.created} clientes, ${stats.services.created} serviços, ${stats.invoices.created} faturas.`,
       );
       if (stats.errors.length > 0) {
-        toast.warning(`${stats.errors.length} registro(s) com erro. Veja o histórico.`);
+        toast.warning(`${stats.errors.length} erro(s). Veja o histórico.`);
       }
       void queryClient.invalidateQueries();
+      // Keep popup for a moment then close
+      setTimeout(() => setShowStatus(false), 3000);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => {
+      toast.error(e.message);
+      setShowStatus(false);
+    },
   });
 
   const handleFile = async (slot: Slot, file: File | undefined) => {
@@ -205,6 +220,70 @@ function AdminWHMCSImportPage() {
             })}
           </CardContent>
         </Card>
+
+        <Dialog open={showStatus} onOpenChange={setShowStatus}>
+          <DialogContent className="rounded-3xl sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {mutation.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-brand" />
+                ) : mutation.isSuccess ? (
+                  <CheckCircle2 className="h-5 w-5 text-brand" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                )}
+                Status da Importação
+              </DialogTitle>
+              <DialogDescription>
+                {mutation.isPending 
+                  ? "Processando arquivos e migrando dados do WHMCS..." 
+                  : mutation.isSuccess 
+                  ? "Migração finalizada com sucesso!"
+                  : "Ocorreu um erro durante a importação."}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs font-medium">
+                  <span>Progresso</span>
+                  <span>{mutation.isPending ? "Processando..." : mutation.isSuccess ? "100%" : "Erro"}</span>
+                </div>
+                <Progress value={mutation.isPending ? 45 : mutation.isSuccess ? 100 : 0} className="h-2" />
+              </div>
+              
+              {mutation.isSuccess && mutation.data && (
+                <div className="grid grid-cols-3 gap-2 text-center pt-2">
+                  <div className="rounded-2xl bg-muted/50 p-3">
+                    <p className="text-xl font-bold text-brand">{mutation.data.clients.created}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Clientes</p>
+                  </div>
+                  <div className="rounded-2xl bg-muted/50 p-3">
+                    <p className="text-xl font-bold text-brand">{mutation.data.services.created}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Serviços</p>
+                  </div>
+                  <div className="rounded-2xl bg-muted/50 p-3">
+                    <p className="text-xl font-bold text-brand">{mutation.data.invoices.created}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Faturas</p>
+                  </div>
+                </div>
+              )}
+
+              {mutation.isError && (
+                <div className="rounded-2xl bg-destructive/10 p-3 text-sm text-destructive font-medium">
+                  {mutation.error?.message || "Erro desconhecido ao processar os arquivos."}
+                </div>
+              )}
+            </div>
+            {!mutation.isPending && (
+              <Button 
+                onClick={() => setShowStatus(false)} 
+                className="w-full rounded-2xl bg-brand font-bold"
+              >
+                Fechar
+              </Button>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   );
