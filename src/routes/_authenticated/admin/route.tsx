@@ -10,19 +10,9 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminLayout() {
-  const { user, loading: authLoading } = useAuth();
-  const { data: roles, isLoading: rolesLoading } = useRoles();
-  const { isStaff } = useIsStaff();
+  const { data: roles, error } = useRoles();
+  const { isStaff, isLoading: loading } = useIsStaff();
   const navigate = useNavigate();
-  
-  const loading = authLoading || rolesLoading;
-
-  useEffect(() => {
-    // Só redireciona se tiver certeza que NÃO é staff e o carregamento terminou
-    if (!loading && user && !isStaff) {
-      void navigate({ to: "/dashboard", replace: true });
-    }
-  }, [loading, user, isStaff, navigate]);
 
   if (loading) {
     return (
@@ -32,6 +22,7 @@ function AdminLayout() {
       </div>
     );
   }
+
 
   if (!isStaff) {
     return (
