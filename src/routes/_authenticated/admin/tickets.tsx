@@ -77,8 +77,9 @@ function AdminTicketsPage() {
               return (
                 <Link 
                   key={ticket.id}
-                  to="/tickets/$ticketId"
+                  to="/tickets/$ticketId" 
                   params={{ ticketId: ticket.id }}
+                  search={{ fromAdmin: true }}
                   className="block group"
                 >
                   <Card className="rounded-3xl border-none shadow-sm hover:shadow-md transition-all overflow-hidden group-hover:bg-brand/[0.02]">

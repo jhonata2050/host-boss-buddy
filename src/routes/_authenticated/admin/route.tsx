@@ -1,25 +1,28 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { ShieldAlert } from "lucide-react";
-import { useEffect } from "react";
-
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIsStaff, useRoles } from "@/hooks/use-auth";
+import { useIsStaff, useRoles, useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
 function AdminLayout() {
-  const { data: roles } = useRoles();
+  const { user, loading: authLoading } = useAuth();
+  const { data: roles, isLoading: rolesLoading } = useRoles();
   const { isStaff } = useIsStaff();
   const navigate = useNavigate();
-  const loading = roles === undefined;
+  
+  const loading = authLoading || rolesLoading;
 
   useEffect(() => {
-    if (!loading && !isStaff) {
+    // Só redireciona se tiver certeza que NÃO é staff e o carregamento terminou
+    if (!loading && user && !isStaff) {
       void navigate({ to: "/dashboard", replace: true });
     }
-  }, [loading, isStaff, navigate]);
+  }, [loading, user, isStaff, navigate]);
 
   if (loading) {
     return (
@@ -32,13 +35,18 @@ function AdminLayout() {
 
   if (!isStaff) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="max-w-sm text-center">
+      <div className="flex min-h-screen items-center justify-center px-4 text-center">
+        <div className="max-w-sm">
           <ShieldAlert className="mx-auto size-8 text-muted-foreground" />
           <h1 className="mt-3 text-lg font-semibold">Área restrita</h1>
           <p className="mt-1 text-sm text-muted-foreground">
+            Você está logado como: {roles?.join(", ") || "cliente"}
+            <br />
             Esta área é exclusiva da administração da plataforma.
           </p>
+          <Button onClick={() => navigate({ to: "/dashboard" })} className="mt-4 rounded-xl">
+            Voltar para o Painel
+          </Button>
         </div>
       </div>
     );
