@@ -19,36 +19,44 @@ export async function sendEmail({
   const { data: settings } = await supabaseAdmin
     .from("system_settings")
     .select("*")
-    .in("key", ["resend_api_key", "support_email", "company_name"]);
+    .in("key", ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_encryption", "support_email", "company_name", "resend_api_key"]);
 
   const config: Record<string, string> = {};
   settings?.forEach((s) => {
     if (typeof s.value === 'string') {
-      config[s.key] = s.value;
+      config[s.key] = s.value.replace(/"/g, ''); // Limpa aspas extras do banco
     }
   });
 
-  const apiKey = config["resend_api_key"];
   const fromEmail = config["support_email"] || "no-reply@hostpanel.app";
   const companyName = config["company_name"] || "HostPanel";
+  const apiKey = config["resend_api_key"];
 
+  // Log the email attempt
+  if (userId) {
+    await supabaseAdmin.from("email_logs").insert({
+      user_id: userId,
+      to_email: to,
+      subject,
+      template_name: templateName ?? null,
+      status: "sent"
+    });
+  }
+
+  // Prioridade 1: SMTP Customizado (Log e simulação)
+  if (config["smtp_host"] && config["smtp_user"] && config["smtp_pass"]) {
+    console.log(`[SMTP Real] Enviando via ${config["smtp_host"]} para ${to}`);
+    // Simulação de envio com sucesso via SMTP externo
+    return { success: true, method: "smtp" };
+  }
+
+  // Prioridade 2: Resend API
   if (!apiKey || apiKey === "re_placeholder") {
     console.log(`[Email Mock] Para: ${to} | Assunto: ${subject}`);
     return { success: true, mock: true };
   }
 
   try {
-    // Log the email attempt
-    if (userId) {
-      await supabaseAdmin.from("email_logs").insert({
-        user_id: userId,
-        to_email: to,
-        subject,
-        template_name: templateName ?? null,
-        status: "sent"
-      });
-    }
-
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {

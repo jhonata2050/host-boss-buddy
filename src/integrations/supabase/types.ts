@@ -56,6 +56,48 @@ export type Database = {
         }
         Relationships: []
       }
+      domains: {
+        Row: {
+          auto_renew: boolean | null
+          created_at: string | null
+          domain_name: string
+          expiry_date: string | null
+          id: string
+          nameservers: string[] | null
+          registrar: string
+          registration_date: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          created_at?: string | null
+          domain_name: string
+          expiry_date?: string | null
+          id?: string
+          nameservers?: string[] | null
+          registrar: string
+          registration_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_renew?: boolean | null
+          created_at?: string | null
+          domain_name?: string
+          expiry_date?: string | null
+          id?: string
+          nameservers?: string[] | null
+          registrar?: string
+          registration_date?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           created_at: string | null
@@ -694,6 +736,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      whmcs_imports: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          stats: Json | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          stats?: Json | null
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          stats?: Json | null
+          status?: string
         }
         Relationships: []
       }

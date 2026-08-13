@@ -198,3 +198,35 @@ export async function deleteDAAccount(serverId: string, username: string) {
     }
   });
 }
+
+export async function getDASession(serverId: string, username: string) {
+  const { data: server, error } = await supabaseAdmin
+    .from("servers")
+    .select("*")
+    .eq("id", serverId)
+    .single();
+
+  if (error || !server) throw new Error("Servidor não encontrado");
+
+  // Single Sign-On via CMD_API_LOGIN_KEYS
+  const result = await callDA({
+    hostname: server.hostname,
+    apiUser: server.api_user,
+    apiToken: server.api_token,
+    command: 'CMD_API_LOGIN_KEYS',
+    method: 'POST',
+    params: {
+      action: 'create',
+      user: username,
+      keyname: `sso_${Date.now()}`,
+      expiry: '3600',
+      ips: '*',
+      type: 'one_time_key'
+    }
+  });
+
+  const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
+  // Nota: o DirectAdmin requer o par user/key para login automático
+  return `https://${cleanHostname}:2222/login?user=${username}&passwd=${result.key || result.value}`;
+}
+
