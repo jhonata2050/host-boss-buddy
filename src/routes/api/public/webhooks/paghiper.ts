@@ -8,7 +8,7 @@ export const Route = createFileRoute('/api/public/webhooks/paghiper')({
       POST: async ({ request }) => {
         const formData = await request.formData();
         const notificationId = formData.get('notification_id');
-        const transactionId = formData.get('transaction_id');
+        const transactionId = formData.get('transaction_id') as string;
         const status = formData.get('status');
 
         if (status === 'paid' || status === 'completed') {
