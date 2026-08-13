@@ -24,9 +24,9 @@ export const Route = createFileRoute("/_authenticated/services")({
 });
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pendente", color: "bg-warning text-warning-foreground" },
-  active: { label: "Ativo", color: "bg-success text-success-foreground" },
-  suspended: { label: "Suspenso", color: "bg-destructive text-destructive-foreground" },
+  pending: { label: "Pendente", color: "bg-warning/20 text-orange-600" },
+  active: { label: "Ativo", color: "bg-brand/20 text-brand" },
+  suspended: { label: "Suspenso", color: "bg-destructive/20 text-destructive" },
   terminated: { label: "Cancelado", color: "bg-muted text-muted-foreground" },
 };
 
@@ -116,7 +116,7 @@ function ClientServicesPage() {
                     )}>
                       <Store className="size-5" />
                     </div>
-                    <Badge className={cn("rounded-full border-none px-3 text-[10px] font-bold uppercase", status.color)}>
+                    <Badge variant="outline" className={cn("rounded-full border-none px-3 text-[10px] font-bold uppercase", status.color)}>
                       {status.label}
                     </Badge>
                   </div>

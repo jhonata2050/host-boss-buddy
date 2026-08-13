@@ -1,0 +1,219 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+export const getSystemSettings = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data, error } = await supabaseAdmin
+      .from("system_settings")
+      .select("*");
+
+    if (error) throw new Error(error.message);
+    
+    const settings: Record<string, any> = {};
+    data.forEach(s => {
+      settings[s.key] = s.value;
+    });
+    
+    return settings;
+  });
+
+export const updateSystemSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.record(z.any()).parse(data))
+  .handler(async ({ data: settings, context }) => {
+    // Verificar se é admin
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
+
+    for (const [key, value] of Object.entries(settings)) {
+      const { error } = await supabaseAdmin
+        .from("system_settings")
+        .upsert({ key, value }, { onConflict: 'key' });
+      
+      if (error) throw new Error(`Error updating ${key}: ${error.message}`);
+    }
+
+    return { success: true };
+  });
+
+export const getTickets = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+
+    let query = context.supabase
+      .from("tickets")
+      .select(`
+        *,
+        profile:profiles(full_name)
+      `)
+      .order("updated_at", { ascending: false });
+
+    if (!isAdmin) {
+      query = query.eq("user_id", context.userId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const getTicketDetails = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.string().parse(data))
+  .handler(async ({ data: ticketId, context }) => {
+    const { data: ticket, error: ticketError } = await context.supabase
+      .from("tickets")
+      .select(`
+        *,
+        profile:profiles(full_name, email)
+      `)
+      .eq("id", ticketId)
+      .single();
+
+    if (ticketError) throw new Error(ticketError.message);
+
+    const { data: messages, error: messagesError } = await context.supabase
+      .from("ticket_messages")
+      .select(`
+        *,
+        profile:profiles(full_name)
+      `)
+      .eq("ticket_id", ticketId)
+      .order("created_at", { ascending: true });
+
+    if (messagesError) throw new Error(messagesError.message);
+
+    return { ticket, messages };
+  });
+
+export const createTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => 
+    z.object({
+      subject: z.string().min(3),
+      message: z.string().min(10),
+      priority: z.enum(["low", "medium", "high"]).default("medium")
+    }).parse(data)
+  )
+  .handler(async ({ data: input, context }) => {
+    const { data: ticket, error: ticketError } = await context.supabase
+      .from("tickets")
+      .insert({
+        user_id: context.userId,
+        subject: input.subject,
+        priority: input.priority,
+        status: "open"
+      })
+      .select()
+      .single();
+
+    if (ticketError) throw new Error(ticketError.message);
+
+    const { error: messageError } = await context.supabase
+      .from("ticket_messages")
+      .insert({
+        ticket_id: ticket.id,
+        user_id: context.userId,
+        message: input.message,
+        is_staff_reply: false
+      });
+
+    if (messageError) throw new Error(messageError.message);
+
+    return ticket;
+  });
+
+export const replyTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => 
+    z.object({
+      ticketId: z.string(),
+      message: z.string().min(1)
+    }).parse(data)
+  )
+  .handler(async ({ data: input, context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+
+    const { data, error } = await context.supabase
+      .from("ticket_messages")
+      .insert({
+        ticket_id: input.ticketId,
+        user_id: context.userId,
+        message: input.message,
+        is_staff_reply: isAdmin
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    await context.supabase
+      .from("tickets")
+      .update({ 
+        status: isAdmin ? "answered" : "customer-reply",
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", input.ticketId);
+
+    return data;
+  });
+
+export const getServers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("servers")
+      .select("*");
+
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const createServerDA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => 
+    z.object({
+      name: z.string(),
+      hostname: z.string(),
+      ip_address: z.string().optional(),
+      api_user: z.string(),
+      api_token: z.string(),
+      max_accounts: z.number().default(100)
+    }).parse(data)
+  )
+  .handler(async ({ data: input, context }) => {
+    const { data, error } = await context.supabase
+      .from("servers")
+      .insert({
+        name: input.name,
+        hostname: input.hostname,
+        ip_address: input.ip_address ?? null,
+        api_user: input.api_user,
+        api_token: input.api_token,
+        max_accounts: input.max_accounts
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  });
