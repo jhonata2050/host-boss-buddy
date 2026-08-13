@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Store, Users } from "lucide-react";
+import { Search, Store, Users, ExternalLink } from "lucide-react";
 import { useState } from "react";
 
 import { AppShell } from "@/components/app/AppShell";
@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin/clients")({
@@ -99,7 +100,8 @@ function ClientsPage() {
                 <TableHead>E-mail</TableHead>
                 <TableHead>Documento</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead className="text-right">Situação</TableHead>
+                <TableHead>Situação</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -114,10 +116,17 @@ function ClientsPage() {
                   <TableCell className="text-muted-foreground">{client.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{client.tax_id ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{client.phone ?? "—"}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     <Badge variant={client.status === "active" ? "default" : "secondary"}>
                       {client.status === "active" ? "Ativo" : client.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" asChild>
+                      <Link to="/admin/clients/$clientId" params={{ clientId: client.id }}>
+                        <ExternalLink className="size-4" />
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

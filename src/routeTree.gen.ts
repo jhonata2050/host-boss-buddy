@@ -30,8 +30,14 @@ import { Route as AuthenticatedAdminTicketsRouteImport } from './routes/_authent
 import { Route as AuthenticatedCheckoutProductIdRouteImport } from './routes/_authenticated/checkout.$productId'
 import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
 import { Route as AuthenticatedTicketsTicketIdRouteImport } from './routes/_authenticated/tickets.$ticketId'
+import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients.$clientId'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 import { Route as ApiPublicWebhooksAbacatepayRouteImport } from './routes/api/public/webhooks/abacatepay'
+import { Route as ApiPublicWebhooksCajupayRouteImport } from './routes/api/public/webhooks/cajupay'
+import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
+import { Route as ApiPublicWebhooksPaghiperRouteImport } from './routes/api/public/webhooks/paghiper'
+import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
+import { Route as ApiPublicWebhooksWooviRouteImport } from './routes/api/public/webhooks/woovi'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -148,6 +154,12 @@ const AuthenticatedTicketsTicketIdRoute =
     path: '/$ticketId',
     getParentRoute: () => AuthenticatedTicketsRoute,
   } as any)
+const AuthenticatedAdminClientsClientIdRoute =
+  AuthenticatedAdminClientsClientIdRouteImport.update({
+    id: '/$clientId',
+    path: '/$clientId',
+    getParentRoute: () => AuthenticatedAdminClientsRoute,
+  } as any)
 const ApiPublicCronMaintenanceRoute =
   ApiPublicCronMaintenanceRouteImport.update({
     id: '/api/public/cron/maintenance',
@@ -160,6 +172,34 @@ const ApiPublicWebhooksAbacatepayRoute =
     path: '/api/public/webhooks/abacatepay',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhooksCajupayRoute =
+  ApiPublicWebhooksCajupayRouteImport.update({
+    id: '/api/public/webhooks/cajupay',
+    path: '/api/public/webhooks/cajupay',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksMercadopagoRoute =
+  ApiPublicWebhooksMercadopagoRouteImport.update({
+    id: '/api/public/webhooks/mercadopago',
+    path: '/api/public/webhooks/mercadopago',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksPaghiperRoute =
+  ApiPublicWebhooksPaghiperRouteImport.update({
+    id: '/api/public/webhooks/paghiper',
+    path: '/api/public/webhooks/paghiper',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
+  id: '/api/public/webhooks/stripe',
+  path: '/api/public/webhooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksWooviRoute = ApiPublicWebhooksWooviRouteImport.update({
+  id: '/api/public/webhooks/woovi',
+  path: '/api/public/webhooks/woovi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -170,7 +210,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
-  '/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
@@ -182,8 +222,14 @@ export interface FileRoutesByFullPath {
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
+  '/api/public/webhooks/cajupay': typeof ApiPublicWebhooksCajupayRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/webhooks/paghiper': typeof ApiPublicWebhooksPaghiperRoute
+  '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -193,7 +239,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
-  '/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/finance': typeof AuthenticatedAdminFinanceRoute
@@ -205,8 +251,14 @@ export interface FileRoutesByTo {
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
+  '/api/public/webhooks/cajupay': typeof ApiPublicWebhooksCajupayRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/webhooks/paghiper': typeof ApiPublicWebhooksPaghiperRoute
+  '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -219,7 +271,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/services': typeof AuthenticatedServicesRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
-  '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/_authenticated/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/finance': typeof AuthenticatedAdminFinanceRoute
@@ -231,8 +283,14 @@ export interface FileRoutesById {
   '/_authenticated/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/_authenticated/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
+  '/api/public/webhooks/cajupay': typeof ApiPublicWebhooksCajupayRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
+  '/api/public/webhooks/paghiper': typeof ApiPublicWebhooksPaghiperRoute
+  '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -257,8 +315,14 @@ export interface FileRouteTypes {
     | '/invoices/$invoiceId'
     | '/tickets/$ticketId'
     | '/admin/'
+    | '/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
     | '/api/public/webhooks/abacatepay'
+    | '/api/public/webhooks/cajupay'
+    | '/api/public/webhooks/mercadopago'
+    | '/api/public/webhooks/paghiper'
+    | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/woovi'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -280,8 +344,14 @@ export interface FileRouteTypes {
     | '/invoices/$invoiceId'
     | '/tickets/$ticketId'
     | '/admin'
+    | '/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
     | '/api/public/webhooks/abacatepay'
+    | '/api/public/webhooks/cajupay'
+    | '/api/public/webhooks/mercadopago'
+    | '/api/public/webhooks/paghiper'
+    | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/woovi'
   id:
     | '__root__'
     | '/'
@@ -305,8 +375,14 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/$invoiceId'
     | '/_authenticated/tickets/$ticketId'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
     | '/api/public/webhooks/abacatepay'
+    | '/api/public/webhooks/cajupay'
+    | '/api/public/webhooks/mercadopago'
+    | '/api/public/webhooks/paghiper'
+    | '/api/public/webhooks/stripe'
+    | '/api/public/webhooks/woovi'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -315,6 +391,11 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
   ApiPublicWebhooksAbacatepayRoute: typeof ApiPublicWebhooksAbacatepayRoute
+  ApiPublicWebhooksCajupayRoute: typeof ApiPublicWebhooksCajupayRoute
+  ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
+  ApiPublicWebhooksPaghiperRoute: typeof ApiPublicWebhooksPaghiperRoute
+  ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiPublicWebhooksWooviRoute: typeof ApiPublicWebhooksWooviRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -466,6 +547,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsTicketIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
+    '/_authenticated/admin/clients/$clientId': {
+      id: '/_authenticated/admin/clients/$clientId'
+      path: '/$clientId'
+      fullPath: '/admin/clients/$clientId'
+      preLoaderRoute: typeof AuthenticatedAdminClientsClientIdRouteImport
+      parentRoute: typeof AuthenticatedAdminClientsRoute
+    }
     '/api/public/cron/maintenance': {
       id: '/api/public/cron/maintenance'
       path: '/api/public/cron/maintenance'
@@ -480,11 +568,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksAbacatepayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/cajupay': {
+      id: '/api/public/webhooks/cajupay'
+      path: '/api/public/webhooks/cajupay'
+      fullPath: '/api/public/webhooks/cajupay'
+      preLoaderRoute: typeof ApiPublicWebhooksCajupayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/mercadopago': {
+      id: '/api/public/webhooks/mercadopago'
+      path: '/api/public/webhooks/mercadopago'
+      fullPath: '/api/public/webhooks/mercadopago'
+      preLoaderRoute: typeof ApiPublicWebhooksMercadopagoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/paghiper': {
+      id: '/api/public/webhooks/paghiper'
+      path: '/api/public/webhooks/paghiper'
+      fullPath: '/api/public/webhooks/paghiper'
+      preLoaderRoute: typeof ApiPublicWebhooksPaghiperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/stripe': {
+      id: '/api/public/webhooks/stripe'
+      path: '/api/public/webhooks/stripe'
+      fullPath: '/api/public/webhooks/stripe'
+      preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/woovi': {
+      id: '/api/public/webhooks/woovi'
+      path: '/api/public/webhooks/woovi'
+      fullPath: '/api/public/webhooks/woovi'
+      preLoaderRoute: typeof ApiPublicWebhooksWooviRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedAdminClientsRouteChildren {
+  AuthenticatedAdminClientsClientIdRoute: typeof AuthenticatedAdminClientsClientIdRoute
+}
+
+const AuthenticatedAdminClientsRouteChildren: AuthenticatedAdminClientsRouteChildren =
+  {
+    AuthenticatedAdminClientsClientIdRoute:
+      AuthenticatedAdminClientsClientIdRoute,
+  }
+
+const AuthenticatedAdminClientsRouteWithChildren =
+  AuthenticatedAdminClientsRoute._addFileChildren(
+    AuthenticatedAdminClientsRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteRouteChildren {
-  AuthenticatedAdminClientsRoute: typeof AuthenticatedAdminClientsRoute
+  AuthenticatedAdminClientsRoute: typeof AuthenticatedAdminClientsRouteWithChildren
   AuthenticatedAdminCouponsRoute: typeof AuthenticatedAdminCouponsRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminFinanceRoute: typeof AuthenticatedAdminFinanceRoute
@@ -497,7 +635,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
-    AuthenticatedAdminClientsRoute: AuthenticatedAdminClientsRoute,
+    AuthenticatedAdminClientsRoute: AuthenticatedAdminClientsRouteWithChildren,
     AuthenticatedAdminCouponsRoute: AuthenticatedAdminCouponsRoute,
     AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
     AuthenticatedAdminFinanceRoute: AuthenticatedAdminFinanceRoute,
@@ -566,6 +704,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
   ApiPublicWebhooksAbacatepayRoute: ApiPublicWebhooksAbacatepayRoute,
+  ApiPublicWebhooksCajupayRoute: ApiPublicWebhooksCajupayRoute,
+  ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
+  ApiPublicWebhooksPaghiperRoute: ApiPublicWebhooksPaghiperRoute,
+  ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiPublicWebhooksWooviRoute: ApiPublicWebhooksWooviRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

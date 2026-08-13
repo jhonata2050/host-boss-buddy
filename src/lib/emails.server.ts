@@ -5,11 +5,15 @@ export async function sendEmail({
   subject,
   html,
   text,
+  userId,
+  templateName,
 }: {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  userId?: string;
+  templateName?: string;
 }) {
   // Buscar configurações de e-mail do banco
   const { data: settings } = await supabaseAdmin
@@ -34,6 +38,17 @@ export async function sendEmail({
   }
 
   try {
+    // Log the email attempt
+    if (userId) {
+      await supabaseAdmin.from("email_logs").insert({
+        user_id: userId,
+        to_email: to,
+        subject,
+        template_name: templateName ?? null,
+        status: "sent"
+      });
+    }
+
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {

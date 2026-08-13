@@ -56,6 +56,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: string | null
+          subject: string
+          template_name: string | null
+          to_email: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          subject: string
+          template_name?: string | null
+          to_email: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          subject?: string
+          template_name?: string | null
+          to_email?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           amount: number
