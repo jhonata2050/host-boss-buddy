@@ -110,11 +110,17 @@ export function useRoles() {
 }
 
 export function useIsStaff() {
-  const { data: roles } = useRoles();
+  const { loading: authLoading, user } = useAuth();
+  const { data: roles, isPending, isFetching } = useRoles();
   const list = roles ?? [];
+  // Enquanto a sessão carrega (ou a query está desabilitada por falta de user),
+  // não podemos concluir que o usuário não é staff.
+  const isLoading = authLoading || (Boolean(user) && (isPending || isFetching)) || (!user && !roles);
   return {
     isAdmin: list.includes("admin"),
     isStaff: list.includes("admin") || list.includes("staff"),
     roles: list,
+    isLoading,
   };
 }
+
