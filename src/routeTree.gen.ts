@@ -21,6 +21,7 @@ import { Route as AuthenticatedAdminCouponsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminInvoicesRouteImport } from './routes/_authenticated/admin.invoices'
 import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 import { Route as AuthenticatedCheckoutProductIdRouteImport } from './routes/_authenticated/checkout.$productId'
+import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -86,12 +87,18 @@ const AuthenticatedCheckoutProductIdRoute =
     path: '/checkout/$productId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInvoicesInvoiceIdRoute =
+  AuthenticatedInvoicesInvoiceIdRouteImport.update({
+    id: '/$invoiceId',
+    path: '/$invoiceId',
+    getParentRoute: () => AuthenticatedInvoicesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/invoices': typeof AuthenticatedInvoicesRoute
+  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
   '/admin/clients': typeof AuthenticatedAdminClientsRoute
@@ -99,12 +106,13 @@ export interface FileRoutesByFullPath {
   '/admin/invoices': typeof AuthenticatedAdminInvoicesRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/checkout/$productId': typeof AuthenticatedCheckoutProductIdRoute
+  '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/invoices': typeof AuthenticatedInvoicesRoute
+  '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
   '/admin/clients': typeof AuthenticatedAdminClientsRoute
@@ -112,6 +120,7 @@ export interface FileRoutesByTo {
   '/admin/invoices': typeof AuthenticatedAdminInvoicesRoute
   '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/checkout/$productId': typeof AuthenticatedCheckoutProductIdRoute
+  '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -119,7 +128,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/invoices': typeof AuthenticatedInvoicesRoute
+  '/_authenticated/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/services': typeof AuthenticatedServicesRoute
   '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRoute
@@ -127,6 +136,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/invoices': typeof AuthenticatedAdminInvoicesRoute
   '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
   '/_authenticated/checkout/$productId': typeof AuthenticatedCheckoutProductIdRoute
+  '/_authenticated/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/admin/invoices'
     | '/admin/products'
     | '/checkout/$productId'
+    | '/invoices/$invoiceId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/admin/invoices'
     | '/admin/products'
     | '/checkout/$productId'
+    | '/invoices/$invoiceId'
   id:
     | '__root__'
     | '/'
@@ -169,6 +181,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/invoices'
     | '/_authenticated/admin/products'
     | '/_authenticated/checkout/$productId'
+    | '/_authenticated/invoices/$invoiceId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -263,12 +276,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCheckoutProductIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/invoices/$invoiceId': {
+      id: '/_authenticated/invoices/$invoiceId'
+      path: '/$invoiceId'
+      fullPath: '/invoices/$invoiceId'
+      preLoaderRoute: typeof AuthenticatedInvoicesInvoiceIdRouteImport
+      parentRoute: typeof AuthenticatedInvoicesRoute
+    }
   }
 }
 
+interface AuthenticatedInvoicesRouteChildren {
+  AuthenticatedInvoicesInvoiceIdRoute: typeof AuthenticatedInvoicesInvoiceIdRoute
+}
+
+const AuthenticatedInvoicesRouteChildren: AuthenticatedInvoicesRouteChildren = {
+  AuthenticatedInvoicesInvoiceIdRoute: AuthenticatedInvoicesInvoiceIdRoute,
+}
+
+const AuthenticatedInvoicesRouteWithChildren =
+  AuthenticatedInvoicesRoute._addFileChildren(
+    AuthenticatedInvoicesRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRoute
+  AuthenticatedInvoicesRoute: typeof AuthenticatedInvoicesRouteWithChildren
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedServicesRoute: typeof AuthenticatedServicesRoute
   AuthenticatedAdminClientsRoute: typeof AuthenticatedAdminClientsRoute
@@ -280,7 +313,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRoute,
+  AuthenticatedInvoicesRoute: AuthenticatedInvoicesRouteWithChildren,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedServicesRoute: AuthenticatedServicesRoute,
   AuthenticatedAdminClientsRoute: AuthenticatedAdminClientsRoute,
