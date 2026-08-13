@@ -113,7 +113,11 @@ function ClientDetailPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const values = Object.fromEntries(formData.entries());
-    updateProfile.mutate(values);
+    
+    // Garantir que não estamos tentando atualizar o email se ele for o mesmo ou estiver bloqueado
+    // Em alguns provedores, o email é o identificador único.
+    const { email, ...updateValues } = values;
+    updateProfile.mutate(updateValues);
   };
 
   return (
