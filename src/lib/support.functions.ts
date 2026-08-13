@@ -240,6 +240,15 @@ export const getDAPackagesList = createServerFn({ method: "GET" })
     return await getDAPackages(serverId);
   });
 
+export const getDASSOUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ serverId: z.string(), username: z.string() }).parse(data))
+  .handler(async ({ data }) => {
+    const { getDASession } = await import("./directadmin.server");
+    return await getDASession(data.serverId, data.username);
+  });
+
+
 export const updateProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => 
