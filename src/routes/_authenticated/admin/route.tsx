@@ -1,21 +1,30 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
-
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIsStaff, useRoles } from "@/hooks/use-auth";
+import { useIsStaff, useRoles, useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
 function AdminLayout() {
-  const { data: roles, isLoading } = useRoles();
+  const { user, loading: authLoading } = useAuth();
+  const { data: roles, isLoading: rolesLoading } = useRoles();
   const { isStaff } = useIsStaff();
   const navigate = useNavigate();
+  
+  const loading = authLoading || rolesLoading;
 
-  if (isLoading) {
+  useEffect(() => {
+    // Só redireciona se tiver certeza que NÃO é staff e o carregamento terminou
+    if (!loading && user && !isStaff) {
+      void navigate({ to: "/dashboard", replace: true });
+    }
+  }, [loading, user, isStaff, navigate]);
+
+  if (loading) {
     return (
       <div className="min-h-screen space-y-4 p-6">
         <Skeleton className="h-10 w-56 rounded-xl" />
