@@ -1,3 +1,4 @@
+"Load the security issues from the scan results and fix the selected issues."
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Check, HardDrive, Mail, Server } from "lucide-react";
