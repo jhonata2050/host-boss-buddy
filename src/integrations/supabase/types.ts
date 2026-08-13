@@ -14,6 +14,196 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_recurring: boolean | null
+          max_uses: number | null
+          type: string
+          updated_at: string
+          used_count: number | null
+          valid_until: string | null
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_recurring?: boolean | null
+          max_uses?: number | null
+          type: string
+          updated_at?: string
+          used_count?: number | null
+          valid_until?: string | null
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_recurring?: boolean | null
+          max_uses?: number | null
+          type?: string
+          updated_at?: string
+          used_count?: number | null
+          valid_until?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
+      invoice_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          service_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          service_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          service_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          discount_amount: number
+          due_date: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          paid_at: string | null
+          payment_method: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_amount?: number
+          due_date: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_amount?: number
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_amount?: number
+          due_date?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          coupon_id: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          notes: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coupon_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_groups: {
         Row: {
           created_at: string
@@ -219,6 +409,110 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          billing_cycle: Database["public"]["Enums"]["billing_cycle"]
+          created_at: string
+          domain: string | null
+          id: string
+          next_due_date: string | null
+          order_id: string | null
+          product_id: string
+          status: Database["public"]["Enums"]["service_status"]
+          suspension_reason: string | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          billing_cycle: Database["public"]["Enums"]["billing_cycle"]
+          created_at?: string
+          domain?: string | null
+          id?: string
+          next_due_date?: string | null
+          order_id?: string | null
+          product_id: string
+          status?: Database["public"]["Enums"]["service_status"]
+          suspension_reason?: string | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
+          created_at?: string
+          domain?: string | null
+          id?: string
+          next_due_date?: string | null
+          order_id?: string | null
+          product_id?: string
+          status?: Database["public"]["Enums"]["service_status"]
+          suspension_reason?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          gateway: string | null
+          gateway_reference: string | null
+          id: string
+          invoice_id: string | null
+          metadata: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          gateway?: string | null
+          gateway_reference?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          gateway?: string | null
+          gateway_reference?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -252,6 +546,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_coupon_uses: {
+        Args: { _coupon_id: string }
+        Returns: undefined
+      }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
@@ -262,6 +560,14 @@ export type Database = {
         | "semiannually"
         | "annually"
         | "biennially"
+      invoice_status: "pending" | "paid" | "cancelled" | "refunded" | "overdue"
+      order_status: "pending" | "active" | "fraud" | "cancelled"
+      service_status:
+        | "pending"
+        | "active"
+        | "suspended"
+        | "terminated"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -396,6 +702,15 @@ export const Constants = {
         "semiannually",
         "annually",
         "biennially",
+      ],
+      invoice_status: ["pending", "paid", "cancelled", "refunded", "overdue"],
+      order_status: ["pending", "active", "fraud", "cancelled"],
+      service_status: [
+        "pending",
+        "active",
+        "suspended",
+        "terminated",
+        "cancelled",
       ],
     },
   },

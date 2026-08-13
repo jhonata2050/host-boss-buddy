@@ -39,13 +39,22 @@ function DashboardPage() {
   const stats = useQuery({
     queryKey: ["dashboard-stats", isStaff],
     queryFn: async () => {
-      const [clients, products] = await Promise.all([
+      const [clients, products, invoices, transactions] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("products").select("id", { count: "exact", head: true }),
+        supabase.from("invoices").select("total_amount").eq("status", "pending"),
+        supabase.from("transactions").select("amount"),
       ]);
+
+      const salesTotal = transactions.data?.reduce((acc, curr) => acc + curr.amount, 0) ?? 0;
+      const pendingTotal = invoices.data?.reduce((acc, curr) => acc + curr.total_amount, 0) ?? 0;
+
       return {
         clients: clients.count ?? 0,
         products: products.count ?? 0,
+        salesTotal,
+        transactionCount: transactions.data?.length ?? 0,
+        pendingTotal,
       };
     },
   });
@@ -77,9 +86,9 @@ function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <KpiCard label="Total em vendas" value={brl.format(0)} />
-        <KpiCard label="Total de transações" value="0" />
-        <KpiCard label="Faturas em aberto" value={brl.format(0)} />
+        <KpiCard label="Total em vendas" value={stats.isLoading ? undefined : brl.format(stats.data?.salesTotal ?? 0)} />
+        <KpiCard label="Total de transações" value={stats.isLoading ? undefined : String(stats.data?.transactionCount ?? 0)} />
+        <KpiCard label="Faturas em aberto" value={stats.isLoading ? undefined : brl.format(stats.data?.pendingTotal ?? 0)} />
       </div>
 
       <div className="mt-6 rounded-2xl border border-border p-4 lg:p-6">
