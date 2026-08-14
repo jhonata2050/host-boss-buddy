@@ -153,13 +153,18 @@ function ClientServicesPage() {
                 </div>
 
                 <div className="bg-secondary/30 p-4 flex gap-2">
-                  <Link 
-                    to="/services/$serviceId" 
-                    params={{ serviceId: svc.id }}
-                    className="flex-1 inline-flex items-center justify-center rounded-xl bg-background border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent group-hover:border-brand/50"
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-xl bg-background border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent group-hover:border-brand/50"
+                    asChild
                   >
-                    Gerenciar
-                  </Link>
+                    <Link 
+                      to="/services/$serviceId" 
+                      params={{ serviceId: svc.id }}
+                    >
+                      Gerenciar
+                    </Link>
+                  </Button>
                   {svc.status === 'active' && svc.username && svc.server_id && (
                     <Button 
                       variant="outline" 

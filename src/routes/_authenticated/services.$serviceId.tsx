@@ -37,7 +37,10 @@ function ServiceManagementPage() {
 
   const { data: service, isLoading, error } = useQuery({
     queryKey: ["service-details", serviceId],
-    queryFn: () => getServiceServerDetails({ data: serviceId }),
+    queryFn: async () => {
+      console.log('Buscando detalhes do serviço:', serviceId);
+      return getServiceServerDetails({ data: serviceId });
+    },
   });
 
   const handleSSO = async (command?: string) => {
