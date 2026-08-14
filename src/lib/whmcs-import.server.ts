@@ -17,9 +17,17 @@ export function emptyStats(): ImportStats {
 }
 
 function pick(row: Record<string, string>, keys: string[]): string {
+  // Normalize the row keys to handle case-insensitivity and spaces
+  const normalizedRow: Record<string, string> = {};
+  for (const [k, v] of Object.entries(row)) {
+    normalizedRow[k.toLowerCase().trim().replace(/[\s_]+/g, "")] = v;
+  }
+
   for (const k of keys) {
-    const v = row[k];
-    if (v) return v;
+    // Also normalize the search keys
+    const normalizedKey = k.toLowerCase().trim().replace(/[\s_]+/g, "");
+    const v = normalizedRow[normalizedKey];
+    if (v !== undefined && v !== null && v !== "") return v;
   }
   return "";
 }
