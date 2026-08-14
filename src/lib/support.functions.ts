@@ -302,7 +302,24 @@ export const getDASSOUrl = createServerFn({ method: "POST" })
       redirectUrl: z.string().optional() 
     }).parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // SECURITY: If not admin, verify ownership of the service before generating SSO
+    const { data: isAdmin } = await context.supabase.rpc('has_role', { _user_id: context.userId, _role: 'admin' });
+    
+    if (!isAdmin) {
+      const { data: service } = await context.supabase
+        .from("services")
+        .select("id, username, server_id")
+        .eq("user_id", context.userId)
+        .eq("username", data.username)
+        .eq("server_id", data.serverId)
+        .maybeSingle();
+
+      if (!service) {
+        throw new Error("Acesso negado: Você não possui permissão para acessar este serviço.");
+      }
+    }
+
     const { getDASession } = await import("./directadmin.server");
     return await getDASession(data.serverId, data.username, data.redirectUrl);
   });
