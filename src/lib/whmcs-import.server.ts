@@ -32,6 +32,12 @@ function pick(row: Record<string, string>, keys: string[]): string {
   return "";
 }
 
+export function debugRow(row: Record<string, string>): string {
+  const keys = Object.keys(row).join(", ");
+  return `Campos encontrados: ${keys}`;
+}
+
+
 function toDate(value: string): string | null {
   if (!value) return null;
   const v = value.trim();
