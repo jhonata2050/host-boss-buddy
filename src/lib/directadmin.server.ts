@@ -315,7 +315,7 @@ export async function getDASession(serverId: string, username: string, redirectU
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  const targetUser = `${server.api_user}|${username}`;
+  const targetUser = username;
   console.log(`Iniciando geração de SSO (One-Time Login URL) para ${targetUser} no servidor ${server.hostname}`);
 
   const params: Record<string, string> = {
