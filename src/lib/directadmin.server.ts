@@ -235,19 +235,22 @@ export async function deleteDAAccount(serverId: string, username: string) {
 
 function isValidDirectAdminLoginUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;
+  
+  // Basic heuristic: check if it contains the typical DA login markers
+  const containsMarker = value.includes("key=") || value.includes("hash=") || value.includes("token=");
+  const containsPath = value.includes("/api/login/url") || value.includes("/CMD_LOGIN_URL");
+  
+  if (containsMarker && containsPath) return true;
+
   try {
     const url = new URL(value);
-    // DirectAdmin returns URLs like https://host:2222/api/login/url?key=...
-    // or sometimes just CMD_LOGIN_URL?hash=...
     return (
       (url.protocol === "https:" || url.protocol === "http:") &&
       url.hostname.length > 0 &&
-      (url.pathname.includes("/api/login/url") || url.pathname.includes("/CMD_LOGIN_URL")) &&
-      (url.searchParams.has("key") || url.searchParams.has("hash"))
+      (containsMarker || containsPath)
     );
   } catch {
-    // If it's not a full URL, it might be a relative path with query
-    return value.includes("CMD_LOGIN_URL") && (value.includes("hash=") || value.includes("key="));
+    return containsMarker || containsPath;
   }
 }
 
@@ -275,8 +278,8 @@ function parseDirectAdminLoginUrl(response: any, serverHostname: string): string
 
   // 2. If response is an object (common when callDA uses URLSearchParams parser)
   if (typeof response === "object" && response !== null) {
-    // Check for explicit 'details' which often carries the URL in DA API
-    const possibleUrl = response.details || response.url || response.URL || response.login_url;
+    // Check for explicit 'result', 'details', 'url', 'URL', or 'login_url'
+    const possibleUrl = response.result || response.details || response.url || response.URL || response.login_url;
     
     if (possibleUrl && typeof possibleUrl === "string") {
       // Decode if it's URL encoded (common in DA responses)
