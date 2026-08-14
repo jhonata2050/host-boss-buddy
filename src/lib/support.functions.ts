@@ -259,6 +259,24 @@ export const getDASSOUrl = createServerFn({ method: "POST" })
   });
 
 
+export const getServiceServerDetails = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.string().parse(data))
+  .handler(async ({ data: serviceId, context }) => {
+    const { data: service, error } = await context.supabase
+      .from("services")
+      .select("*, servers(*)")
+      .eq("id", serviceId)
+      .single();
+
+    if (error || !service) throw new Error("Serviço não encontrado");
+    
+    // Se for DirectAdmin, poderíamos buscar estatísticas reais aqui futuramente
+    // Por enquanto retornamos os dados do banco e as capacidades do servidor
+    return service;
+  });
+
+
 export const updateProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => 

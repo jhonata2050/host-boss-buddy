@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { LayoutPanelLeft, Search, Store, ExternalLink } from "lucide-react";
 import { useState } from "react";
@@ -153,9 +153,15 @@ function ClientServicesPage() {
                 </div>
 
                 <div className="bg-secondary/30 p-4 flex gap-2">
-                  <button className="flex-1 rounded-xl bg-background border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent group-hover:border-brand/50">
-                    Gerenciar
-                  </button>
+                  <Button 
+                    variant="outline"
+                    className="flex-1 rounded-xl bg-background border border-border px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent group-hover:border-brand/50"
+                    asChild
+                  >
+                    <Link to="/services/$serviceId" params={{ serviceId: svc.id }}>
+                      Gerenciar
+                    </Link>
+                  </Button>
                   {svc.status === 'active' && svc.username && svc.server_id && (
                     <Button 
                       variant="outline" 
