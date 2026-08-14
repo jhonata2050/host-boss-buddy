@@ -279,9 +279,9 @@ async function resolveProductId(name: string): Promise<string | null> {
 /** Importa serviços/hospedagens do WHMCS (tblhosting export). */
 async function importServices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
-    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id"]);
-    const serviceWhmcsId = pick(row, ["id", "serviceid", "hostingid", "whmcsid", "service_id"]);
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user", "email_address"]).toLowerCase();
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id", "id_whmcs"]);
+    const serviceWhmcsId = pick(row, ["id", "serviceid", "hostingid", "whmcsid", "service_id", "id_whmcs"]);
 
 
 
