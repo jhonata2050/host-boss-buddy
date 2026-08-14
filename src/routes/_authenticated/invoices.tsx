@@ -36,9 +36,12 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 function ClientInvoicesPage() {
   const [term, setTerm] = useState("");
+  const { user, impersonatedClientId } = useAuth();
+  const effectiveUserId = impersonatedClientId || user?.id;
 
   const invoices = useQuery({
-    queryKey: ["client-invoices"],
+    queryKey: ["client-invoices", effectiveUserId],
+    enabled: Boolean(effectiveUserId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invoices")
@@ -49,11 +52,13 @@ function ClientInvoicesPage() {
           due_date, 
           created_at
         `)
+        .eq("user_id", effectiveUserId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
+
 
   const filtered = (invoices.data ?? []).filter((inv: any) => {
     const search = term.trim().toLowerCase();
