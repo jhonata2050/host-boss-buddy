@@ -80,11 +80,12 @@ function ClientDetailPage() {
 
   const { data: client } = useSuspenseQuery(clientDossierQueryOptions(clientId));
   const dossier = {
-    invoices: [...(client.invoices ?? [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
-    services: [...(client.services ?? [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
-    tickets: [...(client.tickets ?? [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
-    emailLogs: [...(client.email_logs ?? [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+    invoices: [...((client.invoices ?? []) as any[])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+    services: [...((client.services ?? []) as any[])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+    tickets: [...((client.tickets ?? []) as any[])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+    emailLogs: [...((client.email_logs ?? []) as any[])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
   };
+  const dossiersQuery = { isLoading: false, data: dossier };
 
   const updateProfile = useMutation({
     mutationFn: async (values: any) => {
