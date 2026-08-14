@@ -242,96 +242,65 @@ export async function getDASession(serverId: string, username: string, redirectU
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  // Single Sign-On via CMD_API_LOGIN_KEYS
   // O targetUser deve ser admin|user para permitir que o admin gere a chave para o usuário
   const targetUser = `${server.api_user}|${username}`;
 
-  console.log(`Iniciando geração de SSO para ${targetUser} no servidor ${server.hostname}`);
+  console.log(`Iniciando geração de SSO (One-Time Login URL) para ${targetUser} no servidor ${server.hostname}`);
 
-  // Tentativa 1: one_time_url (Método recomendado, gera um hash direto para login)
-  try {
-    const params: Record<string, string> = {
-      action: 'create',
-      type: 'one_time_url',
-      user: targetUser,
-      expiry: '30m',
-      login_keys_notify_on_creation: '0'
-    };
+  // Preparar parâmetros para CMD_API_LOGIN_KEYS com type=one_time_url
+  const params: Record<string, string> = {
+    action: 'create',
+    type: 'one_time_url',
+    user: targetUser,
+    expiry: '5m', // Expiração curta para segurança, conforme documentação
+    login_keys_notify_on_creation: '0'
+  };
 
-    if (redirectUrl && redirectUrl !== '/') {
-      params['redirect-url'] = redirectUrl;
-    }
-
-    const result = await callDA({
-      hostname: server.hostname,
-      apiUser: server.api_user,
-      apiToken: server.api_token,
-      command: 'CMD_API_LOGIN_KEYS',
-      method: 'POST',
-      params
-    });
-
-    console.log("DA Result (one_time_url):", result);
-
-    // O DirectAdmin retorna result.error === '0' e result.details como a URL
-    if (result.error === '0' && result.details) {
-      return result.details;
-    }
-    
-    // Fallback: se o DA retornar campos de texto (como htm_allow etc) significa que ele listou ou ignorou o create
-    if (result.key || result.hash) {
-       const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
-       const hash = result.hash || result.key;
-       return `https://${cleanHostname}:2222/CMD_LOGIN_URL?hash=${hash}`;
-    }
-
-  } catch (e) {
-    console.error("Erro na tentativa de one_time_url, tentando fallback para one_time_key...", e);
+  // DirectAdmin aceita redirect-url para one_time_url
+  if (redirectUrl && redirectUrl !== '/') {
+    params['redirect-url'] = redirectUrl.startsWith('/') ? redirectUrl : `/${redirectUrl}`;
   }
 
-  // Fallback (Tentativa 2): one_time_key (Gera uma senha temporária para o usuário)
-  const keyId = `sso${Date.now().toString(36)}`;
-  const keyPass = generateStrongPassword(128);
-  
-  const fallbackResult = await callDA({
+  const result = await callDA({
     hostname: server.hostname,
     apiUser: server.api_user,
     apiToken: server.api_token,
     command: 'CMD_API_LOGIN_KEYS',
     method: 'POST',
-    params: {
-      action: 'create',
-      user: username, // Aqui geramos a chave diretamente para o usuário
-      keyname: keyId,
-      passwd: keyPass,
-      passwd2: keyPass,
-      expiry: '3600',
-      ips: '0.0.0.0/0',
-      type: 'one_time_key',
-      'CMD_API_LOGIN_KEYS': 'yes',
-      'CMD_LOGIN': 'yes',
-      'ALL_USER': 'yes' // Tenta dar permissão total à chave temporária
-    }
+    params
   });
 
-  console.log("DA Fallback Result:", fallbackResult);
+  console.log("DirectAdmin SSO API Response:", result);
 
-  if (fallbackResult.error === '1') {
-    throw new Error(`DirectAdmin Recusou a Chave: ${fallbackResult.details || fallbackResult.text || "Senha fraca ou permissão negada"}`);
+  /**
+   * Conforme a documentação e observações:
+   * O DirectAdmin retorna result.error === '0' e result.details contendo a URL se bem sucedido.
+   * Se retornar campos como "key" ou "hash" no corpo da resposta (mesmo via POST), tratamos como sucesso.
+   */
+  if (result.error === '0' && result.details && (result.details.startsWith('http') || result.details.includes('hash='))) {
+    return result.details;
   }
 
-  const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
-  const keyValue = fallbackResult.key || fallbackResult.value;
-  
-  if (keyValue) {
-    let loginUrl = `https://${cleanHostname}:2222/login?user=${username}&passwd=${keyValue}`;
-    if (redirectUrl && redirectUrl !== '/') {
-      loginUrl += `&url=${encodeURIComponent(redirectUrl)}`;
+  // Se o DirectAdmin retornar o hash/key diretamente no objeto
+  const token = result.key || result.hash || result.details;
+  if (token && typeof token === 'string') {
+    const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
+    
+    // Se o token for apenas o hash
+    if (!token.includes('http') && token.length > 20) {
+      return `https://${cleanHostname}:2222/CMD_LOGIN_URL?hash=${token}`;
     }
-    return loginUrl;
+    
+    // Se for uma URL completa ou relativa
+    if (token.includes('CMD_LOGIN_URL') || token.includes('api/login/url')) {
+      if (token.startsWith('http')) return token;
+      return `https://${cleanHostname}:2222${token.startsWith('/') ? '' : '/'}${token}`;
+    }
   }
 
-  throw new Error(`O servidor não retornou uma chave válida. Resposta: ${JSON.stringify(fallbackResult)}`);
+  // Se chegarmos aqui, a API falhou ou retornou algo inesperado
+  const errorMsg = result.result || result.text || result.details || JSON.stringify(result);
+  throw new Error(`Erro ao gerar One-Time Login URL: ${errorMsg}`);
 }
 
 
