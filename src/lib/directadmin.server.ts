@@ -98,7 +98,7 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
       return Object.fromEntries(new URLSearchParams(text));
     }
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
       throw new Error(`O servidor DirectAdmin (${hostname}) demorou muito para responder (timeout). Verifique se o IP do HostPanel está liberado no firewall do servidor.`);
     }
     console.error("DirectAdmin Fetch Error:", error);
@@ -318,8 +318,17 @@ export async function getDASession(serverId: string, username: string, redirectU
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  const targetUser = username;
-  console.log(`Iniciando geração de SSO (One-Time Login URL) para o usuário ${targetUser} no servidor ${server.hostname} (via admin ${server.api_user})`);
+  const targetUser = username.trim();
+  if (!targetUser || targetUser.includes('|') || targetUser.includes(':')) {
+    throw new Error('Usuário do serviço inválido para acesso ao DirectAdmin.');
+  }
+
+  // DirectAdmin only creates the login URL for the identity authenticated in
+  // the request. Sending `user` in the form while authenticating as admin
+  // creates an admin OTP. The documented impersonation syntax makes the
+  // authenticated identity the customer while retaining the admin API key.
+  const delegatedApiUser = `${server.api_user}|${targetUser}`;
+  console.log(`Iniciando geração de SSO delegado para o usuário ${targetUser} no servidor ${server.hostname}`);
 
   // DirectAdmin SSO (one_time_url) works by requesting it from CMD_API_LOGIN_KEYS
   // It needs the 'user' parameter to define WHICH user the session belongs to.
@@ -337,7 +346,7 @@ export async function getDASession(serverId: string, username: string, redirectU
 
   const result = await callDA({
     hostname: server.hostname,
-    apiUser: server.api_user,
+    apiUser: delegatedApiUser,
     apiToken: server.api_token,
     command: 'CMD_API_LOGIN_KEYS',
     method: 'POST',
