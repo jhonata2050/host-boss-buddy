@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Store, Users, ExternalLink } from "lucide-react";
 import { useState } from "react";
@@ -32,10 +32,14 @@ export const Route = createFileRoute("/_authenticated/admin/clients")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: ClientsPage,
+  component: ClientsLayout,
 });
 
-function ClientsPage() {
+function ClientsLayout() {
+  return <Outlet />;
+}
+
+export function ClientsPage() {
   const [term, setTerm] = useState("");
 
   const clients = useQuery({
