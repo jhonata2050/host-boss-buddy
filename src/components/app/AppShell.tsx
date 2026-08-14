@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   X,
@@ -23,7 +23,9 @@ import {
   User as UserIcon,
   Users,
   Wallet,
+  LogOut as LogOutIcon,
 } from "lucide-react";
+
 import { useState, type ReactNode } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -157,10 +159,12 @@ export function AppShell({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isStaff } = useIsStaff();
-  const { user } = useAuth();
+  const { user, impersonatedClientId, setImpersonatedClientId } = useAuth();
   const { data: profile } = useProfile();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [hideBanner, setHideBanner] = useState(false);
+
 
   const isAdminArea = area ? area === "admin" : isStaff;
   const sections = isAdminArea ? ADMIN_SECTIONS : CLIENT_SECTIONS;
@@ -191,9 +195,30 @@ export function AppShell({
     await navigate({ to: "/auth" });
   }
 
+  const stopImpersonating = () => {
+    setImpersonatedClientId(null);
+    queryClient.invalidateQueries();
+    navigate({ to: "/admin/clients" });
+  };
+
   return (
+
     <div className="min-h-screen bg-background">
+      {impersonatedClientId && (
+        <div className="bg-brand p-3 text-center text-brand-foreground font-medium border-b border-brand/20 flex items-center justify-center gap-4">
+          Você está visualizando o painel como cliente ({profile?.full_name || profile?.email}).
+          <Button 
+            size="sm" 
+            variant="secondary" 
+            onClick={stopImpersonating}
+            className="rounded-xl h-8 text-xs flex gap-2"
+          >
+            <LogOutIcon className="size-3" /> Sair do modo cliente
+          </Button>
+        </div>
+      )}
       {hasOverdue && !hideBanner && (
+
         <div className="bg-destructive p-3 text-center text-destructive-foreground font-medium border-b border-brand/20 relative animate-in fade-in slide-in-from-top duration-300">
           Você possui faturas vencidas. Regularize seu débito para evitar suspensão dos serviços.
           <button 
