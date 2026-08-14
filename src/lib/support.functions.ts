@@ -242,14 +242,14 @@ export const updateServerDA = createServerFn({ method: "POST" })
     }).parse(data)
   )
   .handler(async ({ data: input, context }) => {
-    const patch: Record<string, unknown> = {
+    const patch = {
       name: input.name,
       hostname: input.hostname,
       ip_address: input.ip_address ?? null,
       api_user: input.api_user,
       max_accounts: input.max_accounts,
+      ...(input.api_token && input.api_token.length > 0 ? { api_token: input.api_token } : {}),
     };
-    if (input.api_token && input.api_token.length > 0) patch['api_token'] = input.api_token;
 
     const { data, error } = await context.supabase
       .from("servers")
