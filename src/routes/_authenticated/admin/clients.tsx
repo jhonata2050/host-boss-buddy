@@ -213,9 +213,10 @@ export function ClientsPage() {
                     <Checkbox 
                       checked={selectedIds.includes(client.id)}
                       onCheckedChange={() => toggleSelect(client.id)}
-                      aria-label={\`Selecionar \${client.full_name}\`}
+                      aria-label={`Selecionar ${client.full_name}`}
                     />
                   </TableCell>
+
 
                   <TableCell className="font-medium">
                     {client.full_name ?? "Sem nome"}
