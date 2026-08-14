@@ -41,9 +41,16 @@ export function debugRow(row: Record<string, string>): string {
 function toDate(value: string): string | null {
   if (!value) return null;
   const v = value.trim();
-  if (v === "0000-00-00" || v === "0000-00-00 00:00:00") return null;
+  if (v === "0000-00-00" || v === "0000-00-00 00:00:00" || v === "0" || v === "") return null;
+  // Handle DD/MM/YYYY
+  if (v.includes("/") && v.split("/")[0].length <= 2) {
+    const [day, month, year] = v.split("/");
+    const d = new Date(`${year}-${month}-${day}`);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
   const d = new Date(v.replace(" ", "T"));
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+
 }
 
 function toNumber(value: string): number {
