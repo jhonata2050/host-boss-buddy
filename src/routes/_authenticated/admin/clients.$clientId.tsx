@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getClientDossier } from "@/lib/client-dossier.functions";
 import { 
   Table, 
   TableBody, 
@@ -55,23 +56,7 @@ const clientDossierQueryOptions = (clientId: string) =>
   queryOptions({
     queryKey: ["admin-client-dossier", clientId],
     queryFn: async () => {
-      const [profile, invoices, services, tickets, emailLogs] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", clientId).single(),
-        supabase.from("invoices").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
-        supabase.from("services").select("*, products(name)").eq("user_id", clientId).order("created_at", { ascending: false }),
-        supabase.from("tickets").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
-        supabase.from("email_logs").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
-      ]);
-
-      const error = profile.error || invoices.error || services.error || tickets.error || emailLogs.error;
-      if (error) throw error;
-      return {
-        ...profile.data,
-        invoices: invoices.data ?? [],
-        services: services.data ?? [],
-        tickets: tickets.data ?? [],
-        email_logs: emailLogs.data ?? [],
-      };
+      return getClientDossier({ data: { clientId } });
     },
     staleTime: 1000 * 60 * 2,
   });
