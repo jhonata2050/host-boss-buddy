@@ -43,7 +43,9 @@ function toDate(value: string): string | null {
   const v = value.trim();
   if (v === "0000-00-00" || v === "0000-00-00 00:00:00" || v === "0" || v === "") return null;
   // Handle DD/MM/YYYY
-  if (v.includes("/") && v.split("/")[0].length <= 2) {
+  const partsSlash = v.split("/");
+  if (v.includes("/") && partsSlash[0] && partsSlash[0].length <= 2) {
+
     const parts = v.split("/");
     if (parts.length === 3) {
       const [day, month, year] = parts;
