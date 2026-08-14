@@ -101,8 +101,10 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
   const cleanEmail = email?.trim().toLowerCase();
   const cleanWhmcsId = whmcsClientId?.toString().trim();
 
-  if (!cleanEmail && !cleanWhmcsId) return null;
-
+  if (!cleanEmail && !cleanWhmcsId) {
+    console.log("[Import] Falha ao resolver usuário: e-mail e WHMCS_ID estão vazios.");
+    return null;
+  }
 
   // 1. Tenta buscar pelo whmcs_id no banco de perfis (mais preciso)
   if (cleanWhmcsId) {
@@ -142,7 +144,7 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     }
   }
 
-  // 3. Fallback: busca no auth.users
+  // 3. Fallback: busca no auth.users por e-mail
   if (cleanEmail) {
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
@@ -154,7 +156,7 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     }
   }
 
-  console.log(`[Import] Falha ao resolver usuário: Email=${cleanEmail}, WHMCS_ID=${cleanWhmcsId}`);
+  console.log(`[Import] Falha ao resolver usuário: Email=${cleanEmail || "n/a"}, WHMCS_ID=${cleanWhmcsId || "n/a"}`);
   return null;
 }
 
