@@ -36,7 +36,11 @@ export const Route = createFileRoute("/_authenticated/admin/clients")({
 });
 
 function ClientsLayout() {
-  return <Outlet />;
+  return (
+    <div className="w-full">
+      <Outlet />
+    </div>
+  );
 }
 
 export function ClientsPage() {
