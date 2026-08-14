@@ -295,11 +295,18 @@ export const getDAPackagesList = createServerFn({ method: "GET" })
 
 export const getDASSOUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ serverId: z.string(), username: z.string() }).parse(data))
+  .inputValidator((data: unknown) => 
+    z.object({ 
+      serverId: z.string(), 
+      username: z.string(),
+      redirectUrl: z.string().optional() 
+    }).parse(data)
+  )
   .handler(async ({ data }) => {
     const { getDASession } = await import("./directadmin.server");
-    return await getDASession(data.serverId, data.username);
+    return await getDASession(data.serverId, data.username, data.redirectUrl);
   });
+
 
 
 export const getServiceServerDetails = createServerFn({ method: "GET" })
