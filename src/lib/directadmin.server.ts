@@ -133,6 +133,11 @@ export async function createDAAccount(serverId: string, details: {
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
+  // Gerar senha forte (Alfanumérica + Símbolos + Tamanho > 12)
+  const password = Math.random().toString(36).slice(-8) + 
+                   Math.random().toString(36).slice(-8).toUpperCase() + 
+                   "!@#$%";
+
   return await callDA({
     hostname: server.hostname,
     apiUser: server.api_user,
@@ -144,8 +149,8 @@ export async function createDAAccount(serverId: string, details: {
       add: 'Submit',
       username: details.username,
       email: details.email,
-      passwd: Math.random().toString(36).slice(-10) + '!',
-      passwd2: Math.random().toString(36).slice(-10) + '!',
+      passwd: password,
+      passwd2: password,
       domain: details.domain,
       package: details.package,
       ip: server.ip_address || '',
