@@ -22,6 +22,36 @@ interface DAConnectionResult {
   packages: string[];
 }
 
+function generateStrongPassword(length = 32): string {
+  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lowercase = 'abcdefghijkmnopqrstuvwxyz';
+  const numbers = '23456789';
+  const symbols = '@#$%&*!?';
+  const allCharacters = `${uppercase}${lowercase}${numbers}${symbols}`;
+  const randomValues = new Uint32Array(length);
+  crypto.getRandomValues(randomValues);
+
+  const password = [
+    uppercase.charAt((randomValues[0] ?? 0) % uppercase.length),
+    lowercase.charAt((randomValues[1] ?? 0) % lowercase.length),
+    numbers.charAt((randomValues[2] ?? 0) % numbers.length),
+    symbols.charAt((randomValues[3] ?? 0) % symbols.length),
+    ...Array.from(
+      { length: length - 4 },
+      (_, index) => allCharacters.charAt((randomValues[index + 4] ?? 0) % allCharacters.length),
+    ),
+  ];
+
+  for (let index = password.length - 1; index > 0; index -= 1) {
+    const swapIndex = (randomValues[index] ?? 0) % (index + 1);
+    const currentCharacter = password[index] ?? '';
+    password[index] = password[swapIndex] ?? '';
+    password[swapIndex] = currentCharacter;
+  }
+
+  return password.join('');
+}
+
 async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', params = {} }: DARequestOptions) {
   // Limpa o hostname e garante o uso da porta 2222
   const cleanHostname = hostname.replace(/^https?:\/\//, '').split(':')[0];
@@ -133,8 +163,7 @@ export async function createDAAccount(serverId: string, details: {
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  // Gerar senha EXTREMAMENTE forte (Alfanumérica + Símbolos + Tamanho > 20)
-  const password = `StrongPass${Math.random().toString(36).slice(-10).toUpperCase()}@${Math.random().toString(36).slice(-10)}#$!`;
+  const password = generateStrongPassword(32);
 
   return await callDA({
     hostname: server.hostname,
@@ -213,8 +242,8 @@ export async function getDASession(serverId: string, username: string) {
 
   // Single Sign-On via CMD_API_LOGIN_KEYS
   const keyId = `sso${Date.now().toString(36)}${Math.random().toString(36).slice(-4)}`;
-  // Senha EXTREMAMENTE forte para a chave de login (mínimo 20 caracteres, maiúsculas, minúsculas, números e símbolos)
-  const keyPass = `Key${Math.random().toString(36).slice(-10).toUpperCase()}@Pass${Math.random().toString(36).slice(-10)}!#`;
+  // O DirectAdmin valida também a senha temporária da chave SSO.
+  const keyPass = generateStrongPassword(32);
 
   const result = await callDA({
     hostname: server.hostname,
