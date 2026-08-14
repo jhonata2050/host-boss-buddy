@@ -94,7 +94,7 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     // Se não achou no perfil, tenta ver se foi injetado no metadata do usuário
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
-      const user = users.find(u => u.user_metadata?.whmcs_id?.toString() === cleanWhmcsId);
+      const user = users.find(u => u.user_metadata?.['whmcs_id']?.toString() === cleanWhmcsId);
       if (user) return user.id;
     }
   }
