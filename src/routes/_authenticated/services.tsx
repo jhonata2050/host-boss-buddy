@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { getDASSOUrl } from "@/lib/support.functions";
+import { useAuth } from "@/hooks/use-auth";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/services")({
