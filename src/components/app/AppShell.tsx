@@ -162,6 +162,10 @@ export function AppShell({
   const navigate = useNavigate();
   const [hideBanner, setHideBanner] = useState(false);
 
+  const isAdminArea = area ? area === "admin" : isStaff;
+  const sections = isAdminArea ? ADMIN_SECTIONS : CLIENT_SECTIONS;
+  const homeTo = isAdminArea ? "/admin" : "/dashboard";
+
   const { data: overdueInvoices } = useQuery({
     queryKey: ["overdue-invoices", user?.id],
     queryFn: async () => {
@@ -178,10 +182,6 @@ export function AppShell({
   });
 
   const hasOverdue = overdueInvoices && overdueInvoices.length > 0;
-
-  const isAdminArea = area ? area === "admin" : isStaff;
-  const sections = isAdminArea ? ADMIN_SECTIONS : CLIENT_SECTIONS;
-  const homeTo = isAdminArea ? "/admin" : "/dashboard";
 
   const name = profile?.full_name ?? user?.email ?? "Conta";
   const initials = name.slice(0, 2).toUpperCase();
