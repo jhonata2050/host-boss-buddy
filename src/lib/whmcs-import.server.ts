@@ -17,9 +17,17 @@ export function emptyStats(): ImportStats {
 }
 
 function pick(row: Record<string, string>, keys: string[]): string {
+  // Normalize the row keys to handle case-insensitivity and spaces
+  const normalizedRow: Record<string, string> = {};
+  for (const [k, v] of Object.entries(row)) {
+    normalizedRow[k.toLowerCase().trim().replace(/[\s_]+/g, "")] = v;
+  }
+
   for (const k of keys) {
-    const v = row[k];
-    if (v) return v;
+    // Also normalize the search keys
+    const normalizedKey = k.toLowerCase().trim().replace(/[\s_]+/g, "");
+    const v = normalizedRow[normalizedKey];
+    if (v !== undefined && v !== null && v !== "") return v;
   }
   return "";
 }
@@ -82,6 +90,13 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
       .eq("whmcs_id", cleanWhmcsId)
       .maybeSingle();
     if (profile?.id) return profile.id;
+
+    // Se não achou no perfil, tenta ver se foi injetado no metadata do usuário
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+    if (!error && users) {
+      const user = users.find(u => u.user_metadata?.['whmcs_id']?.toString() === cleanWhmcsId);
+      if (user) return user.id;
+    }
   }
   
   // 2. Tenta buscar pelo e-mail no banco de perfis
@@ -110,8 +125,8 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
 /** Importa clientes do WHMCS (tblclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "e-mail", "email_address", "mail", "client_email", "clientemail"]).toLowerCase();
-    const whmcsId = pick(row, ["id", "userid", "clientid", "uid"]);
+    const email = pick(row, ["email", "e-mail", "emailaddress", "mail", "clientemail", "clientemail"]).toLowerCase();
+    const whmcsId = pick(row, ["id", "userid", "clientid", "uid", "cid"]);
     
     if (!email) continue;
 
@@ -224,14 +239,14 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
     try {
       const userId = await resolveUserId(email, whmcsClientId);
       if (!userId) {
-        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"})`);
+        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Verifique se o cliente foi importado primeiro.`);
       }
 
-      const productName = pick(row, ["product", "produto", "packagename", "product_name", "package"]);
+      const productName = pick(row, ["product", "produto", "packagename", "productname", "package"]);
       const productId = await resolveProductId(productName || "Plano Importado");
       if (!productId) throw new Error("não foi possível resolver o produto");
 
-      const cycleRaw = pick(row, ["billingcycle", "billing_cycle", "ciclo"]).toLowerCase();
+      const cycleRaw = pick(row, ["billingcycle", "billingcycle", "ciclo"]).toLowerCase();
       const cycle = CYCLE_MAP[cycleRaw] ?? "monthly";
       
       const statusRaw = pick(row, ["status", "domainstatus", "state"]).toLowerCase();
@@ -239,7 +254,7 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 
       const domain = pick(row, ["domain", "dominio", "host", "hostname"]);
       const username = pick(row, ["username", "usuario", "login", "user"]);
-      const nextDue = toDate(pick(row, ["nextduedate", "next_due_date", "vencimento", "next_due"]));
+      const nextDue = toDate(pick(row, ["nextduedate", "nextduedate", "vencimento", "nextdue"]));
 
       const { error } = await (supabaseAdmin.from("services") as any).insert({
         user_id: userId,
@@ -273,16 +288,19 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
     
     try {
       const userId = await resolveUserId(email, whmcsClientId);
-      if (!userId) throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"})`);
+      if (!userId) {
+        // Log better error for debugging why linking failed
+        throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Verifique se o cliente foi importado primeiro.`);
+      }
 
-      const total = toNumber(pick(row, ["total", "valor", "amount", "total_amount"]));
+      const total = toNumber(pick(row, ["total", "valor", "amount", "totalamount"]));
       const subtotal = toNumber(pick(row, ["subtotal"])) || total;
-      const statusRaw = pick(row, ["status", "invoice_status"]).toLowerCase();
+      const statusRaw = pick(row, ["status", "invoicestatus"]).toLowerCase();
       const status = INVOICE_STATUS_MAP[statusRaw] ?? "unpaid";
       
-      const dueDate = toDate(pick(row, ["duedate", "due_date", "vencimento", "date"])) ?? new Date().toISOString();
-      const paidAt = toDate(pick(row, ["datepaid", "paid_at", "data_pagamento", "date_paid"]));
-      const method = pick(row, ["paymentmethod", "payment_method", "metodo", "gateway"]);
+      const dueDate = toDate(pick(row, ["duedate", "duedate", "vencimento", "date"])) ?? new Date().toISOString();
+      const paidAt = toDate(pick(row, ["datepaid", "paidat", "datapagamento", "datepaid"]));
+      const method = pick(row, ["paymentmethod", "paymentmethod", "metodo", "gateway"]);
 
       const { error } = await (supabaseAdmin.from("invoices") as any).insert({
         user_id: userId,
