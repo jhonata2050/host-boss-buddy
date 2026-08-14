@@ -233,6 +233,67 @@ export async function deleteDAAccount(serverId: string, username: string) {
   });
 }
 
+function isValidDirectAdminLoginUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    // DirectAdmin returns URLs like https://host:2222/api/login/url?key=...
+    // or sometimes just CMD_LOGIN_URL?hash=...
+    return (
+      (url.protocol === "https:" || url.protocol === "http:") &&
+      url.hostname.length > 0 &&
+      (url.pathname.includes("/api/login/url") || url.pathname.includes("/CMD_LOGIN_URL")) &&
+      (url.searchParams.has("key") || url.searchParams.has("hash"))
+    );
+  } catch {
+    // If it's not a full URL, it might be a relative path with query
+    return value.includes("CMD_LOGIN_URL") && (value.includes("hash=") || value.includes("key="));
+  }
+}
+
+function parseDirectAdminLoginUrl(response: any, serverHostname: string): string {
+  const cleanHostname = serverHostname.replace(/^https?:\/\//, '').split(':')[0];
+  const baseUrl = `https://${cleanHostname}:2222`;
+
+  // 1. If response is a direct string starting with URL: or just the URL
+  if (typeof response === "string") {
+    let value = response.trim();
+    if (value.startsWith("URL:")) {
+      value = value.substring(4).trim();
+    }
+    
+    if (isValidDirectAdminLoginUrl(value)) {
+      if (value.startsWith('http')) return value;
+      return `${baseUrl}${value.startsWith('/') ? '' : '/'}${value}`;
+    }
+  }
+
+  // 2. If response is an object (DA often returns URLSearchParams parsed as object)
+  if (typeof response === "object" && response !== null) {
+    const possibleUrl = response.url || response.URL || response.login_url || response.details;
+    if (isValidDirectAdminLoginUrl(possibleUrl)) {
+      if (possibleUrl.startsWith('http')) return possibleUrl;
+      return `${baseUrl}${possibleUrl.startsWith('/') ? '' : '/'}${possibleUrl}`;
+    }
+
+    // Check for key/hash in the object
+    const token = response.key || response.hash;
+    if (token && typeof token === "string" && token.length > 20) {
+      return `${baseUrl}/CMD_LOGIN_URL?hash=${token}`;
+    }
+  }
+
+  // If we got here but the response looks like success (error=0)
+  if (response && response.error === '0' && response.details) {
+     if (isValidDirectAdminLoginUrl(response.details)) {
+        if (response.details.startsWith('http')) return response.details;
+        return `${baseUrl}${response.details.startsWith('/') ? '' : '/'}${response.details}`;
+     }
+  }
+
+  throw new Error("O DirectAdmin não retornou uma One-Time Login URL válida.");
+}
+
 export async function getDASession(serverId: string, username: string, redirectUrl?: string) {
   const { data: server, error } = await supabaseAdmin
     .from("servers")
@@ -242,21 +303,17 @@ export async function getDASession(serverId: string, username: string, redirectU
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  // O targetUser deve ser admin|user para permitir que o admin gere a chave para o usuário
   const targetUser = `${server.api_user}|${username}`;
-
   console.log(`Iniciando geração de SSO (One-Time Login URL) para ${targetUser} no servidor ${server.hostname}`);
 
-  // Preparar parâmetros para CMD_API_LOGIN_KEYS com type=one_time_url
   const params: Record<string, string> = {
     action: 'create',
     type: 'one_time_url',
     user: targetUser,
-    expiry: '5m', // Expiração curta para segurança, conforme documentação
+    expiry: '5m',
     login_keys_notify_on_creation: '0'
   };
 
-  // DirectAdmin aceita redirect-url para one_time_url
   if (redirectUrl && redirectUrl !== '/') {
     params['redirect-url'] = redirectUrl.startsWith('/') ? redirectUrl : `/${redirectUrl}`;
   }
@@ -270,37 +327,10 @@ export async function getDASession(serverId: string, username: string, redirectU
     params
   });
 
-  console.log("DirectAdmin SSO API Response:", result);
+  // Log only the existence of a result for security
+  console.log("DirectAdmin SSO API call completed.");
 
-  /**
-   * Conforme a documentação e observações:
-   * O DirectAdmin retorna result.error === '0' e result.details contendo a URL se bem sucedido.
-   * Se retornar campos como "key" ou "hash" no corpo da resposta (mesmo via POST), tratamos como sucesso.
-   */
-  if (result.error === '0' && result.details && (result.details.startsWith('http') || result.details.includes('hash='))) {
-    return result.details;
-  }
-
-  // Se o DirectAdmin retornar o hash/key diretamente no objeto
-  const token = result.key || result.hash || result.details;
-  if (token && typeof token === 'string') {
-    const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
-    
-    // Se o token for apenas o hash
-    if (!token.includes('http') && token.length > 20) {
-      return `https://${cleanHostname}:2222/CMD_LOGIN_URL?hash=${token}`;
-    }
-    
-    // Se for uma URL completa ou relativa
-    if (token.includes('CMD_LOGIN_URL') || token.includes('api/login/url')) {
-      if (token.startsWith('http')) return token;
-      return `https://${cleanHostname}:2222${token.startsWith('/') ? '' : '/'}${token}`;
-    }
-  }
-
-  // Se chegarmos aqui, a API falhou ou retornou algo inesperado
-  const errorMsg = result.result || result.text || result.details || JSON.stringify(result);
-  throw new Error(`Erro ao gerar One-Time Login URL: ${errorMsg}`);
+  return parseDirectAdminLoginUrl(result, server.hostname);
 }
 
 
