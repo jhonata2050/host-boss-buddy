@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/tickets")({
   head: () => ({
@@ -33,6 +34,7 @@ function ClientTicketsPage() {
   const [term, setTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: tickets, isLoading } = useQuery({
     queryKey: ["client-tickets", user?.id],
