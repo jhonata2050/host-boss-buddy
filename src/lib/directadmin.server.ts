@@ -241,42 +241,64 @@ export async function getDASession(serverId: string, username: string, redirectU
   if (error || !server) throw new Error("Servidor não encontrado");
 
   // Single Sign-On via CMD_API_LOGIN_KEYS
-  // Se o servidor for acessado por um Admin (como o nosso api_user), podemos usar o formato "admin|user"
-  const targetUser = server.api_user.includes('|') ? server.api_user : `${server.api_user}|${username}`;
+  const targetUser = `${server.api_user}|${username}`;
 
   const result = await callDA({
     hostname: server.hostname,
     apiUser: server.api_user,
     apiToken: server.api_token,
     command: 'CMD_API_LOGIN_KEYS',
-    method: 'GET',
+    method: 'POST', // Mudando para POST para garantir o envio correto dos parâmetros
     params: {
       action: 'create',
       type: 'one_time_url',
       user: targetUser,
-      passwd: server.api_token,
+      passwd: server.api_token, 
       'redirect-url': redirectUrl || '/',
       expiry: '30m',
       login_keys_notify_on_creation: '0'
     }
-
   });
 
+  // O DirectAdmin retorna a URL de One-Time Login no campo 'details' em caso de sucesso (error=0)
+  if (result.error === '0' && result.details && typeof result.details === 'string') {
+    return result.details;
+  }
+
+  // Se a resposta veio com uma lista de chaves (como visto no log do erro), significa que o comando listou em vez de criar
+  // Isso acontece se os parâmetros não forem reconhecidos ou se o método estiver incorreto.
   if (result.error === '1' || result.text?.toLowerCase().includes('error')) {
     throw new Error(`Erro do DirectAdmin: ${result.details || result.text || 'Falha ao criar URL de acesso'}`);
   }
 
-  // O resultado esperado para one_time_url é um objeto contendo a URL no campo 'details' ou similar
-  const ssoUrl = result.details || result.text;
+  // Fallback para o método de chave manual caso o one_time_url falhe ou retorne algo inesperado
+  const keyId = `sso${Date.now().toString(36)}`;
+  const keyPass = generateStrongPassword(32);
   
-  if (ssoUrl && ssoUrl.startsWith('http')) {
-    return ssoUrl;
-  }
+  const fallbackResult = await callDA({
+    hostname: server.hostname,
+    apiUser: server.api_user,
+    apiToken: server.api_token,
+    command: 'CMD_API_LOGIN_KEYS',
+    method: 'POST',
+    params: {
+      action: 'create',
+      user: username,
+      keyname: keyId,
+      id: keyId,
+      passwd: keyPass,
+      passwd2: keyPass,
+      expiry: '3600',
+      ips: '0.0.0.0/0',
+      type: 'one_time_key'
+    }
+  });
 
-  // Fallback para o método anterior caso o one_time_url não retorne a URL completa
   const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
-  if (result.key || result.value) {
-    return `https://${cleanHostname}:2222/login?user=${username}&passwd=${result.key || result.value}`;
+  const keyValue = fallbackResult.key || fallbackResult.value;
+  
+  if (keyValue) {
+    return `https://${cleanHostname}:2222/login?user=${username}&passwd=${keyValue}`;
   }
 
   throw new Error(`Resposta inesperada do DirectAdmin: ${JSON.stringify(result)}`);
