@@ -174,11 +174,18 @@ function ServiceManagementPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-3 pt-2">
-                    <Button onClick={() => handleSSO()} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90 gap-2">
+                    <Button 
+                      onClick={() => handleSSO('CMD_SHOW_DOMAIN')} 
+                      className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90 gap-2"
+                    >
                       <ExternalLink className="size-4" />
                       Acessar Painel de Controle
                     </Button>
-                    <Button variant="outline" onClick={() => handleSSO('CMD_FILE_MANAGER')} className="rounded-xl border-border hover:bg-secondary/50 gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleSSO('CMD_FILE_MANAGER')} 
+                      className="rounded-xl border-border hover:bg-secondary/50 gap-2"
+                    >
                       <HardDrive className="size-4" />
                       Gerenciador de Arquivos
                     </Button>
