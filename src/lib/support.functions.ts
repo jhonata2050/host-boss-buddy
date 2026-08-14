@@ -228,6 +228,49 @@ export const createServerDA = createServerFn({ method: "POST" })
     return data;
   });
 
+export const updateServerDA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      hostname: z.string(),
+      ip_address: z.string().optional(),
+      api_user: z.string(),
+      api_token: z.string().optional(),
+      max_accounts: z.number().default(100),
+    }).parse(data)
+  )
+  .handler(async ({ data: input, context }) => {
+    const patch = {
+      name: input.name,
+      hostname: input.hostname,
+      ip_address: input.ip_address ?? null,
+      api_user: input.api_user,
+      max_accounts: input.max_accounts,
+      ...(input.api_token && input.api_token.length > 0 ? { api_token: input.api_token } : {}),
+    };
+
+    const { data, error } = await context.supabase
+      .from("servers")
+      .update(patch)
+      .eq("id", input.id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const deleteServerDA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.string().parse(data))
+  .handler(async ({ data: serverId, context }) => {
+    const { error } = await context.supabase.from("servers").delete().eq("id", serverId);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 export const testDAConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.string().parse(data))

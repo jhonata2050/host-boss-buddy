@@ -218,7 +218,8 @@ export async function getDASession(serverId: string, username: string) {
     params: {
       action: 'create',
       user: username,
-      keyname: `sso_${Date.now()}`,
+      keyname: `sso${Date.now().toString(36)}`,
+      id: `sso${Date.now().toString(36)}`,
       expiry: '3600',
       ips: '0.0.0.0/0',
       type: 'one_time_key'

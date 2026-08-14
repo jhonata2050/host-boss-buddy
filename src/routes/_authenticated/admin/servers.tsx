@@ -3,9 +3,9 @@ import { AppShell } from "@/components/app/AppShell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getServers, createServerDA, testDAConnection, getDAPackagesList } from "@/lib/support.functions";
+import { getServers, createServerDA, testDAConnection, getDAPackagesList, updateServerDA, deleteServerDA } from "@/lib/support.functions";
 
-import { Plus, Server, Globe, Shield, Activity, Trash2, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Plus, Server, Globe, Shield, Activity, Trash2, RefreshCw, CheckCircle2, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,62 @@ export const Route = createFileRoute("/_authenticated/admin/servers")({
   component: AdminServersPage,
 });
 
+type ServerRow = {
+  id: string;
+  name: string;
+  hostname: string;
+  ip_address: string | null;
+  api_user: string;
+  max_accounts: number | null;
+};
+
 function AdminServersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingServer, setEditingServer] = useState<ServerRow | null>(null);
   const [syncResults, setSyncResults] = useState<Record<string, { packages: string[]; syncedAt: string }>>({});
   const queryClient = useQueryClient();
+
+  const updateServerMutation = useMutation({
+    mutationFn: (payload: {
+      id: string;
+      name: string;
+      hostname: string;
+      ip_address?: string | undefined;
+      api_user: string;
+      api_token?: string | undefined;
+      max_accounts: number;
+    }) => updateServerDA({ data: payload }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-servers"] });
+      toast.success("Servidor atualizado com sucesso!");
+      setEditingServer(null);
+    },
+    onError: (err: Error) => toast.error("Erro ao atualizar: " + err.message),
+  });
+
+  const deleteServerMutation = useMutation({
+    mutationFn: (serverId: string) => deleteServerDA({ data: serverId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-servers"] });
+      toast.success("Servidor removido.");
+    },
+    onError: (err: Error) => toast.error("Erro ao remover: " + err.message),
+  });
+
+  const handleEditServer = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingServer) return;
+    const formData = new FormData(e.currentTarget);
+    updateServerMutation.mutate({
+      id: editingServer.id,
+      name: formData.get("name") as string,
+      hostname: formData.get("hostname") as string,
+      ip_address: (formData.get("ip_address") as string) || undefined,
+      api_user: formData.get("api_user") as string,
+      api_token: (formData.get("api_token") as string) || undefined,
+      max_accounts: Number(formData.get("max_accounts")) || 100,
+    });
+  };
 
   const { data: servers, isLoading } = useQuery({
     queryKey: ["admin-servers"],
@@ -203,7 +255,31 @@ function AdminServersPage() {
                       <RefreshCw className={`mr-2 h-4 w-4 ${syncMutation.isPending && syncMutation.variables === server.id ? "animate-spin" : ""}`} />
                       {syncMutation.isPending && syncMutation.variables === server.id ? "Sincronizando..." : "Sincronizar pacotes"}
                     </Button>
-                    <Button variant="ghost" size="icon" className="rounded-xl text-destructive hover:bg-destructive/5"><Trash2 className="h-4 w-4" /></Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => setEditingServer({
+                        id: server.id,
+                        name: server.name,
+                        hostname: server.hostname,
+                        ip_address: server.ip_address,
+                        api_user: server.api_user,
+                        max_accounts: server.max_accounts,
+                      })}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-xl text-destructive hover:bg-destructive/5"
+                      onClick={() => {
+                        if (confirm(`Remover o servidor ${server.name}?`)) deleteServerMutation.mutate(server.id);
+                      }}
+                      disabled={deleteServerMutation.isPending && deleteServerMutation.variables === server.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -216,6 +292,49 @@ function AdminServersPage() {
             <Button variant="link" className="text-brand font-bold mt-2" onClick={() => setIsModalOpen(true)}>Adicionar o primeiro servidor</Button>
           </div>
         )}
+
+        <Dialog open={editingServer !== null} onOpenChange={(open) => !open && setEditingServer(null)}>
+          <DialogContent className="rounded-3xl border-none shadow-2xl max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold">Editar Servidor</DialogTitle>
+            </DialogHeader>
+            {editingServer && (
+              <form onSubmit={handleEditServer} className="space-y-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-name">Nome Amigável</Label>
+                  <Input id="edit-name" name="name" defaultValue={editingServer.name} required className="rounded-xl" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-hostname">Hostname/IP da API</Label>
+                  <Input id="edit-hostname" name="hostname" defaultValue={editingServer.hostname} required className="rounded-xl" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-api_user">Usuário API</Label>
+                  <Input id="edit-api_user" name="api_user" defaultValue={editingServer.api_user} required className="rounded-xl" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-api_token">Chave de API / Senha</Label>
+                  <Input id="edit-api_token" name="api_token" type="password" placeholder="Deixe vazio para manter a atual" className="rounded-xl" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-ip_address">IP Público</Label>
+                    <Input id="edit-ip_address" name="ip_address" defaultValue={editingServer.ip_address ?? ""} className="rounded-xl" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-max_accounts">Limite de Contas</Label>
+                    <Input id="edit-max_accounts" name="max_accounts" type="number" defaultValue={editingServer.max_accounts ?? 100} className="rounded-xl" />
+                  </div>
+                </div>
+                <DialogFooter className="pt-4">
+                  <Button type="submit" disabled={updateServerMutation.isPending} className="bg-brand text-brand-foreground w-full rounded-2xl">
+                    {updateServerMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   );
