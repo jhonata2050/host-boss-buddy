@@ -32,6 +32,7 @@ import { Route as AuthenticatedAdminTicketsRouteImport } from './routes/_authent
 import { Route as AuthenticatedCheckoutProductIdRouteImport } from './routes/_authenticated/checkout.$productId'
 import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
 import { Route as AuthenticatedTicketsTicketIdRouteImport } from './routes/_authenticated/tickets.$ticketId'
+import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin/clients.index'
 import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients.$clientId'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 import { Route as ApiPublicWebhooksAbacatepayRouteImport } from './routes/api/public/webhooks/abacatepay'
@@ -168,6 +169,12 @@ const AuthenticatedTicketsTicketIdRoute =
     path: '/$ticketId',
     getParentRoute: () => AuthenticatedTicketsRoute,
   } as any)
+const AuthenticatedAdminClientsIndexRoute =
+  AuthenticatedAdminClientsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAdminClientsRoute,
+  } as any)
 const AuthenticatedAdminClientsClientIdRoute =
   AuthenticatedAdminClientsClientIdRouteImport.update({
     id: '/$clientId',
@@ -246,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/api/public/webhooks/paghiper': typeof ApiPublicWebhooksPaghiperRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
+  '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -255,7 +263,6 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
-  '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/domains': typeof AuthenticatedAdminDomainsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -277,6 +284,7 @@ export interface FileRoutesByTo {
   '/api/public/webhooks/paghiper': typeof ApiPublicWebhooksPaghiperRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
+  '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -311,6 +319,7 @@ export interface FileRoutesById {
   '/api/public/webhooks/paghiper': typeof ApiPublicWebhooksPaghiperRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
+  '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -345,6 +354,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/paghiper'
     | '/api/public/webhooks/stripe'
     | '/api/public/webhooks/woovi'
+    | '/admin/clients/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -354,7 +364,6 @@ export interface FileRouteTypes {
     | '/profile'
     | '/services'
     | '/tickets'
-    | '/admin/clients'
     | '/admin/coupons'
     | '/admin/domains'
     | '/admin/emails'
@@ -376,6 +385,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/paghiper'
     | '/api/public/webhooks/stripe'
     | '/api/public/webhooks/woovi'
+    | '/admin/clients'
   id:
     | '__root__'
     | '/'
@@ -409,6 +419,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/paghiper'
     | '/api/public/webhooks/stripe'
     | '/api/public/webhooks/woovi'
+    | '/_authenticated/admin/clients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -587,6 +598,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsTicketIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
+    '/_authenticated/admin/clients/': {
+      id: '/_authenticated/admin/clients/'
+      path: '/'
+      fullPath: '/admin/clients/'
+      preLoaderRoute: typeof AuthenticatedAdminClientsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminClientsRoute
+    }
     '/_authenticated/admin/clients/$clientId': {
       id: '/_authenticated/admin/clients/$clientId'
       path: '/$clientId'
@@ -648,12 +666,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminClientsRouteChildren {
   AuthenticatedAdminClientsClientIdRoute: typeof AuthenticatedAdminClientsClientIdRoute
+  AuthenticatedAdminClientsIndexRoute: typeof AuthenticatedAdminClientsIndexRoute
 }
 
 const AuthenticatedAdminClientsRouteChildren: AuthenticatedAdminClientsRouteChildren =
   {
     AuthenticatedAdminClientsClientIdRoute:
       AuthenticatedAdminClientsClientIdRoute,
+    AuthenticatedAdminClientsIndexRoute: AuthenticatedAdminClientsIndexRoute,
   }
 
 const AuthenticatedAdminClientsRouteWithChildren =
