@@ -17,7 +17,8 @@ import {
   Send,
   Save,
   LogIn,
-  Edit2
+  Edit2,
+  ExternalLink
 } from "lucide-react";
 
 import { useState } from "react";
