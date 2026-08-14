@@ -31,6 +31,7 @@ import { Route as AuthenticatedAdminServersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminTicketsRouteImport } from './routes/_authenticated/admin/tickets'
 import { Route as AuthenticatedCheckoutProductIdRouteImport } from './routes/_authenticated/checkout.$productId'
 import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
+import { Route as AuthenticatedServicesIndexRouteImport } from './routes/_authenticated/services.index'
 import { Route as AuthenticatedServicesServiceIdRouteImport } from './routes/_authenticated/services.$serviceId'
 import { Route as AuthenticatedTicketsTicketIdRouteImport } from './routes/_authenticated/tickets.$ticketId'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin/clients.index'
@@ -164,6 +165,12 @@ const AuthenticatedInvoicesInvoiceIdRoute =
     path: '/$invoiceId',
     getParentRoute: () => AuthenticatedInvoicesRoute,
   } as any)
+const AuthenticatedServicesIndexRoute =
+  AuthenticatedServicesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedServicesRoute,
+  } as any)
 const AuthenticatedServicesServiceIdRoute =
   AuthenticatedServicesServiceIdRouteImport.update({
     id: '/$serviceId',
@@ -253,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/services/$serviceId': typeof AuthenticatedServicesServiceIdRoute
   '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/services/': typeof AuthenticatedServicesIndexRoute
   '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
@@ -269,7 +277,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/invoices': typeof AuthenticatedInvoicesRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
-  '/services': typeof AuthenticatedServicesRouteWithChildren
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/domains': typeof AuthenticatedAdminDomainsRoute
@@ -285,6 +292,7 @@ export interface FileRoutesByTo {
   '/services/$serviceId': typeof AuthenticatedServicesServiceIdRoute
   '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/services': typeof AuthenticatedServicesIndexRoute
   '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
@@ -321,6 +329,7 @@ export interface FileRoutesById {
   '/_authenticated/services/$serviceId': typeof AuthenticatedServicesServiceIdRoute
   '/_authenticated/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/services/': typeof AuthenticatedServicesIndexRoute
   '/_authenticated/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/services/$serviceId'
     | '/tickets/$ticketId'
     | '/admin/'
+    | '/services/'
     | '/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
     | '/api/public/webhooks/abacatepay'
@@ -373,7 +383,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/invoices'
     | '/profile'
-    | '/services'
     | '/tickets'
     | '/admin/coupons'
     | '/admin/domains'
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/services/$serviceId'
     | '/tickets/$ticketId'
     | '/admin'
+    | '/services'
     | '/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
     | '/api/public/webhooks/abacatepay'
@@ -424,6 +434,7 @@ export interface FileRouteTypes {
     | '/_authenticated/services/$serviceId'
     | '/_authenticated/tickets/$ticketId'
     | '/_authenticated/admin/'
+    | '/_authenticated/services/'
     | '/_authenticated/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
     | '/api/public/webhooks/abacatepay'
@@ -604,6 +615,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvoicesInvoiceIdRouteImport
       parentRoute: typeof AuthenticatedInvoicesRoute
     }
+    '/_authenticated/services/': {
+      id: '/_authenticated/services/'
+      path: '/'
+      fullPath: '/services/'
+      preLoaderRoute: typeof AuthenticatedServicesIndexRouteImport
+      parentRoute: typeof AuthenticatedServicesRoute
+    }
     '/_authenticated/services/$serviceId': {
       id: '/_authenticated/services/$serviceId'
       path: '/$serviceId'
@@ -750,10 +768,12 @@ const AuthenticatedInvoicesRouteWithChildren =
 
 interface AuthenticatedServicesRouteChildren {
   AuthenticatedServicesServiceIdRoute: typeof AuthenticatedServicesServiceIdRoute
+  AuthenticatedServicesIndexRoute: typeof AuthenticatedServicesIndexRoute
 }
 
 const AuthenticatedServicesRouteChildren: AuthenticatedServicesRouteChildren = {
   AuthenticatedServicesServiceIdRoute: AuthenticatedServicesServiceIdRoute,
+  AuthenticatedServicesIndexRoute: AuthenticatedServicesIndexRoute,
 }
 
 const AuthenticatedServicesRouteWithChildren =
