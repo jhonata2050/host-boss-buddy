@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { 
   User, 
   Mail, 
@@ -46,52 +46,45 @@ export const Route = createFileRoute("/_authenticated/admin/clients/$clientId")(
       { title: `Detalhes do Cliente — HostPanel` },
     ],
   }),
+  loader: ({ context, params }) =>
+    context.queryClient.ensureQueryData(clientDossierQueryOptions(params.clientId)),
   component: ClientDetailPage,
 });
+
+const clientDossierQueryOptions = (clientId: string) =>
+  queryOptions({
+    queryKey: ["admin-client-dossier", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(`
+          *,
+          invoices(*),
+          services(*, products(name)),
+          tickets(*),
+          email_logs(*)
+        `)
+        .eq("id", clientId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 2,
+  });
 
 function ClientDetailPage() {
   const { clientId } = Route.useParams();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
 
-  const clientQuery = useQuery({
-    queryKey: ["admin-client", clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", clientId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  const dossiersQuery = useQuery({
-    queryKey: ["admin-client-dossier", clientId],
-    queryFn: async () => {
-      // Parallelize requests and use indexes
-      const [invoices, services, tickets, emailLogs] = await Promise.all([
-        supabase.from("invoices").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
-        supabase.from("services").select("*, products(name)").eq("user_id", clientId).order("created_at", { ascending: false }),
-        supabase.from("tickets").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
-        supabase.from("email_logs").select("*").eq("user_id", clientId).order("created_at", { ascending: false })
-      ]);
-
-      const firstError = invoices.error || services.error || tickets.error || emailLogs.error;
-      if (firstError) throw new Error(firstError.message);
-
-      return {
-        invoices: invoices.data || [],
-        services: services.data || [],
-        tickets: tickets.data || [],
-        emailLogs: emailLogs.data || []
-      };
-    },
-    staleTime: 1000 * 60 * 2, // 2 minutes for dossier
-    enabled: !!clientId,
-  });
+  const { data: client } = useSuspenseQuery(clientDossierQueryOptions(clientId));
+  const dossier = {
+    invoices: [...(client.invoices ?? [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+    services: [...(client.services ?? [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+    tickets: [...(client.tickets ?? [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+    emailLogs: [...(client.email_logs ?? [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+  };
 
   const updateProfile = useMutation({
     mutationFn: async (values: any) => {
@@ -102,7 +95,7 @@ function ClientDetailPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-client", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-client-dossier", clientId] });
       setIsEditing(false);
       toast.success("Perfil atualizado com sucesso");
     },
@@ -110,57 +103,6 @@ function ClientDetailPage() {
       toast.error(`Erro ao atualizar: ${err.message}`);
     }
   });
-
-  if (clientQuery.isLoading) {
-    return (
-      <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Carregando...</span>}>
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-64 rounded-xl" />
-          <Skeleton className="h-96 w-full rounded-3xl" />
-        </div>
-      </AppShell>
-    );
-  }
-
-  if (clientQuery.error) {
-    return (
-      <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Erro</span>}>
-        <Card className="rounded-3xl border-none shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="size-5 text-destructive" /> Não foi possível carregar o cliente
-            </CardTitle>
-            <CardDescription>{(clientQuery.error as Error).message}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="rounded-xl">
-              <Link to="/admin/clients">Voltar para clientes</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </AppShell>
-    );
-  }
-
-  if (!clientQuery.data) {
-    return (
-      <AppShell area="admin" breadcrumb={<span>Admin / Clientes / Não encontrado</span>}>
-        <Card className="rounded-3xl border-none shadow-sm">
-          <CardHeader>
-            <CardTitle>Cliente não encontrado</CardTitle>
-            <CardDescription>O registro pode ter sido removido.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="rounded-xl">
-              <Link to="/admin/clients">Voltar para clientes</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </AppShell>
-    );
-  }
-
-  const client = clientQuery.data;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
