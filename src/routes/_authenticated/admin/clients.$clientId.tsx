@@ -15,10 +15,16 @@ import {
   AlertCircle,
   XCircle,
   Send,
-  Save
+  Save,
+  LogIn
 } from "lucide-react";
+
 import { useState } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
+import { impersonateClient } from "@/lib/admin.functions";
+
 
 import { AppShell } from "@/components/app/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +70,11 @@ const clientDossierQueryOptions = (clientId: string) =>
 function ClientDetailPage() {
   const { clientId } = Route.useParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { setImpersonatedClientId } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
+
 
   const { data: client } = useSuspenseQuery(clientDossierQueryOptions(clientId));
   const dossier = {
@@ -104,7 +114,22 @@ function ClientDetailPage() {
     updateProfile.mutate(updateValues);
   };
 
+  const handleImpersonate = async () => {
+    setIsImpersonating(true);
+    try {
+      await impersonateClient({ data: { clientId } });
+      setImpersonatedClientId(clientId);
+      toast.success("Logado como cliente");
+      navigate({ to: "/dashboard" });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao logar como cliente");
+    } finally {
+      setIsImpersonating(false);
+    }
+  };
+
   return (
+
     <AppShell
       area="admin"
       breadcrumb={
@@ -123,9 +148,21 @@ function ClientDetailPage() {
             <h1 className="text-3xl font-bold tracking-tight">{client.full_name || "Sem Nome"}</h1>
             <p className="text-muted-foreground">{client.email}</p>
           </div>
-          <Badge className="h-8 px-4 text-sm" variant={client.status === "active" ? "default" : "secondary"}>
-            {client.status === "active" ? "Ativo" : "Inativo"}
-          </Badge>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              className="rounded-xl flex gap-2 h-10"
+              onClick={handleImpersonate}
+              disabled={isImpersonating}
+            >
+              <LogIn className="size-4" /> 
+              {isImpersonating ? "Acessando..." : "Acessar como Cliente"}
+            </Button>
+            <Badge className="h-10 px-4 text-sm" variant={client.status === "active" ? "default" : "secondary"}>
+              {client.status === "active" ? "Ativo" : "Inativo"}
+            </Badge>
+          </div>
+
         </div>
 
         <Tabs defaultValue="info" className="w-full">
