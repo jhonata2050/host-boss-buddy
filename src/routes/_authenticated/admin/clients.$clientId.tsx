@@ -55,20 +55,23 @@ const clientDossierQueryOptions = (clientId: string) =>
   queryOptions({
     queryKey: ["admin-client-dossier", clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(`
-          *,
-          invoices(*),
-          services(*, products(name)),
-          tickets(*),
-          email_logs(*)
-        `)
-        .eq("id", clientId)
-        .single();
+      const [profile, invoices, services, tickets, emailLogs] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", clientId).single(),
+        supabase.from("invoices").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
+        supabase.from("services").select("*, products(name)").eq("user_id", clientId).order("created_at", { ascending: false }),
+        supabase.from("tickets").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
+        supabase.from("email_logs").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
+      ]);
 
+      const error = profile.error || invoices.error || services.error || tickets.error || emailLogs.error;
       if (error) throw error;
-      return data;
+      return {
+        ...profile.data,
+        invoices: invoices.data ?? [],
+        services: services.data ?? [],
+        tickets: tickets.data ?? [],
+        email_logs: emailLogs.data ?? [],
+      };
     },
     staleTime: 1000 * 60 * 2,
   });
@@ -80,10 +83,10 @@ function ClientDetailPage() {
 
   const { data: client } = useSuspenseQuery(clientDossierQueryOptions(clientId));
   const dossier = {
-    invoices: [...((client.invoices ?? []) as any[])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
-    services: [...((client.services ?? []) as any[])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
-    tickets: [...((client.tickets ?? []) as any[])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
-    emailLogs: [...((client.email_logs ?? []) as any[])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+    invoices: client.invoices,
+    services: client.services,
+    tickets: client.tickets,
+    emailLogs: client.email_logs,
   };
   const dossiersQuery = { isLoading: false, data: dossier };
 
