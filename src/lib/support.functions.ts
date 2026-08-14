@@ -365,9 +365,10 @@ export const updateServiceDetails = createServerFn({ method: "POST" })
         username: input.username,
         domain: input.domain,
         server_id: input.server_id,
-        status: input.status ?? undefined
+        status: input.status ? (input.status as any) : undefined
       })
       .eq("id", input.serviceId);
+
 
     if (error) throw new Error(`Erro ao atualizar serviço: ${error.message}`);
     return { success: true };
