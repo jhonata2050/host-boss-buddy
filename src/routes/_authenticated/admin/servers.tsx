@@ -3,9 +3,9 @@ import { AppShell } from "@/components/app/AppShell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getServers, createServerDA, testDAConnection, getDAPackagesList } from "@/lib/support.functions";
+import { getServers, createServerDA, testDAConnection, getDAPackagesList, updateServerDA, deleteServerDA } from "@/lib/support.functions";
 
-import { Plus, Server, Globe, Shield, Activity, Trash2, RefreshCw, CheckCircle2 } from "lucide-react";
+import { Plus, Server, Globe, Shield, Activity, Trash2, RefreshCw, CheckCircle2, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
