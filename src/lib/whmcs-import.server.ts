@@ -317,7 +317,9 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
       const userId = await resolveUserId(email, whmcsClientId);
       if (!userId) {
         // Log better error for debugging why linking failed
-        throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Verifique se o cliente foi importado primeiro.`);
+        const fields = Object.keys(row).join(", ");
+        throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Campos disponíveis no CSV: ${fields}. Verifique se o cliente foi importado primeiro.`);
+
       }
 
       const total = toNumber(pick(row, ["total", "valor", "amount", "totalamount"]));
