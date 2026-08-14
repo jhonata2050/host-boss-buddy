@@ -300,7 +300,14 @@ export function AppShell({
         <main className="min-w-0 flex-1 px-4 py-4 lg:px-6">
           <header className="flex items-center justify-between gap-4 pb-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">{breadcrumb}</div>
-            <Bell className="size-5 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground relative">
+                <Bell className="size-5" />
+                {hasOverdue && (
+                  <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full border-2 border-background" />
+                )}
+              </Button>
+            </div>
           </header>
           <div className="rounded-3xl border border-border bg-card p-4 shadow-[var(--shadow-card)] lg:p-6">
             {children}
