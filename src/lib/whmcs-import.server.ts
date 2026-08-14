@@ -174,8 +174,10 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
 
 
     const fullName =
-      pick(row, ["full_name", "name", "nome"]) ||
-      `${pick(row, ["firstname", "first_name"])} ${pick(row, ["lastname", "last_name"])}`.trim();
+      pick(row, ["full_name", "name", "nome", "firstname", "first_name", "lastname", "last_name"]) ||
+      `${pick(row, ["firstname", "first_name"])} ${pick(row, ["lastname", "last_name"])}`.trim() ||
+      email.split("@")[0] || "Cliente Importado";
+
 
     const profile = {
       full_name: fullName || null,
