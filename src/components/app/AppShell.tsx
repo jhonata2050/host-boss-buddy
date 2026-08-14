@@ -1,6 +1,8 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
+  X,
   ChevronDown,
   Cog,
   Gauge,
@@ -158,6 +160,24 @@ export function AppShell({
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const navigate = useNavigate();
+  const [hideBanner, setHideBanner] = useState(false);
+
+  const { data: overdueInvoices } = useQuery({
+    queryKey: ["overdue-invoices", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from("invoices")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "pending")
+        .lt("due_date", new Date().toISOString());
+      return data || [];
+    },
+    enabled: !!user && !isAdminArea,
+  });
+
+  const hasOverdue = overdueInvoices && overdueInvoices.length > 0;
 
   const isAdminArea = area ? area === "admin" : isStaff;
   const sections = isAdminArea ? ADMIN_SECTIONS : CLIENT_SECTIONS;
@@ -173,6 +193,17 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
+      {hasOverdue && !hideBanner && (
+        <div className="bg-destructive p-3 text-center text-destructive-foreground font-medium border-b border-brand/20 relative animate-in fade-in slide-in-from-top duration-300">
+          Você possui faturas vencidas. Regularize seu débito para evitar suspensão dos serviços.
+          <button 
+            onClick={() => setHideBanner(true)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
       <div className="flex">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
           <div className="flex items-center justify-between px-2 pb-4">

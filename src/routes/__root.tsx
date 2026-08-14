@@ -136,9 +136,6 @@ function RootComponent() {
       <AuthProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <div className="min-h-screen">
-          <div className="bg-destructive p-4 text-center text-destructive-foreground font-medium border-b border-brand/20">
-            foi gerado 14 erros, verifique o historico
-          </div>
           <Outlet />
         </div>
 
