@@ -165,7 +165,7 @@ export async function createDAAccount(serverId: string, details: {
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  const password = generateStrongPassword(32);
+  const password = generateStrongPassword(128);
 
   return await callDA({
     hostname: server.hostname,
@@ -271,10 +271,10 @@ export async function getDASession(serverId: string, username: string, redirectU
     console.error("Erro na tentativa de one_time_url, tentando fallback...", e);
   }
 
-  // Fallback (Tentativa 2): one_time_key com senha ULTRA forte (64 caracteres)
+  // Fallback (Tentativa 2): one_time_key com senha ULTRA forte (128 caracteres)
   const keyId = `sso${Date.now().toString(36)}`;
-  // Aumentado para 64 caracteres e garantindo símbolos complexos para satisfazer o servidor br01-da
-  const keyPass = generateStrongPassword(64);
+  // Aumentado para 128 caracteres e garantindo símbolos complexos para satisfazer o servidor br01-da
+  const keyPass = generateStrongPassword(128);
   
   const fallbackResult = await callDA({
     hostname: server.hostname,
