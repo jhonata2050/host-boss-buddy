@@ -32,12 +32,31 @@ function pick(row: Record<string, string>, keys: string[]): string {
   return "";
 }
 
+export function debugRow(row: Record<string, string>): string {
+  const keys = Object.keys(row).join(", ");
+  return `Campos encontrados: ${keys}`;
+}
+
+
 function toDate(value: string): string | null {
   if (!value) return null;
   const v = value.trim();
-  if (v === "0000-00-00" || v === "0000-00-00 00:00:00") return null;
+  if (v === "0000-00-00" || v === "0000-00-00 00:00:00" || v === "0" || v === "") return null;
+  // Handle DD/MM/YYYY
+  const partsSlash = v.split("/");
+  if (v.includes("/") && partsSlash[0] && partsSlash[0].length <= 2) {
+
+    const parts = v.split("/");
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const d = new Date(`${year}-${month}-${day}`);
+      return Number.isNaN(d.getTime()) ? null : d.toISOString();
+    }
+
+  }
   const d = new Date(v.replace(" ", "T"));
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+
 }
 
 function toNumber(value: string): number {
@@ -82,6 +101,9 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
   const cleanEmail = email?.trim().toLowerCase();
   const cleanWhmcsId = whmcsClientId?.toString().trim();
 
+  if (!cleanEmail && !cleanWhmcsId) return null;
+
+
   // 1. Tenta buscar pelo whmcs_id no banco de perfis (mais preciso)
   if (cleanWhmcsId) {
     const { data: profile } = await (supabaseAdmin
@@ -89,13 +111,20 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
       .select("id")
       .eq("whmcs_id", cleanWhmcsId)
       .maybeSingle();
-    if (profile?.id) return profile.id;
+    
+    if (profile?.id) {
+      console.log(`[Import] Resolvido via whmcs_id (${cleanWhmcsId}): ${profile.id}`);
+      return profile.id;
+    }
 
     // Se não achou no perfil, tenta ver se foi injetado no metadata do usuário
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
       const user = users.find(u => u.user_metadata?.['whmcs_id']?.toString() === cleanWhmcsId);
-      if (user) return user.id;
+      if (user) {
+        console.log(`[Import] Resolvido via auth metadata whmcs_id (${cleanWhmcsId}): ${user.id}`);
+        return user.id;
+      }
     }
   }
   
@@ -106,7 +135,11 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
       .select("id")
       .ilike("email", cleanEmail)
       .maybeSingle();
-    if (profile?.id) return profile.id;
+    
+    if (profile?.id) {
+      console.log(`[Import] Resolvido via email (${cleanEmail}): ${profile.id}`);
+      return profile.id;
+    }
   }
 
   // 3. Fallback: busca no auth.users
@@ -114,25 +147,37 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
       const user = users.find(u => u.email?.toLowerCase() === cleanEmail);
-      if (user) return user.id;
+      if (user) {
+        console.log(`[Import] Resolvido via auth email fallback (${cleanEmail}): ${user.id}`);
+        return user.id;
+      }
     }
   }
 
+  console.log(`[Import] Falha ao resolver usuário: Email=${cleanEmail}, WHMCS_ID=${cleanWhmcsId}`);
   return null;
 }
+
 
 
 /** Importa clientes do WHMCS (tblclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "e-mail", "emailaddress", "mail", "clientemail", "clientemail"]).toLowerCase();
-    const whmcsId = pick(row, ["id", "userid", "clientid", "uid", "cid"]);
+    const email = pick(row, ["email", "e-mail", "emailaddress", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
+    const whmcsId = pick(row, ["id", "userid", "clientid", "uid", "cid", "whmcsid", "client_id", "userid"]);
     
-    if (!email) continue;
+    if (!email && !whmcsId) {
+      stats.clients.failed++;
+      stats.errors.push("Linha ignorada: e-mail e ID WHMCS ausentes.");
+      continue;
+    }
+
 
     const fullName =
-      pick(row, ["full_name", "name", "nome"]) ||
-      `${pick(row, ["firstname", "first_name"])} ${pick(row, ["lastname", "last_name"])}`.trim();
+      pick(row, ["full_name", "name", "nome", "firstname", "first_name", "lastname", "last_name"]) ||
+      `${pick(row, ["firstname", "first_name"])} ${pick(row, ["lastname", "last_name"])}`.trim() ||
+      email.split("@")[0] || "Cliente Importado";
+
 
     const profile = {
       full_name: fullName || null,
@@ -232,14 +277,18 @@ async function resolveProductId(name: string): Promise<string | null> {
 /** Importa serviços/hospedagens do WHMCS (tblhosting export). */
 async function importServices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail"]).toLowerCase();
-    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id"]);
-    const serviceWhmcsId = pick(row, ["id", "serviceid", "hostingid"]);
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id"]);
+    const serviceWhmcsId = pick(row, ["id", "serviceid", "hostingid", "whmcsid", "service_id"]);
+
+
 
     try {
       const userId = await resolveUserId(email, whmcsClientId);
       if (!userId) {
-        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Verifique se o cliente foi importado primeiro.`);
+        const fields = Object.keys(row).join(", ");
+        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Campos disponíveis no CSV: ${fields}. Verifique se o cliente foi importado primeiro.`);
+
       }
 
       const productName = pick(row, ["product", "produto", "packagename", "productname", "package"]);
@@ -282,15 +331,19 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 /** Importa faturas do WHMCS (tblinvoices export). */
 async function importInvoices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail"]).toLowerCase();
-    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id"]);
-    const invoiceWhmcsId = pick(row, ["id", "invoiceid", "invoicenum", "number"]);
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id"]);
+    const invoiceWhmcsId = pick(row, ["id", "invoiceid", "invoicenum", "number", "whmcsid", "invoice_id"]);
+
+
     
     try {
       const userId = await resolveUserId(email, whmcsClientId);
       if (!userId) {
         // Log better error for debugging why linking failed
-        throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Verifique se o cliente foi importado primeiro.`);
+        const fields = Object.keys(row).join(", ");
+        throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Campos disponíveis no CSV: ${fields}. Verifique se o cliente foi importado primeiro.`);
+
       }
 
       const total = toNumber(pick(row, ["total", "valor", "amount", "totalamount"]));
