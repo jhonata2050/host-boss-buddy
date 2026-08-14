@@ -109,6 +109,8 @@ function AdminWHMCSImportPage() {
       setStep("Preparando arquivos...");
       const total = emptyStats();
       setLive(total);
+      
+      const sessionStart = new Date();
 
       const { jobId } = await startJob();
 
