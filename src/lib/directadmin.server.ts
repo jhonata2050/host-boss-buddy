@@ -26,8 +26,9 @@ function generateStrongPassword(length = 32): string {
   const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
   const lowercase = 'abcdefghijkmnopqrstuvwxyz';
   const numbers = '23456789';
-  const symbols = '@#$%&*!?';
+  const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?'; // Expanded symbols set
   const allCharacters = `${uppercase}${lowercase}${numbers}${symbols}`;
+  
   const randomValues = new Uint32Array(length);
   crypto.getRandomValues(randomValues);
 
@@ -36,21 +37,22 @@ function generateStrongPassword(length = 32): string {
     lowercase.charAt((randomValues[1] ?? 0) % lowercase.length),
     numbers.charAt((randomValues[2] ?? 0) % numbers.length),
     symbols.charAt((randomValues[3] ?? 0) % symbols.length),
-    ...Array.from(
-      { length: length - 4 },
-      (_, index) => allCharacters.charAt((randomValues[index + 4] ?? 0) % allCharacters.length),
-    ),
   ];
 
-  for (let index = password.length - 1; index > 0; index -= 1) {
-    const swapIndex = (randomValues[index] ?? 0) % (index + 1);
-    const currentCharacter = password[index] ?? '';
-    password[index] = password[swapIndex] ?? '';
-    password[swapIndex] = currentCharacter;
+  // Fill the rest with truly random characters
+  for (let i = 4; i < length; i++) {
+    password.push(allCharacters.charAt((randomValues[i] ?? 0) % allCharacters.length));
+  }
+
+  // Cryptographically secure shuffle
+  for (let i = password.length - 1; i > 0; i--) {
+    const j = (randomValues[i] ?? 0) % (i + 1);
+    [password[i], password[j]] = [password[j]!, password[i]!];
   }
 
   return password.join('');
 }
+
 
 async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', params = {} }: DARequestOptions) {
   // Limpa o hostname e garante o uso da porta 2222
@@ -243,37 +245,36 @@ export async function getDASession(serverId: string, username: string, redirectU
   // Single Sign-On via CMD_API_LOGIN_KEYS
   const targetUser = `${server.api_user}|${username}`;
 
-  const result = await callDA({
-    hostname: server.hostname,
-    apiUser: server.api_user,
-    apiToken: server.api_token,
-    command: 'CMD_API_LOGIN_KEYS',
-    method: 'POST', // Mudando para POST para garantir o envio correto dos parâmetros
-    params: {
-      action: 'create',
-      type: 'one_time_url',
-      user: targetUser,
-      passwd: server.api_token, 
-      'redirect-url': redirectUrl || '/',
-      expiry: '30m',
-      login_keys_notify_on_creation: '0'
+  // Tentativa 1: one_time_url (Método recomendado, sem senha exposta)
+  try {
+    const result = await callDA({
+      hostname: server.hostname,
+      apiUser: server.api_user,
+      apiToken: server.api_token,
+      command: 'CMD_API_LOGIN_KEYS',
+      method: 'POST',
+      params: {
+        action: 'create',
+        type: 'one_time_url',
+        user: targetUser,
+        // passwd: server.api_token, // Removido: o DA às vezes rejeita se enviado no corpo para one_time_url
+        'redirect-url': redirectUrl || '/',
+        expiry: '30m',
+        login_keys_notify_on_creation: '0'
+      }
+    });
+
+    if (result.error === '0' && result.details && typeof result.details === 'string') {
+      return result.details;
     }
-  });
-
-  // O DirectAdmin retorna a URL de One-Time Login no campo 'details' em caso de sucesso (error=0)
-  if (result.error === '0' && result.details && typeof result.details === 'string') {
-    return result.details;
+  } catch (e) {
+    console.error("Erro na tentativa de one_time_url, tentando fallback...", e);
   }
 
-  // Se a resposta veio com uma lista de chaves (como visto no log do erro), significa que o comando listou em vez de criar
-  // Isso acontece se os parâmetros não forem reconhecidos ou se o método estiver incorreto.
-  if (result.error === '1' || result.text?.toLowerCase().includes('error')) {
-    throw new Error(`Erro do DirectAdmin: ${result.details || result.text || 'Falha ao criar URL de acesso'}`);
-  }
-
-  // Fallback para o método de chave manual caso o one_time_url falhe ou retorne algo inesperado
+  // Fallback (Tentativa 2): one_time_key com senha ULTRA forte (64 caracteres)
   const keyId = `sso${Date.now().toString(36)}`;
-  const keyPass = generateStrongPassword(32);
+  // Aumentado para 64 caracteres e garantindo símbolos complexos para satisfazer o servidor br01-da
+  const keyPass = generateStrongPassword(64);
   
   const fallbackResult = await callDA({
     hostname: server.hostname,
@@ -290,9 +291,16 @@ export async function getDASession(serverId: string, username: string, redirectU
       passwd2: keyPass,
       expiry: '3600',
       ips: '0.0.0.0/0',
-      type: 'one_time_key'
+      type: 'one_time_key',
+      // Permissões mínimas para a chave ser aceita mais facilmente
+      'CMD_API_LOGIN_KEYS': 'yes',
+      'CMD_LOGIN': 'yes'
     }
   });
+
+  if (fallbackResult.error === '1') {
+    throw new Error(`DirectAdmin Recusou a Chave: ${fallbackResult.details || fallbackResult.text || "Senha fraca ou permissão negada"}`);
+  }
 
   const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
   const keyValue = fallbackResult.key || fallbackResult.value;
@@ -301,7 +309,8 @@ export async function getDASession(serverId: string, username: string, redirectU
     return `https://${cleanHostname}:2222/login?user=${username}&passwd=${keyValue}`;
   }
 
-  throw new Error(`Resposta inesperada do DirectAdmin: ${JSON.stringify(result)}`);
+  throw new Error(`O servidor não retornou uma chave válida. Resposta: ${JSON.stringify(fallbackResult)}`);
 }
+
 
 
