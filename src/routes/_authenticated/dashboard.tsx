@@ -28,17 +28,19 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 function ClientDashboardPage() {
-  const { user } = useAuth();
+  const { user, impersonatedClientId } = useAuth();
   const { data: profile } = useProfile();
+  const effectiveUserId = impersonatedClientId || user?.id;
 
   const stats = useQuery({
-    queryKey: ["client-dashboard-stats", user?.id],
-    enabled: Boolean(user?.id),
+    queryKey: ["client-dashboard-stats", effectiveUserId],
+    enabled: Boolean(effectiveUserId),
     queryFn: async () => {
       const [services, invoices] = await Promise.all([
-        supabase.from("services").select("id, status"),
-        supabase.from("invoices").select("total_amount, status"),
+        supabase.from("services").select("id, status").eq("user_id", effectiveUserId!),
+        supabase.from("invoices").select("total_amount, status").eq("user_id", effectiveUserId!),
       ]);
+
 
       const pending = (invoices.data ?? []).filter((i) => i.status === "pending");
       return {
