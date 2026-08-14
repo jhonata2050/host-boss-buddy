@@ -35,9 +35,12 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 function ClientServicesPage() {
   const [term, setTerm] = useState("");
+  const { user, impersonatedClientId } = useAuth();
+  const effectiveUserId = impersonatedClientId || user?.id;
 
   const services = useQuery({
-    queryKey: ["client-services"],
+    queryKey: ["client-services", effectiveUserId],
+    enabled: Boolean(effectiveUserId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
@@ -48,11 +51,13 @@ function ClientServicesPage() {
             directadmin_package
           )
         `)
+        .eq("user_id", effectiveUserId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
+
 
   const filtered = (services.data ?? []).filter((svc: any) => {
     const search = term.trim().toLowerCase();
