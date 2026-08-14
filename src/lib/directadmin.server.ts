@@ -26,8 +26,9 @@ function generateStrongPassword(length = 32): string {
   const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
   const lowercase = 'abcdefghijkmnopqrstuvwxyz';
   const numbers = '23456789';
-  const symbols = '@#$%&*!?';
+  const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?'; // Expanded symbols set
   const allCharacters = `${uppercase}${lowercase}${numbers}${symbols}`;
+  
   const randomValues = new Uint32Array(length);
   crypto.getRandomValues(randomValues);
 
@@ -36,21 +37,22 @@ function generateStrongPassword(length = 32): string {
     lowercase.charAt((randomValues[1] ?? 0) % lowercase.length),
     numbers.charAt((randomValues[2] ?? 0) % numbers.length),
     symbols.charAt((randomValues[3] ?? 0) % symbols.length),
-    ...Array.from(
-      { length: length - 4 },
-      (_, index) => allCharacters.charAt((randomValues[index + 4] ?? 0) % allCharacters.length),
-    ),
   ];
 
-  for (let index = password.length - 1; index > 0; index -= 1) {
-    const swapIndex = (randomValues[index] ?? 0) % (index + 1);
-    const currentCharacter = password[index] ?? '';
-    password[index] = password[swapIndex] ?? '';
-    password[swapIndex] = currentCharacter;
+  // Fill the rest with truly random characters
+  for (let i = 4; i < length; i++) {
+    password.push(allCharacters.charAt((randomValues[i] ?? 0) % allCharacters.length));
+  }
+
+  // Cryptographically secure shuffle
+  for (let i = password.length - 1; i > 0; i--) {
+    const j = (randomValues[i] ?? 0) % (i + 1);
+    [password[i], password[j]] = [password[j]!, password[i]!];
   }
 
   return password.join('');
 }
+
 
 async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', params = {} }: DARequestOptions) {
   // Limpa o hostname e garante o uso da porta 2222
