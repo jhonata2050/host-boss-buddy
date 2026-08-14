@@ -106,9 +106,9 @@ export function ClientsPage() {
     setIsDeleting(true);
     try {
       const result = await bulkDeleteClients({ data: { clientIds: selectedIds } });
-      toast.success(\`\${result.deleted} clientes excluídos com sucesso.\`);
+      toast.success(`${result.deleted} clientes excluídos com sucesso.`);
       if (result.failures > 0) {
-        toast.error(\`Falha ao excluir \${result.failures} clientes.\`);
+        toast.error(`Falha ao excluir ${result.failures} clientes.`);
       }
       setSelectedIds([]);
       queryClient.invalidateQueries({ queryKey: ["admin-clients"] });
@@ -118,6 +118,7 @@ export function ClientsPage() {
       setIsDeleting(false);
     }
   };
+
 
 
   return (
