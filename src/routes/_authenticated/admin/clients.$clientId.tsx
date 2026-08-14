@@ -17,7 +17,8 @@ import {
   Send,
   Save,
   LogIn,
-  Edit2
+  Edit2,
+  ExternalLink
 } from "lucide-react";
 
 import { useState } from "react";
@@ -318,7 +319,7 @@ function ClientDetailPage() {
                         <TableHead>Servidor</TableHead>
                         <TableHead>Vencimento</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="w-10"></TableHead>
+                        <TableHead className="w-20"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -353,14 +354,36 @@ function ClientDetailPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="size-8 rounded-lg"
-                              onClick={() => setEditingService(s)}
-                            >
-                              <Edit2 className="size-3" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              {s.status === 'active' && s.username && s.server_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 rounded-lg text-brand hover:text-brand hover:bg-brand/10"
+                                  onClick={async () => {
+                                    try {
+                                      const { getDASSOUrl } = await import("@/lib/support.functions");
+                                      const url = await getDASSOUrl({ data: { serverId: s.server_id, username: s.username } });
+                                      window.open(url, '_blank');
+                                    } catch (err: any) {
+                                      toast.error("Erro ao gerar acesso: " + err.message);
+                                    }
+                                  }}
+                                  title="Acessar Painel"
+                                >
+                                  <ExternalLink className="size-3" />
+                                </Button>
+                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="size-8 rounded-lg"
+                                onClick={() => setEditingService(s)}
+                                title="Editar Detalhes"
+                              >
+                                <Edit2 className="size-3" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

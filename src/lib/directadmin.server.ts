@@ -75,7 +75,7 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
         'Accept': 'application/json, text/plain',
       },
       body: method === 'POST' ? searchParams.toString() : null,
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(30_000),
       redirect: 'manual',
     });
 
@@ -98,6 +98,9 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
       return Object.fromEntries(new URLSearchParams(text));
     }
   } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`O servidor DirectAdmin (${hostname}) demorou muito para responder (timeout). Verifique se o IP do HostPanel está liberado no firewall do servidor.`);
+    }
     console.error("DirectAdmin Fetch Error:", error);
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
     throw new Error(`Falha na comunicação com o DirectAdmin: ${message}. Verifique o hostname e as permissões da chave no servidor ${hostname}.`);
@@ -324,7 +327,7 @@ export async function getDASession(serverId: string, username: string, redirectU
     action: 'create',
     type: 'one_time_url',
     user: targetUser,
-    expiry: '5m',
+    expiry: '60m',
     login_keys_notify_on_creation: '0'
   };
 
