@@ -101,6 +101,9 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
   const cleanEmail = email?.trim().toLowerCase();
   const cleanWhmcsId = whmcsClientId?.toString().trim();
 
+  if (!cleanEmail && !cleanWhmcsId) return null;
+
+
   // 1. Tenta buscar pelo whmcs_id no banco de perfis (mais preciso)
   if (cleanWhmcsId) {
     const { data: profile } = await (supabaseAdmin
