@@ -189,6 +189,7 @@ export type Database = {
           total_amount: number
           updated_at: string
           user_id: string
+          whmcs_id: string | null
         }
         Insert: {
           created_at?: string
@@ -205,6 +206,7 @@ export type Database = {
           total_amount: number
           updated_at?: string
           user_id: string
+          whmcs_id?: string | null
         }
         Update: {
           created_at?: string
@@ -221,6 +223,7 @@ export type Database = {
           total_amount?: number
           updated_at?: string
           user_id?: string
+          whmcs_id?: string | null
         }
         Relationships: [
           {
@@ -442,6 +445,7 @@ export type Database = {
           status: string
           tax_id: string | null
           updated_at: string
+          whmcs_id: string | null
         }
         Insert: {
           address_line?: string | null
@@ -460,6 +464,7 @@ export type Database = {
           status?: string
           tax_id?: string | null
           updated_at?: string
+          whmcs_id?: string | null
         }
         Update: {
           address_line?: string | null
@@ -478,6 +483,7 @@ export type Database = {
           status?: string
           tax_id?: string | null
           updated_at?: string
+          whmcs_id?: string | null
         }
         Relationships: []
       }
@@ -534,6 +540,7 @@ export type Database = {
           updated_at: string
           user_id: string
           username: string | null
+          whmcs_id: string | null
         }
         Insert: {
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
@@ -548,6 +555,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           username?: string | null
+          whmcs_id?: string | null
         }
         Update: {
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
@@ -562,6 +570,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string | null
+          whmcs_id?: string | null
         }
         Relationships: [
           {
