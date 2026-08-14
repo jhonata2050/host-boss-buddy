@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Store, Users, ExternalLink, Trash2, CheckSquare, Square } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, Store, Users, ExternalLink, Trash2 } from "lucide-react";
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { 
