@@ -292,6 +292,49 @@ function AdminServersPage() {
             <Button variant="link" className="text-brand font-bold mt-2" onClick={() => setIsModalOpen(true)}>Adicionar o primeiro servidor</Button>
           </div>
         )}
+
+        <Dialog open={editingServer !== null} onOpenChange={(open) => !open && setEditingServer(null)}>
+          <DialogContent className="rounded-3xl border-none shadow-2xl max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold">Editar Servidor</DialogTitle>
+            </DialogHeader>
+            {editingServer && (
+              <form onSubmit={handleEditServer} className="space-y-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-name">Nome Amigável</Label>
+                  <Input id="edit-name" name="name" defaultValue={editingServer.name} required className="rounded-xl" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-hostname">Hostname/IP da API</Label>
+                  <Input id="edit-hostname" name="hostname" defaultValue={editingServer.hostname} required className="rounded-xl" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-api_user">Usuário API</Label>
+                  <Input id="edit-api_user" name="api_user" defaultValue={editingServer.api_user} required className="rounded-xl" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-api_token">Chave de API / Senha</Label>
+                  <Input id="edit-api_token" name="api_token" type="password" placeholder="Deixe vazio para manter a atual" className="rounded-xl" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-ip_address">IP Público</Label>
+                    <Input id="edit-ip_address" name="ip_address" defaultValue={editingServer.ip_address ?? ""} className="rounded-xl" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="edit-max_accounts">Limite de Contas</Label>
+                    <Input id="edit-max_accounts" name="max_accounts" type="number" defaultValue={editingServer.max_accounts ?? 100} className="rounded-xl" />
+                  </div>
+                </div>
+                <DialogFooter className="pt-4">
+                  <Button type="submit" disabled={updateServerMutation.isPending} className="bg-brand text-brand-foreground w-full rounded-2xl">
+                    {updateServerMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   );
