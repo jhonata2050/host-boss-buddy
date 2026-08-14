@@ -136,7 +136,7 @@ function RootComponent() {
       <AuthProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <div className="min-h-screen">
-          <div className="bg-yellow-100 p-4 text-center text-yellow-800 font-medium border-b border-yellow-200">
+          <div className="bg-destructive/10 p-4 text-center text-destructive font-medium border-b border-destructive/20">
             ainda nao esta importando os servicos e faturas do s clientes ndo whmcs, analise e corrija isso definitivamente
           </div>
           <Outlet />

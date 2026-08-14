@@ -90,6 +90,13 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
       .eq("whmcs_id", cleanWhmcsId)
       .maybeSingle();
     if (profile?.id) return profile.id;
+
+    // Se não achou no perfil, tenta ver se foi injetado no metadata do usuário
+    const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
+    if (!error && users) {
+      const user = users.find(u => u.user_metadata?.whmcs_id?.toString() === cleanWhmcsId);
+      if (user) return user.id;
+    }
   }
   
   // 2. Tenta buscar pelo e-mail no banco de perfis
@@ -118,8 +125,8 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
 /** Importa clientes do WHMCS (tblclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "e-mail", "email_address", "mail", "client_email", "clientemail"]).toLowerCase();
-    const whmcsId = pick(row, ["id", "userid", "clientid", "uid"]);
+    const email = pick(row, ["email", "e-mail", "emailaddress", "mail", "clientemail", "clientemail"]).toLowerCase();
+    const whmcsId = pick(row, ["id", "userid", "clientid", "uid", "cid"]);
     
     if (!email) continue;
 
