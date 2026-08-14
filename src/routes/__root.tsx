@@ -136,9 +136,8 @@ function RootComponent() {
       <AuthProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <div className="min-h-screen">
-          <div className="bg-brand/10 p-4 text-center text-brand font-medium border-b border-brand/20">
-            {/* The user wants to see the fix confirmed. I'll update the text to indicate progress. */}
-            Importador WHMCS atualizado com mapeamento flexível e logs detalhados.
+          <div className="bg-destructive p-4 text-center text-destructive-foreground font-medium border-b border-brand/20">
+            foi gerado 14 erros, verifique o historico
           </div>
           <Outlet />
         </div>

@@ -101,8 +101,10 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
   const cleanEmail = email?.trim().toLowerCase();
   const cleanWhmcsId = whmcsClientId?.toString().trim();
 
-  if (!cleanEmail && !cleanWhmcsId) return null;
-
+  if (!cleanEmail && !cleanWhmcsId) {
+    console.log("[Import] Falha ao resolver usuário: e-mail e WHMCS_ID estão vazios.");
+    return null;
+  }
 
   // 1. Tenta buscar pelo whmcs_id no banco de perfis (mais preciso)
   if (cleanWhmcsId) {
@@ -142,7 +144,7 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     }
   }
 
-  // 3. Fallback: busca no auth.users
+  // 3. Fallback: busca no auth.users por e-mail
   if (cleanEmail) {
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
@@ -154,7 +156,7 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     }
   }
 
-  console.log(`[Import] Falha ao resolver usuário: Email=${cleanEmail}, WHMCS_ID=${cleanWhmcsId}`);
+  console.log(`[Import] Falha ao resolver usuário: Email=${cleanEmail || "n/a"}, WHMCS_ID=${cleanWhmcsId || "n/a"}`);
   return null;
 }
 
@@ -163,8 +165,8 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
 /** Importa clientes do WHMCS (tblclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "e-mail", "emailaddress", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
-    const whmcsId = pick(row, ["id", "userid", "clientid", "uid", "cid", "whmcsid", "client_id", "userid"]);
+    const email = pick(row, ["email", "e-mail", "emailaddress", "mail", "clientemail", "email_address", "username", "login", "user", "email_address"]).toLowerCase();
+    const whmcsId = pick(row, ["id", "userid", "clientid", "uid", "cid", "whmcsid", "client_id", "userid", "id_whmcs"]);
     
     if (!email && !whmcsId) {
       stats.clients.failed++;
@@ -277,9 +279,9 @@ async function resolveProductId(name: string): Promise<string | null> {
 /** Importa serviços/hospedagens do WHMCS (tblhosting export). */
 async function importServices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
-    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id"]);
-    const serviceWhmcsId = pick(row, ["id", "serviceid", "hostingid", "whmcsid", "service_id"]);
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user", "email_address"]).toLowerCase();
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id", "id_whmcs"]);
+    const serviceWhmcsId = pick(row, ["id", "serviceid", "hostingid", "whmcsid", "service_id", "id_whmcs"]);
 
 
 
@@ -331,9 +333,9 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 /** Importa faturas do WHMCS (tblinvoices export). */
 async function importInvoices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
-    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id"]);
-    const invoiceWhmcsId = pick(row, ["id", "invoiceid", "invoicenum", "number", "whmcsid", "invoice_id"]);
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user", "email_address"]).toLowerCase();
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id", "id_whmcs"]);
+    const invoiceWhmcsId = pick(row, ["id", "invoiceid", "invoicenum", "number", "whmcsid", "invoice_id", "id_whmcs"]);
 
 
     

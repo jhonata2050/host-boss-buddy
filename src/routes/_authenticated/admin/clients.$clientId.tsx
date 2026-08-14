@@ -40,7 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-export const Route = createFileRoute("/_authenticated/admin/clients_/$clientId")({
+export const Route = createFileRoute("/_authenticated/admin/clients/$clientId")({
   head: ({ params }) => ({
     meta: [
       { title: `Detalhes do Cliente — HostPanel` },
