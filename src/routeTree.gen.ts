@@ -32,7 +32,7 @@ import { Route as AuthenticatedAdminTicketsRouteImport } from './routes/_authent
 import { Route as AuthenticatedCheckoutProductIdRouteImport } from './routes/_authenticated/checkout.$productId'
 import { Route as AuthenticatedInvoicesInvoiceIdRouteImport } from './routes/_authenticated/invoices.$invoiceId'
 import { Route as AuthenticatedTicketsTicketIdRouteImport } from './routes/_authenticated/tickets.$ticketId'
-import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients_.$clientId'
+import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients.$clientId'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 import { Route as ApiPublicWebhooksAbacatepayRouteImport } from './routes/api/public/webhooks/abacatepay'
 import { Route as ApiPublicWebhooksCajupayRouteImport } from './routes/api/public/webhooks/cajupay'
@@ -170,9 +170,9 @@ const AuthenticatedTicketsTicketIdRoute =
   } as any)
 const AuthenticatedAdminClientsClientIdRoute =
   AuthenticatedAdminClientsClientIdRouteImport.update({
-    id: '/clients_/$clientId',
-    path: '/clients/$clientId',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
+    id: '/$clientId',
+    path: '/$clientId',
+    getParentRoute: () => AuthenticatedAdminClientsRoute,
   } as any)
 const ApiPublicCronMaintenanceRoute =
   ApiPublicCronMaintenanceRouteImport.update({
@@ -224,7 +224,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
-  '/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/domains': typeof AuthenticatedAdminDomainsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -255,7 +255,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/services': typeof AuthenticatedServicesRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
-  '/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/admin/domains': typeof AuthenticatedAdminDomainsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -289,7 +289,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/services': typeof AuthenticatedServicesRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
-  '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRoute
+  '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/_authenticated/admin/coupons': typeof AuthenticatedAdminCouponsRoute
   '/_authenticated/admin/domains': typeof AuthenticatedAdminDomainsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
@@ -303,7 +303,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/_authenticated/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
-  '/_authenticated/admin/clients_/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
+  '/_authenticated/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
   '/api/public/webhooks/cajupay': typeof ApiPublicWebhooksCajupayRoute
@@ -401,7 +401,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/$invoiceId'
     | '/_authenticated/tickets/$ticketId'
     | '/_authenticated/admin/'
-    | '/_authenticated/admin/clients_/$clientId'
+    | '/_authenticated/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
     | '/api/public/webhooks/abacatepay'
     | '/api/public/webhooks/cajupay'
@@ -587,12 +587,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsTicketIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
-    '/_authenticated/admin/clients_/$clientId': {
-      id: '/_authenticated/admin/clients_/$clientId'
-      path: '/clients/$clientId'
+    '/_authenticated/admin/clients/$clientId': {
+      id: '/_authenticated/admin/clients/$clientId'
+      path: '/$clientId'
       fullPath: '/admin/clients/$clientId'
       preLoaderRoute: typeof AuthenticatedAdminClientsClientIdRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
+      parentRoute: typeof AuthenticatedAdminClientsRoute
     }
     '/api/public/cron/maintenance': {
       id: '/api/public/cron/maintenance'
@@ -646,8 +646,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminClientsRouteChildren {
+  AuthenticatedAdminClientsClientIdRoute: typeof AuthenticatedAdminClientsClientIdRoute
+}
+
+const AuthenticatedAdminClientsRouteChildren: AuthenticatedAdminClientsRouteChildren =
+  {
+    AuthenticatedAdminClientsClientIdRoute:
+      AuthenticatedAdminClientsClientIdRoute,
+  }
+
+const AuthenticatedAdminClientsRouteWithChildren =
+  AuthenticatedAdminClientsRoute._addFileChildren(
+    AuthenticatedAdminClientsRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteRouteChildren {
-  AuthenticatedAdminClientsRoute: typeof AuthenticatedAdminClientsRoute
+  AuthenticatedAdminClientsRoute: typeof AuthenticatedAdminClientsRouteWithChildren
   AuthenticatedAdminCouponsRoute: typeof AuthenticatedAdminCouponsRoute
   AuthenticatedAdminDomainsRoute: typeof AuthenticatedAdminDomainsRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
@@ -658,12 +673,11 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminServersRoute: typeof AuthenticatedAdminServersRoute
   AuthenticatedAdminTicketsRoute: typeof AuthenticatedAdminTicketsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
-  AuthenticatedAdminClientsClientIdRoute: typeof AuthenticatedAdminClientsClientIdRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
-    AuthenticatedAdminClientsRoute: AuthenticatedAdminClientsRoute,
+    AuthenticatedAdminClientsRoute: AuthenticatedAdminClientsRouteWithChildren,
     AuthenticatedAdminCouponsRoute: AuthenticatedAdminCouponsRoute,
     AuthenticatedAdminDomainsRoute: AuthenticatedAdminDomainsRoute,
     AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
@@ -674,8 +688,6 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminServersRoute: AuthenticatedAdminServersRoute,
     AuthenticatedAdminTicketsRoute: AuthenticatedAdminTicketsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
-    AuthenticatedAdminClientsClientIdRoute:
-      AuthenticatedAdminClientsClientIdRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
