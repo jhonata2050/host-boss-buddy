@@ -535,6 +535,7 @@ export type Database = {
           next_due_date: string | null
           order_id: string | null
           product_id: string
+          server_id: string | null
           status: Database["public"]["Enums"]["service_status"]
           suspension_reason: string | null
           updated_at: string
@@ -550,6 +551,7 @@ export type Database = {
           next_due_date?: string | null
           order_id?: string | null
           product_id: string
+          server_id?: string | null
           status?: Database["public"]["Enums"]["service_status"]
           suspension_reason?: string | null
           updated_at?: string
@@ -565,6 +567,7 @@ export type Database = {
           next_due_date?: string | null
           order_id?: string | null
           product_id?: string
+          server_id?: string | null
           status?: Database["public"]["Enums"]["service_status"]
           suspension_reason?: string | null
           updated_at?: string
@@ -585,6 +588,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "servers"
             referencedColumns: ["id"]
           },
         ]
