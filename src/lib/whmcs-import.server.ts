@@ -44,9 +44,13 @@ function toDate(value: string): string | null {
   if (v === "0000-00-00" || v === "0000-00-00 00:00:00" || v === "0" || v === "") return null;
   // Handle DD/MM/YYYY
   if (v.includes("/") && v.split("/")[0].length <= 2) {
-    const [day, month, year] = v.split("/");
-    const d = new Date(`${year}-${month}-${day}`);
-    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+    const parts = v.split("/");
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      const d = new Date(`${year}-${month}-${day}`);
+      return Number.isNaN(d.getTime()) ? null : d.toISOString();
+    }
+
   }
   const d = new Date(v.replace(" ", "T"));
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
