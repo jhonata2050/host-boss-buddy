@@ -275,8 +275,8 @@ function parseDirectAdminLoginUrl(response: any, serverHostname: string): string
 
   // 2. If response is an object (common when callDA uses URLSearchParams parser)
   if (typeof response === "object" && response !== null) {
-    // Check for explicit 'details' which often carries the URL in DA API
-    const possibleUrl = response.details || response.url || response.URL || response.login_url;
+    // Check for explicit 'result', 'details', 'url', 'URL', or 'login_url'
+    const possibleUrl = response.result || response.details || response.url || response.URL || response.login_url;
     
     if (possibleUrl && typeof possibleUrl === "string") {
       // Decode if it's URL encoded (common in DA responses)
