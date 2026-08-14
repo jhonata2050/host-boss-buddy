@@ -16,10 +16,54 @@ export const Route = createFileRoute("/_authenticated/admin/servers")({
   component: AdminServersPage,
 });
 
+type ServerRow = {
+  id: string;
+  name: string;
+  hostname: string;
+  ip_address: string | null;
+  api_user: string;
+  max_accounts: number | null;
+};
+
 function AdminServersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingServer, setEditingServer] = useState<ServerRow | null>(null);
   const [syncResults, setSyncResults] = useState<Record<string, { packages: string[]; syncedAt: string }>>({});
   const queryClient = useQueryClient();
+
+  const updateServerMutation = useMutation({
+    mutationFn: (payload: Parameters<typeof updateServerDA>[0]["data"]) => updateServerDA({ data: payload }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-servers"] });
+      toast.success("Servidor atualizado com sucesso!");
+      setEditingServer(null);
+    },
+    onError: (err: Error) => toast.error("Erro ao atualizar: " + err.message),
+  });
+
+  const deleteServerMutation = useMutation({
+    mutationFn: (serverId: string) => deleteServerDA({ data: serverId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-servers"] });
+      toast.success("Servidor removido.");
+    },
+    onError: (err: Error) => toast.error("Erro ao remover: " + err.message),
+  });
+
+  const handleEditServer = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingServer) return;
+    const formData = new FormData(e.currentTarget);
+    updateServerMutation.mutate({
+      id: editingServer.id,
+      name: formData.get("name") as string,
+      hostname: formData.get("hostname") as string,
+      ip_address: (formData.get("ip_address") as string) || undefined,
+      api_user: formData.get("api_user") as string,
+      api_token: (formData.get("api_token") as string) || undefined,
+      max_accounts: Number(formData.get("max_accounts")) || 100,
+    });
+  };
 
   const { data: servers, isLoading } = useQuery({
     queryKey: ["admin-servers"],
