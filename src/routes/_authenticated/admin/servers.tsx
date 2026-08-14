@@ -255,7 +255,31 @@ function AdminServersPage() {
                       <RefreshCw className={`mr-2 h-4 w-4 ${syncMutation.isPending && syncMutation.variables === server.id ? "animate-spin" : ""}`} />
                       {syncMutation.isPending && syncMutation.variables === server.id ? "Sincronizando..." : "Sincronizar pacotes"}
                     </Button>
-                    <Button variant="ghost" size="icon" className="rounded-xl text-destructive hover:bg-destructive/5"><Trash2 className="h-4 w-4" /></Button>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl"
+                      onClick={() => setEditingServer({
+                        id: server.id,
+                        name: server.name,
+                        hostname: server.hostname,
+                        ip_address: server.ip_address,
+                        api_user: server.api_user,
+                        max_accounts: server.max_accounts,
+                      })}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" /> Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-xl text-destructive hover:bg-destructive/5"
+                      onClick={() => {
+                        if (confirm(`Remover o servidor ${server.name}?`)) deleteServerMutation.mutate(server.id);
+                      }}
+                      disabled={deleteServerMutation.isPending && deleteServerMutation.variables === server.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
