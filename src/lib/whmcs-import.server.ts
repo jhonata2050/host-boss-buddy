@@ -89,13 +89,20 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
       .select("id")
       .eq("whmcs_id", cleanWhmcsId)
       .maybeSingle();
-    if (profile?.id) return profile.id;
+    
+    if (profile?.id) {
+      console.log(`[Import] Resolvido via whmcs_id (${cleanWhmcsId}): ${profile.id}`);
+      return profile.id;
+    }
 
     // Se não achou no perfil, tenta ver se foi injetado no metadata do usuário
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
       const user = users.find(u => u.user_metadata?.['whmcs_id']?.toString() === cleanWhmcsId);
-      if (user) return user.id;
+      if (user) {
+        console.log(`[Import] Resolvido via auth metadata whmcs_id (${cleanWhmcsId}): ${user.id}`);
+        return user.id;
+      }
     }
   }
   
@@ -106,7 +113,11 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
       .select("id")
       .ilike("email", cleanEmail)
       .maybeSingle();
-    if (profile?.id) return profile.id;
+    
+    if (profile?.id) {
+      console.log(`[Import] Resolvido via email (${cleanEmail}): ${profile.id}`);
+      return profile.id;
+    }
   }
 
   // 3. Fallback: busca no auth.users
@@ -114,12 +125,17 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
       const user = users.find(u => u.email?.toLowerCase() === cleanEmail);
-      if (user) return user.id;
+      if (user) {
+        console.log(`[Import] Resolvido via auth email fallback (${cleanEmail}): ${user.id}`);
+        return user.id;
+      }
     }
   }
 
+  console.log(`[Import] Falha ao resolver usuário: Email=${cleanEmail}, WHMCS_ID=${cleanWhmcsId}`);
   return null;
 }
+
 
 
 /** Importa clientes do WHMCS (tblclients export). */
