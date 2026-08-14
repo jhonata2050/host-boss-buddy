@@ -243,37 +243,54 @@ export async function getDASession(serverId: string, username: string, redirectU
   if (error || !server) throw new Error("Servidor não encontrado");
 
   // Single Sign-On via CMD_API_LOGIN_KEYS
+  // O targetUser deve ser admin|user para permitir que o admin gere a chave para o usuário
   const targetUser = `${server.api_user}|${username}`;
 
-  // Tentativa 1: one_time_url (Método recomendado, sem senha exposta)
+  console.log(`Iniciando geração de SSO para ${targetUser} no servidor ${server.hostname}`);
+
+  // Tentativa 1: one_time_url (Método recomendado, gera um hash direto para login)
   try {
+    const params: Record<string, string> = {
+      action: 'create',
+      type: 'one_time_url',
+      user: targetUser,
+      expiry: '30m',
+      login_keys_notify_on_creation: '0'
+    };
+
+    if (redirectUrl && redirectUrl !== '/') {
+      params['redirect-url'] = redirectUrl;
+    }
+
     const result = await callDA({
       hostname: server.hostname,
       apiUser: server.api_user,
       apiToken: server.api_token,
       command: 'CMD_API_LOGIN_KEYS',
       method: 'POST',
-      params: {
-        action: 'create',
-        type: 'one_time_url',
-        user: targetUser,
-        // passwd: server.api_token, // Removido: o DA às vezes rejeita se enviado no corpo para one_time_url
-        'redirect-url': redirectUrl || '/',
-        expiry: '30m',
-        login_keys_notify_on_creation: '0'
-      }
+      params
     });
 
-    if (result.error === '0' && result.details && typeof result.details === 'string') {
+    console.log("DA Result (one_time_url):", result);
+
+    // O DirectAdmin retorna result.error === '0' e result.details como a URL
+    if (result.error === '0' && result.details) {
       return result.details;
     }
+    
+    // Fallback: se o DA retornar campos de texto (como htm_allow etc) significa que ele listou ou ignorou o create
+    if (result.key || result.hash) {
+       const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
+       const hash = result.hash || result.key;
+       return `https://${cleanHostname}:2222/CMD_LOGIN_URL?hash=${hash}`;
+    }
+
   } catch (e) {
-    console.error("Erro na tentativa de one_time_url, tentando fallback...", e);
+    console.error("Erro na tentativa de one_time_url, tentando fallback para one_time_key...", e);
   }
 
-  // Fallback (Tentativa 2): one_time_key com senha ULTRA forte (128 caracteres)
+  // Fallback (Tentativa 2): one_time_key (Gera uma senha temporária para o usuário)
   const keyId = `sso${Date.now().toString(36)}`;
-  // Aumentado para 128 caracteres e garantindo símbolos complexos para satisfazer o servidor br01-da
   const keyPass = generateStrongPassword(128);
   
   const fallbackResult = await callDA({
@@ -284,19 +301,20 @@ export async function getDASession(serverId: string, username: string, redirectU
     method: 'POST',
     params: {
       action: 'create',
-      user: username,
+      user: username, // Aqui geramos a chave diretamente para o usuário
       keyname: keyId,
-      id: keyId,
       passwd: keyPass,
       passwd2: keyPass,
       expiry: '3600',
       ips: '0.0.0.0/0',
       type: 'one_time_key',
-      // Permissões mínimas para a chave ser aceita mais facilmente
       'CMD_API_LOGIN_KEYS': 'yes',
-      'CMD_LOGIN': 'yes'
+      'CMD_LOGIN': 'yes',
+      'ALL_USER': 'yes' // Tenta dar permissão total à chave temporária
     }
   });
+
+  console.log("DA Fallback Result:", fallbackResult);
 
   if (fallbackResult.error === '1') {
     throw new Error(`DirectAdmin Recusou a Chave: ${fallbackResult.details || fallbackResult.text || "Senha fraca ou permissão negada"}`);
@@ -306,7 +324,11 @@ export async function getDASession(serverId: string, username: string, redirectU
   const keyValue = fallbackResult.key || fallbackResult.value;
   
   if (keyValue) {
-    return `https://${cleanHostname}:2222/login?user=${username}&passwd=${keyValue}`;
+    let loginUrl = `https://${cleanHostname}:2222/login?user=${username}&passwd=${keyValue}`;
+    if (redirectUrl && redirectUrl !== '/') {
+      loginUrl += `&url=${encodeURIComponent(redirectUrl)}`;
+    }
+    return loginUrl;
   }
 
   throw new Error(`O servidor não retornou uma chave válida. Resposta: ${JSON.stringify(fallbackResult)}`);
