@@ -333,9 +333,9 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 /** Importa faturas do WHMCS (tblinvoices export). */
 async function importInvoices(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
-    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id"]);
-    const invoiceWhmcsId = pick(row, ["id", "invoiceid", "invoicenum", "number", "whmcsid", "invoice_id"]);
+    const email = pick(row, ["email", "client_email", "e-mail", "user_email", "mail", "clientemail", "email_address", "username", "login", "user", "email_address"]).toLowerCase();
+    const whmcsClientId = pick(row, ["userid", "clientid", "uid", "client_id", "user_id", "cid", "whmcsid", "client_id", "id_whmcs"]);
+    const invoiceWhmcsId = pick(row, ["id", "invoiceid", "invoicenum", "number", "whmcsid", "invoice_id", "id_whmcs"]);
 
 
     
