@@ -1,6 +1,8 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
+  X,
   ChevronDown,
   Cog,
   Gauge,
@@ -158,10 +160,28 @@ export function AppShell({
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const navigate = useNavigate();
+  const [hideBanner, setHideBanner] = useState(false);
 
   const isAdminArea = area ? area === "admin" : isStaff;
   const sections = isAdminArea ? ADMIN_SECTIONS : CLIENT_SECTIONS;
   const homeTo = isAdminArea ? "/admin" : "/dashboard";
+
+  const { data: overdueInvoices } = useQuery({
+    queryKey: ["overdue-invoices", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from("invoices")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "pending")
+        .lt("due_date", new Date().toISOString());
+      return data || [];
+    },
+    enabled: !!user && !isAdminArea,
+  });
+
+  const hasOverdue = overdueInvoices && overdueInvoices.length > 0;
 
   const name = profile?.full_name ?? user?.email ?? "Conta";
   const initials = name.slice(0, 2).toUpperCase();
@@ -173,6 +193,17 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
+      {hasOverdue && !hideBanner && (
+        <div className="bg-destructive p-3 text-center text-destructive-foreground font-medium border-b border-brand/20 relative animate-in fade-in slide-in-from-top duration-300">
+          Você possui faturas vencidas. Regularize seu débito para evitar suspensão dos serviços.
+          <button 
+            onClick={() => setHideBanner(true)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
       <div className="flex">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
           <div className="flex items-center justify-between px-2 pb-4">
@@ -269,7 +300,14 @@ export function AppShell({
         <main className="min-w-0 flex-1 px-4 py-4 lg:px-6">
           <header className="flex items-center justify-between gap-4 pb-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">{breadcrumb}</div>
-            <Bell className="size-5 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground relative">
+                <Bell className="size-5" />
+                {hasOverdue && (
+                  <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full border-2 border-background" />
+                )}
+              </Button>
+            </div>
           </header>
           <div className="rounded-3xl border border-border bg-card p-4 shadow-[var(--shadow-card)] lg:p-6">
             {children}
