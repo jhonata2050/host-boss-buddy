@@ -75,7 +75,7 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
         'Accept': 'application/json, text/plain',
       },
       body: method === 'POST' ? searchParams.toString() : null,
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(30_000),
       redirect: 'manual',
     });
 
@@ -324,7 +324,7 @@ export async function getDASession(serverId: string, username: string, redirectU
     action: 'create',
     type: 'one_time_url',
     user: targetUser,
-    expiry: '5m',
+    expiry: '60m',
     login_keys_notify_on_creation: '0'
   };
 
