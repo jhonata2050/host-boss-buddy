@@ -32,7 +32,15 @@ function AdminServersPage() {
   const queryClient = useQueryClient();
 
   const updateServerMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof updateServerDA>[0]["data"]) => updateServerDA({ data: payload }),
+    mutationFn: (payload: {
+      id: string;
+      name: string;
+      hostname: string;
+      ip_address?: string;
+      api_user: string;
+      api_token?: string;
+      max_accounts: number;
+    }) => updateServerDA({ data: payload }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-servers"] });
       toast.success("Servidor atualizado com sucesso!");
