@@ -232,14 +232,14 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
     try {
       const userId = await resolveUserId(email, whmcsClientId);
       if (!userId) {
-        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"})`);
+        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Verifique se o cliente foi importado primeiro.`);
       }
 
-      const productName = pick(row, ["product", "produto", "packagename", "product_name", "package"]);
+      const productName = pick(row, ["product", "produto", "packagename", "productname", "package"]);
       const productId = await resolveProductId(productName || "Plano Importado");
       if (!productId) throw new Error("não foi possível resolver o produto");
 
-      const cycleRaw = pick(row, ["billingcycle", "billing_cycle", "ciclo"]).toLowerCase();
+      const cycleRaw = pick(row, ["billingcycle", "billingcycle", "ciclo"]).toLowerCase();
       const cycle = CYCLE_MAP[cycleRaw] ?? "monthly";
       
       const statusRaw = pick(row, ["status", "domainstatus", "state"]).toLowerCase();
@@ -247,7 +247,7 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
 
       const domain = pick(row, ["domain", "dominio", "host", "hostname"]);
       const username = pick(row, ["username", "usuario", "login", "user"]);
-      const nextDue = toDate(pick(row, ["nextduedate", "next_due_date", "vencimento", "next_due"]));
+      const nextDue = toDate(pick(row, ["nextduedate", "nextduedate", "vencimento", "nextdue"]));
 
       const { error } = await (supabaseAdmin.from("services") as any).insert({
         user_id: userId,
