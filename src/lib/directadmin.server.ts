@@ -318,6 +318,8 @@ export async function getDASession(serverId: string, username: string, redirectU
   const targetUser = username;
   console.log(`Iniciando geração de SSO (One-Time Login URL) para o usuário ${targetUser} no servidor ${server.hostname} (via admin ${server.api_user})`);
 
+  // DirectAdmin SSO (one_time_url) works by requesting it from CMD_API_LOGIN_KEYS
+  // It needs the 'user' parameter to define WHICH user the session belongs to.
   const params: Record<string, string> = {
     action: 'create',
     type: 'one_time_url',
