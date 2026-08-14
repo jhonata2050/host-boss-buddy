@@ -263,7 +263,9 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
     try {
       const userId = await resolveUserId(email, whmcsClientId);
       if (!userId) {
-        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Verifique se o cliente foi importado primeiro.`);
+        const fields = Object.keys(row).join(", ");
+        throw new Error(`não foi possível associar o serviço ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Campos disponíveis no CSV: ${fields}. Verifique se o cliente foi importado primeiro.`);
+
       }
 
       const productName = pick(row, ["product", "produto", "packagename", "productname", "package"]);
