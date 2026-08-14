@@ -133,8 +133,8 @@ export async function createDAAccount(serverId: string, details: {
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  // Gerar senha EXTREMAMENTE forte (Alfanumérica + Símbolos + Tamanho > 16)
-  const password = `Pass_${Math.random().toString(36).slice(-8)}${Math.random().toString(36).slice(-8).toUpperCase()}!@#$%`;
+  // Gerar senha EXTREMAMENTE forte (Alfanumérica + Símbolos + Tamanho > 20)
+  const password = `StrongPass${Math.random().toString(36).slice(-10).toUpperCase()}@${Math.random().toString(36).slice(-10)}#$!`;
 
   return await callDA({
     hostname: server.hostname,
@@ -213,8 +213,8 @@ export async function getDASession(serverId: string, username: string) {
 
   // Single Sign-On via CMD_API_LOGIN_KEYS
   const keyId = `sso${Date.now().toString(36)}${Math.random().toString(36).slice(-4)}`;
-  // Senha EXTREMAMENTE forte para a chave de login (mínimo 16 caracteres, maiúsculas, minúsculas, números e símbolos)
-  const keyPass = `Secure${Math.random().toString(36).slice(-8)}_DA_${Math.random().toString(36).slice(-4).toUpperCase()}!@#`;
+  // Senha EXTREMAMENTE forte para a chave de login (mínimo 20 caracteres, maiúsculas, minúsculas, números e símbolos)
+  const keyPass = `Key${Math.random().toString(36).slice(-10).toUpperCase()}@Pass${Math.random().toString(36).slice(-10)}!#`;
 
   const result = await callDA({
     hostname: server.hostname,
