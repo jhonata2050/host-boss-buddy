@@ -35,14 +35,14 @@ function ClientTicketsPage() {
   const queryClient = useQueryClient();
 
   const { data: tickets, isLoading } = useQuery({
-    queryKey: ["client-tickets"],
+    queryKey: ["client-tickets", user?.id],
     queryFn: () => getTickets(),
   });
 
   const createTicketMutation = useMutation({
     mutationFn: (data: any) => createTicket({ data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["client-tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["client-tickets", user?.id] });
       toast.success("Ticket criado com sucesso!");
       setIsModalOpen(false);
     },
