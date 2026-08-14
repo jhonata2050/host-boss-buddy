@@ -45,10 +45,11 @@ function ClientsPage() {
         .from("profiles")
         .select("id, full_name, email, company_name, tax_id, phone, status, created_at")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(100); // Reduced limit for faster initial load
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 5,
   });
 
   const needle = term.trim().toLowerCase();

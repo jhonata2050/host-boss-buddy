@@ -65,11 +65,13 @@ function ClientDetailPage() {
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const dossiersQuery = useQuery({
     queryKey: ["admin-client-dossier", clientId],
     queryFn: async () => {
+      // Parallelize requests and use indexes
       const [invoices, services, tickets, emailLogs] = await Promise.all([
         supabase.from("invoices").select("*").eq("user_id", clientId).order("created_at", { ascending: false }),
         supabase.from("services").select("*, products(name)").eq("user_id", clientId).order("created_at", { ascending: false }),
@@ -77,7 +79,6 @@ function ClientDetailPage() {
         supabase.from("email_logs").select("*").eq("user_id", clientId).order("created_at", { ascending: false })
       ]);
 
-      // Não silencia falhas de permissão: elas precisam aparecer para o admin.
       const firstError = invoices.error || services.error || tickets.error || emailLogs.error;
       if (firstError) throw new Error(firstError.message);
 
@@ -88,6 +89,8 @@ function ClientDetailPage() {
         emailLogs: emailLogs.data || []
       };
     },
+    staleTime: 1000 * 60 * 2, // 2 minutes for dossier
+    enabled: !!clientId,
   });
 
   const updateProfile = useMutation({

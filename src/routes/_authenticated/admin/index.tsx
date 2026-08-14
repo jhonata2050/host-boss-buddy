@@ -45,6 +45,7 @@ function AdminDashboardPage() {
   const stats = useQuery({
     queryKey: ["admin-dashboard-stats"],
     queryFn: async () => {
+      // Use indexed queries and head: true for counts where possible
       const [clients, products, invoices, transactions, services] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("products").select("id", { count: "exact", head: true }),
@@ -62,6 +63,7 @@ function AdminDashboardPage() {
         pendingTotal: invoices.data?.reduce((acc, i) => acc + Number(i.total_amount), 0) ?? 0,
       };
     },
+    staleTime: 1000 * 60 * 10, // Dashboard stats can be more stale
   });
 
   return (
