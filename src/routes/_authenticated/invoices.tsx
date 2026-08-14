@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+
 
 export const Route = createFileRoute("/_authenticated/invoices")({
   head: () => ({
