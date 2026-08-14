@@ -1,7 +1,23 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Store, Users, ExternalLink } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, Store, Users, ExternalLink, Trash2 } from "lucide-react";
+
 import { useState } from "react";
+import { toast } from "sonner";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { bulkDeleteClients } from "@/lib/admin.functions";
+
 
 import { AppShell } from "@/components/app/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +61,9 @@ function ClientsLayout() {
 
 export function ClientsPage() {
   const [term, setTerm] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
   const clients = useQuery({
     queryKey: ["admin-clients"],
@@ -53,7 +72,7 @@ export function ClientsPage() {
         .from("profiles")
         .select("id, full_name, email, company_name, tax_id, phone, status, created_at")
         .order("created_at", { ascending: false })
-        .limit(100); // Reduced limit for faster initial load
+        .limit(100);
       if (error) throw error;
       return data;
     },
@@ -66,6 +85,41 @@ export function ClientsPage() {
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(needle)),
   );
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map(c => c.id));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+    
+    setIsDeleting(true);
+    try {
+      const result = await bulkDeleteClients({ data: { clientIds: selectedIds } });
+      toast.success(`${result.deleted} clientes excluídos com sucesso.`);
+      if (result.failures > 0) {
+        toast.error(`Falha ao excluir ${result.failures} clientes.`);
+      }
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ["admin-clients"] });
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir clientes");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+
 
   return (
     <AppShell
@@ -84,7 +138,37 @@ export function ClientsPage() {
         </>
       }
     >
-      <h1 className="text-2xl font-semibold tracking-tight">Seus clientes</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Seus clientes</h1>
+        
+        {selectedIds.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="rounded-xl flex gap-2 h-11">
+                <Trash2 className="size-4" /> Excluir {selectedIds.length} selecionados
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-3xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação excluirá permanentemente {selectedIds.length} clientes e todos os seus serviços, faturas e históricos associados. Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Excluindo..." : "Sim, excluir tudo"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
 
       <div className="relative mt-6 max-w-sm">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -96,6 +180,7 @@ export function ClientsPage() {
         />
       </div>
 
+
       {clients.isLoading ? (
         <Skeleton className="mt-6 h-56 rounded-2xl" />
       ) : filtered.length === 0 ? (
@@ -105,6 +190,13 @@ export function ClientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox 
+                    checked={selectedIds.length === filtered.length && filtered.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Selecionar todos"
+                  />
+                </TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Documento</TableHead>
@@ -112,10 +204,20 @@ export function ClientsPage() {
                 <TableHead>Situação</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
+
             </TableHeader>
             <TableBody>
               {filtered.map((client) => (
-                <TableRow key={client.id}>
+                <TableRow key={client.id} className={selectedIds.includes(client.id) ? "bg-muted/30" : ""}>
+                  <TableCell>
+                    <Checkbox 
+                      checked={selectedIds.includes(client.id)}
+                      onCheckedChange={() => toggleSelect(client.id)}
+                      aria-label={`Selecionar ${client.full_name}`}
+                    />
+                  </TableCell>
+
+
                   <TableCell className="font-medium">
                     {client.full_name ?? "Sem nome"}
                     {client.company_name && (

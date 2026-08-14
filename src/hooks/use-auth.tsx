@@ -32,25 +32,36 @@ type AuthContextValue = {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  impersonatedClientId: string | null;
+  setImpersonatedClientId: (id: string | null) => void;
 };
 
 const AuthContext = createContext<AuthContextValue>({
   session: null,
   user: null,
   loading: true,
+  impersonatedClientId: null,
+  setImpersonatedClientId: () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [impersonatedClientId, setImpersonatedClientId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Restore impersonation from session storage if any
+    const stored = typeof window !== 'undefined' ? window.sessionStorage.getItem('impersonated_id') : null;
+    if (stored) setImpersonatedClientId(stored);
+
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
         if (event === "SIGNED_OUT") {
           queryClient.clear();
+          window.sessionStorage.removeItem('impersonated_id');
+          setImpersonatedClientId(null);
         } else {
           void queryClient.invalidateQueries();
         }
@@ -65,8 +76,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, [queryClient]);
 
+  const handleSetImpersonated = (id: string | null) => {
+    setImpersonatedClientId(id);
+    if (typeof window !== 'undefined') {
+      if (id) window.sessionStorage.setItem('impersonated_id', id);
+      else window.sessionStorage.removeItem('impersonated_id');
+    }
+    queryClient.invalidateQueries();
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user: session?.user ?? null, 
+      loading,
+      impersonatedClientId,
+      setImpersonatedClientId: handleSetImpersonated
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -77,15 +103,17 @@ export function useAuth() {
 }
 
 export function useProfile() {
-  const { user } = useAuth();
+  const { user, impersonatedClientId } = useAuth();
+  const effectiveUserId = impersonatedClientId || user?.id;
+
   return useQuery({
-    queryKey: ["profile", user?.id],
-    enabled: Boolean(user?.id),
+    queryKey: ["profile", effectiveUserId],
+    enabled: Boolean(effectiveUserId),
     queryFn: async (): Promise<Profile | null> => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user!.id)
+        .eq("id", effectiveUserId!)
         .maybeSingle();
       if (error) throw error;
       return (data as Profile) ?? null;
