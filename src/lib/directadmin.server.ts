@@ -249,16 +249,17 @@ export async function getDASession(serverId: string, username: string, redirectU
     apiUser: server.api_user,
     apiToken: server.api_token,
     command: 'CMD_API_LOGIN_KEYS',
-    method: 'GET', // Usando GET conforme exemplo do fórum e documentação para one_time_url
+    method: 'GET',
     params: {
       action: 'create',
       type: 'one_time_url',
       user: targetUser,
-      passwd: server.api_token, // O DirectAdmin frequentemente requer a senha/token do admin para validar a criação
+      passwd: server.api_token,
       'redirect-url': redirectUrl || '/',
       expiry: '30m',
       login_keys_notify_on_creation: '0'
     }
+
   });
 
   if (result.error === '1' || result.text?.toLowerCase().includes('error')) {
