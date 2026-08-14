@@ -283,8 +283,18 @@ function ClientDetailPage() {
                     <TableBody>
                       {dossiersQuery.data?.services.map((s: any) => (
                         <TableRow key={s.id}>
-                          <TableCell className="font-medium">{s.products?.name || "Produto"}</TableCell>
-                          <TableCell className="text-muted-foreground">{s.domain || "—"}</TableCell>
+                          <TableCell className="font-medium">
+                            {s.products?.name || "Produto"}
+                            {!s.username && (
+                              <span className="block text-[10px] text-destructive italic">Usuário ausente</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {s.domain || "—"}
+                            {!s.server_id && s.domain && (
+                              <span className="block text-[10px] text-destructive italic">Sem servidor</span>
+                            )}
+                          </TableCell>
                           <TableCell>
                             {s.next_due_date ? format(new Date(s.next_due_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                           </TableCell>

@@ -304,7 +304,8 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
       const status = SERVICE_STATUS_MAP[statusRaw] ?? "active";
 
       const domain = pick(row, ["domain", "dominio", "host", "hostname"]);
-      const username = pick(row, ["username", "usuario", "login", "user"]);
+      const username = pick(row, ["username", "usuario", "login", "user", "username"]);
+      const serverId = pick(row, ["server", "server_id", "serverid", "id_servidor"]);
       const nextDue = toDate(pick(row, ["nextduedate", "nextduedate", "vencimento", "nextdue"]));
 
       const { error } = await (supabaseAdmin.from("services") as any).insert({
@@ -313,6 +314,7 @@ async function importServices(rows: Record<string, string>[], stats: ImportStats
         whmcs_id: serviceWhmcsId || null,
         domain: domain || null,
         username: username || null,
+        server_id: serverId || null,
         billing_cycle: cycle as any,
         status: status as any,
         next_due_date: nextDue,
