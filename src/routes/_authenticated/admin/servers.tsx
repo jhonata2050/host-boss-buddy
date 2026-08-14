@@ -36,9 +36,9 @@ function AdminServersPage() {
       id: string;
       name: string;
       hostname: string;
-      ip_address?: string;
+      ip_address?: string | undefined;
       api_user: string;
-      api_token?: string;
+      api_token?: string | undefined;
       max_accounts: number;
     }) => updateServerDA({ data: payload }),
     onSuccess: () => {
