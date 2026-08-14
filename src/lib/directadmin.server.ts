@@ -32,19 +32,21 @@ function generateStrongPassword(length = 32): string {
   crypto.getRandomValues(randomValues);
 
   const password = [
-    uppercase[randomValues[0] % uppercase.length],
-    lowercase[randomValues[1] % lowercase.length],
-    numbers[randomValues[2] % numbers.length],
-    symbols[randomValues[3] % symbols.length],
+    uppercase.charAt((randomValues[0] ?? 0) % uppercase.length),
+    lowercase.charAt((randomValues[1] ?? 0) % lowercase.length),
+    numbers.charAt((randomValues[2] ?? 0) % numbers.length),
+    symbols.charAt((randomValues[3] ?? 0) % symbols.length),
     ...Array.from(
       { length: length - 4 },
-      (_, index) => allCharacters[randomValues[index + 4] % allCharacters.length],
+      (_, index) => allCharacters.charAt((randomValues[index + 4] ?? 0) % allCharacters.length),
     ),
   ];
 
   for (let index = password.length - 1; index > 0; index -= 1) {
-    const swapIndex = randomValues[index] % (index + 1);
-    [password[index], password[swapIndex]] = [password[swapIndex], password[index]];
+    const swapIndex = (randomValues[index] ?? 0) % (index + 1);
+    const currentCharacter = password[index] ?? '';
+    password[index] = password[swapIndex] ?? '';
+    password[swapIndex] = currentCharacter;
   }
 
   return password.join('');
