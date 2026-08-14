@@ -281,16 +281,19 @@ async function importInvoices(rows: Record<string, string>[], stats: ImportStats
     
     try {
       const userId = await resolveUserId(email, whmcsClientId);
-      if (!userId) throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"})`);
+      if (!userId) {
+        // Log better error for debugging why linking failed
+        throw new Error(`não foi possível associar a fatura ao cliente (e-mail: ${email || "vazio"}, ID WHMCS: ${whmcsClientId || "vazio"}). Verifique se o cliente foi importado primeiro.`);
+      }
 
-      const total = toNumber(pick(row, ["total", "valor", "amount", "total_amount"]));
+      const total = toNumber(pick(row, ["total", "valor", "amount", "totalamount"]));
       const subtotal = toNumber(pick(row, ["subtotal"])) || total;
-      const statusRaw = pick(row, ["status", "invoice_status"]).toLowerCase();
+      const statusRaw = pick(row, ["status", "invoicestatus"]).toLowerCase();
       const status = INVOICE_STATUS_MAP[statusRaw] ?? "unpaid";
       
-      const dueDate = toDate(pick(row, ["duedate", "due_date", "vencimento", "date"])) ?? new Date().toISOString();
-      const paidAt = toDate(pick(row, ["datepaid", "paid_at", "data_pagamento", "date_paid"]));
-      const method = pick(row, ["paymentmethod", "payment_method", "metodo", "gateway"]);
+      const dueDate = toDate(pick(row, ["duedate", "duedate", "vencimento", "date"])) ?? new Date().toISOString();
+      const paidAt = toDate(pick(row, ["datepaid", "paidat", "datapagamento", "datepaid"]));
+      const method = pick(row, ["paymentmethod", "paymentmethod", "metodo", "gateway"]);
 
       const { error } = await (supabaseAdmin.from("invoices") as any).insert({
         user_id: userId,
