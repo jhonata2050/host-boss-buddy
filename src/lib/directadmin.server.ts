@@ -133,6 +133,11 @@ export async function createDAAccount(serverId: string, details: {
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
+  // Gerar senha forte (Alfanumérica + Símbolos + Tamanho > 12)
+  const password = Math.random().toString(36).slice(-8) + 
+                   Math.random().toString(36).slice(-8).toUpperCase() + 
+                   "!@#$%";
+
   return await callDA({
     hostname: server.hostname,
     apiUser: server.api_user,
@@ -144,8 +149,8 @@ export async function createDAAccount(serverId: string, details: {
       add: 'Submit',
       username: details.username,
       email: details.email,
-      passwd: Math.random().toString(36).slice(-10) + '!',
-      passwd2: Math.random().toString(36).slice(-10) + '!',
+      passwd: password,
+      passwd2: password,
       domain: details.domain,
       package: details.package,
       ip: server.ip_address || '',
@@ -209,6 +214,10 @@ export async function getDASession(serverId: string, username: string) {
   if (error || !server) throw new Error("Servidor não encontrado");
 
   // Single Sign-On via CMD_API_LOGIN_KEYS
+  const keyId = `sso${Date.now().toString(36)}${Math.random().toString(36).slice(-4)}`;
+  // Senha forte para a chave de login (exigida por alguns servidores mesmo para chaves temporárias)
+  const keyPass = `Key${Math.random().toString(36).slice(-8)}${Math.random().toString(36).slice(-4).toUpperCase()}!@#`;
+
   const result = await callDA({
     hostname: server.hostname,
     apiUser: server.api_user,
@@ -218,12 +227,13 @@ export async function getDASession(serverId: string, username: string) {
     params: {
       action: 'create',
       user: username,
-      keyname: `sso${Date.now().toString(36)}`,
-      id: `sso${Date.now().toString(36)}`,
+      keyname: keyId,
+      id: keyId,
+      passwd: keyPass,
+      passwd2: keyPass,
       expiry: '3600',
       ips: '0.0.0.0/0',
       type: 'one_time_key'
-
     }
   });
 
