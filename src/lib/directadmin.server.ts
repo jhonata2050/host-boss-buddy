@@ -255,6 +255,11 @@ function parseDirectAdminLoginUrl(response: any, serverHostname: string): string
   const cleanHostname = serverHostname.replace(/^https?:\/\//, '').split(':')[0];
   const baseUrl = `https://${cleanHostname}:2222`;
 
+  console.log("Parsing DirectAdmin Response:", JSON.stringify(response));
+
+  // DirectAdmin often returns text/plain that looks like "error=0&text=URL%20Created&details=https%3A%2F%2F..."
+  // Our callDA already tries to parse this into an object.
+
   // 1. If response is a direct string starting with URL: or just the URL
   if (typeof response === "string") {
     let value = response.trim();
@@ -268,12 +273,24 @@ function parseDirectAdminLoginUrl(response: any, serverHostname: string): string
     }
   }
 
-  // 2. If response is an object (DA often returns URLSearchParams parsed as object)
+  // 2. If response is an object (common when callDA uses URLSearchParams parser)
   if (typeof response === "object" && response !== null) {
-    const possibleUrl = response.url || response.URL || response.login_url || response.details;
-    if (isValidDirectAdminLoginUrl(possibleUrl)) {
-      if (possibleUrl.startsWith('http')) return possibleUrl;
-      return `${baseUrl}${possibleUrl.startsWith('/') ? '' : '/'}${possibleUrl}`;
+    // Check for explicit 'details' which often carries the URL in DA API
+    const possibleUrl = response.details || response.url || response.URL || response.login_url;
+    
+    if (possibleUrl && typeof possibleUrl === "string") {
+      // Decode if it's URL encoded (common in DA responses)
+      let decodedUrl = possibleUrl;
+      try {
+        if (possibleUrl.includes('%')) {
+          decodedUrl = decodeURIComponent(possibleUrl);
+        }
+      } catch (e) {}
+
+      if (isValidDirectAdminLoginUrl(decodedUrl)) {
+        if (decodedUrl.startsWith('http')) return decodedUrl;
+        return `${baseUrl}${decodedUrl.startsWith('/') ? '' : '/'}${decodedUrl}`;
+      }
     }
 
     // Check for key/hash in the object
@@ -283,15 +300,7 @@ function parseDirectAdminLoginUrl(response: any, serverHostname: string): string
     }
   }
 
-  // If we got here but the response looks like success (error=0)
-  if (response && response.error === '0' && response.details) {
-     if (isValidDirectAdminLoginUrl(response.details)) {
-        if (response.details.startsWith('http')) return response.details;
-        return `${baseUrl}${response.details.startsWith('/') ? '' : '/'}${response.details}`;
-     }
-  }
-
-  throw new Error("O DirectAdmin não retornou uma One-Time Login URL válida.");
+  throw new Error(`O DirectAdmin não retornou uma URL válida. Resposta recebida: ${JSON.stringify(response)}`);
 }
 
 export async function getDASession(serverId: string, username: string, redirectUrl?: string) {
