@@ -220,8 +220,9 @@ export async function getDASession(serverId: string, username: string) {
       user: username,
       keyname: `sso_${Date.now()}`,
       expiry: '3600',
-      ips: '*',
+      ips: '0.0.0.0/0',
       type: 'one_time_key'
+
     }
   });
 
