@@ -98,6 +98,9 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
       return Object.fromEntries(new URLSearchParams(text));
     }
   } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`O servidor DirectAdmin (${hostname}) demorou muito para responder (timeout). Verifique se o IP do HostPanel está liberado no firewall do servidor.`);
+    }
     console.error("DirectAdmin Fetch Error:", error);
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
     throw new Error(`Falha na comunicação com o DirectAdmin: ${message}. Verifique o hostname e as permissões da chave no servidor ${hostname}.`);
