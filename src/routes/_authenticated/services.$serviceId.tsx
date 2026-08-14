@@ -55,16 +55,13 @@ function ServiceManagementPage() {
           // @ts-ignore
           serverId: service.server_id, 
           // @ts-ignore
-          username: service.username 
+          username: service.username,
+          redirectUrl: command || '/'
         } 
       });
       
-      let finalUrl = url;
-      if (command) {
-        finalUrl += `&redirect=${encodeURIComponent(command)}`;
-      }
-      
-      window.open(finalUrl, '_blank');
+      window.open(url, '_blank');
+
     } catch (err: any) {
       toast.error("Erro ao acessar painel: " + err.message);
     }

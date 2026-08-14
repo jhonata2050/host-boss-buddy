@@ -231,7 +231,7 @@ export async function deleteDAAccount(serverId: string, username: string) {
   });
 }
 
-export async function getDASession(serverId: string, username: string) {
+export async function getDASession(serverId: string, username: string, redirectUrl?: string) {
   const { data: server, error } = await supabaseAdmin
     .from("servers")
     .select("*")
@@ -241,31 +241,45 @@ export async function getDASession(serverId: string, username: string) {
   if (error || !server) throw new Error("Servidor não encontrado");
 
   // Single Sign-On via CMD_API_LOGIN_KEYS
-  const keyId = `sso${Date.now().toString(36)}${Math.random().toString(36).slice(-4)}`;
-  // O DirectAdmin valida também a senha temporária da chave SSO.
-  const keyPass = generateStrongPassword(32);
+  // Se o servidor for acessado por um Admin (como o nosso api_user), podemos usar o formato "admin|user"
+  const targetUser = server.api_user.includes('|') ? server.api_user : `${server.api_user}|${username}`;
 
   const result = await callDA({
     hostname: server.hostname,
     apiUser: server.api_user,
     apiToken: server.api_token,
     command: 'CMD_API_LOGIN_KEYS',
-    method: 'POST',
+    method: 'GET',
     params: {
       action: 'create',
-      user: username,
-      keyname: keyId,
-      id: keyId,
-      passwd: keyPass,
-      passwd2: keyPass,
-      expiry: '3600',
-      ips: '0.0.0.0/0',
-      type: 'one_time_key'
+      type: 'one_time_url',
+      user: targetUser,
+      passwd: server.api_token,
+      'redirect-url': redirectUrl || '/',
+      expiry: '30m',
+      login_keys_notify_on_creation: '0'
     }
+
   });
 
+  if (result.error === '1' || result.text?.toLowerCase().includes('error')) {
+    throw new Error(`Erro do DirectAdmin: ${result.details || result.text || 'Falha ao criar URL de acesso'}`);
+  }
+
+  // O resultado esperado para one_time_url é um objeto contendo a URL no campo 'details' ou similar
+  const ssoUrl = result.details || result.text;
+  
+  if (ssoUrl && ssoUrl.startsWith('http')) {
+    return ssoUrl;
+  }
+
+  // Fallback para o método anterior caso o one_time_url não retorne a URL completa
   const cleanHostname = server.hostname.replace(/^https?:\/\//, '').split(':')[0];
-  // Nota: o DirectAdmin requer o par user/key para login automático
-  return `https://${cleanHostname}:2222/login?user=${username}&passwd=${result.key || result.value}`;
+  if (result.key || result.value) {
+    return `https://${cleanHostname}:2222/login?user=${username}&passwd=${result.key || result.value}`;
+  }
+
+  throw new Error(`Resposta inesperada do DirectAdmin: ${JSON.stringify(result)}`);
 }
+
 
