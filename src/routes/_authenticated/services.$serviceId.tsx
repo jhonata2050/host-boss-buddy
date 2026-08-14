@@ -45,7 +45,10 @@ function ServiceManagementPage() {
 
   const handleSSO = async (command?: string) => {
     // @ts-ignore - Supabase relations can be tricky with types
-    if (!service?.server_id || !service?.username) return;
+    if (!service?.server_id || !service?.username) {
+      toast.error("O usuário ou servidor ainda não foi vinculado a este serviço. Verifique a importação.");
+      return;
+    }
     try {
       const url = await getDASSOUrl({ 
         data: { 
@@ -152,7 +155,14 @@ function ServiceManagementPage() {
                     <div className="p-4 rounded-2xl bg-secondary/30">
                       <p className="text-xs text-muted-foreground font-medium uppercase">Usuário</p>
                       {/* @ts-ignore */}
-                      <p className="mt-1 font-bold text-foreground">{service.username || '---'}</p>
+                      <p className="mt-1 font-bold text-foreground">
+                        {service.username || '---'}
+                        {!service.username && (
+                          <span className="ml-2 text-[10px] text-destructive font-normal block italic">
+                            (Pendente Sincronização)
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <div className="p-4 rounded-2xl bg-secondary/30">
                       <p className="text-xs text-muted-foreground font-medium uppercase">IP do Servidor</p>
