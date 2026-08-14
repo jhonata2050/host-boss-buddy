@@ -165,8 +165,8 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
 /** Importa clientes do WHMCS (tblclients export). */
 async function importClients(rows: Record<string, string>[], stats: ImportStats) {
   for (const row of rows) {
-    const email = pick(row, ["email", "e-mail", "emailaddress", "mail", "clientemail", "email_address", "username", "login", "user"]).toLowerCase();
-    const whmcsId = pick(row, ["id", "userid", "clientid", "uid", "cid", "whmcsid", "client_id", "userid"]);
+    const email = pick(row, ["email", "e-mail", "emailaddress", "mail", "clientemail", "email_address", "username", "login", "user", "email_address"]).toLowerCase();
+    const whmcsId = pick(row, ["id", "userid", "clientid", "uid", "cid", "whmcsid", "client_id", "userid", "id_whmcs"]);
     
     if (!email && !whmcsId) {
       stats.clients.failed++;
