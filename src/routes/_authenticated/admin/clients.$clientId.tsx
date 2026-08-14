@@ -16,7 +16,8 @@ import {
   XCircle,
   Send,
   Save,
-  LogIn
+  LogIn,
+  Edit2
 } from "lucide-react";
 
 import { useState } from "react";
@@ -46,6 +47,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { getServers, updateServiceDetails } from "@/lib/support.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/clients/$clientId")({
   head: ({ params }) => ({
@@ -54,9 +57,18 @@ export const Route = createFileRoute("/_authenticated/admin/clients/$clientId")(
     ],
   }),
   loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(clientDossierQueryOptions(params.clientId)),
+    Promise.all([
+      context.queryClient.ensureQueryData(clientDossierQueryOptions(params.clientId)),
+      context.queryClient.ensureQueryData(serversQueryOptions),
+    ]),
   component: ClientDetailPage,
 });
+
+const serversQueryOptions = queryOptions({
+  queryKey: ["admin-servers"],
+  queryFn: () => getServers(),
+});
+
 
 const clientDossierQueryOptions = (clientId: string) =>
   queryOptions({
@@ -74,9 +86,13 @@ function ClientDetailPage() {
   const { setImpersonatedClientId } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
-
+  
+  // Estado para o modal de edição de serviço
+  const [editingService, setEditingService] = useState<any>(null);
 
   const { data: client } = useSuspenseQuery(clientDossierQueryOptions(clientId));
+  const { data: servers } = useSuspenseQuery(serversQueryOptions);
+
   const dossier = {
     invoices: client.invoices,
     services: client.services,
@@ -84,6 +100,7 @@ function ClientDetailPage() {
     emailLogs: client.email_logs,
   };
   const dossiersQuery = { isLoading: false, data: dossier };
+
 
   const updateProfile = useMutation({
     mutationFn: async (values: any) => {
@@ -108,8 +125,6 @@ function ClientDetailPage() {
     const formData = new FormData(e.currentTarget);
     const values = Object.fromEntries(formData.entries());
     
-    // Garantir que não estamos tentando atualizar o email se ele for o mesmo ou estiver bloqueado
-    // Em alguns provedores, o email é o identificador único.
     const { email, ...updateValues } = values;
     updateProfile.mutate(updateValues);
   };
@@ -127,6 +142,31 @@ function ClientDetailPage() {
       setIsImpersonating(false);
     }
   };
+
+  const updateServiceMutation = useMutation({
+    mutationFn: (data: any) => updateServiceDetails({ data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-client-dossier", clientId] });
+      setEditingService(null);
+      toast.success("Serviço atualizado com sucesso");
+    },
+    onError: (err: any) => {
+      toast.error("Erro ao atualizar serviço: " + err.message);
+    }
+  });
+
+  const handleUpdateService = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    updateServiceMutation.mutate({
+      serviceId: editingService.id,
+      username: formData.get("username") as string || null,
+      domain: formData.get("domain") as string || null,
+      server_id: formData.get("server_id") as string || null,
+      status: formData.get("status") as any || null,
+    });
+  };
+
 
   return (
 
@@ -275,39 +315,56 @@ function ClientDetailPage() {
                       <TableRow>
                         <TableHead>Serviço</TableHead>
                         <TableHead>Domínio</TableHead>
+                        <TableHead>Servidor</TableHead>
                         <TableHead>Vencimento</TableHead>
-                        <TableHead>Provisionado</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead className="w-10"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {dossiersQuery.data?.services.map((s: any) => (
                         <TableRow key={s.id}>
                           <TableCell className="font-medium">
-                            {s.products?.name || "Produto"}
-                            {!s.username && (
-                              <span className="block text-[10px] text-destructive italic">Usuário ausente</span>
-                            )}
+                            <div className="flex flex-col">
+                              <span>{s.products?.name || "Produto"}</span>
+                              {s.username ? (
+                                <span className="text-[10px] text-muted-foreground">Usuário: {s.username}</span>
+                              ) : (
+                                <span className="text-[10px] text-destructive italic">Usuário ausente</span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {s.domain || "—"}
-                            {!s.server_id && s.domain && (
-                              <span className="block text-[10px] text-destructive italic">Sem servidor</span>
+                          </TableCell>
+                          <TableCell>
+                            {s.server_id ? (
+                              <span className="text-xs">{servers?.find(sv => sv.id === s.server_id)?.name || "Servidor"}</span>
+                            ) : (
+                              <span className="text-[10px] text-destructive italic">Não vinculado</span>
                             )}
                           </TableCell>
                           <TableCell>
                             {s.next_due_date ? format(new Date(s.next_due_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                           </TableCell>
                           <TableCell>
-                            {format(new Date(s.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                          </TableCell>
-                          <TableCell>
                             <Badge variant={s.status === 'active' ? 'default' : s.status === 'suspended' ? 'secondary' : 'destructive'}>
                               {s.status}
                             </Badge>
                           </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="size-8 rounded-lg"
+                              onClick={() => setEditingService(s)}
+                            >
+                              <Edit2 className="size-3" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
+
                       {dossiersQuery.data?.services.length === 0 && (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Nenhum serviço encontrado</TableCell>
@@ -459,6 +516,84 @@ function ClientDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={!!editingService} onOpenChange={(open) => !open && setEditingService(null)}>
+        <DialogContent className="rounded-3xl border-none shadow-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Gerenciar Serviço</DialogTitle>
+            <DialogDescription>
+              Ajuste manualmente os detalhes técnicos para sincronização com o servidor.
+            </DialogDescription>
+          </DialogHeader>
+          {editingService && (
+            <form onSubmit={handleUpdateService} className="space-y-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="service_product">Produto</Label>
+                <Input id="service_product" value={editingService.products?.name || "Produto"} disabled className="rounded-xl h-11 bg-muted/30" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="username">Usuário do Servidor (SSO)</Label>
+                <Input 
+                  id="username" 
+                  name="username" 
+                  defaultValue={editingService.username || ""} 
+                  placeholder="Ex: abacap123" 
+                  className="rounded-xl h-11" 
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="domain">Domínio</Label>
+                <Input 
+                  id="domain" 
+                  name="domain" 
+                  defaultValue={editingService.domain || ""} 
+                  placeholder="dominio.com.br" 
+                  className="rounded-xl h-11" 
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="server_id">Servidor Vinculado</Label>
+                <select 
+                  id="server_id" 
+                  name="server_id" 
+                  defaultValue={editingService.server_id || ""}
+                  className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Nenhum</option>
+                  {servers?.map((sv) => (
+                    <option key={sv.id} value={sv.id}>{sv.name} ({sv.hostname})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <select 
+                  id="status" 
+                  name="status" 
+                  defaultValue={editingService.status}
+                  className="flex h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="active">Ativo</option>
+                  <option value="pending">Pendente</option>
+                  <option value="suspended">Suspenso</option>
+                  <option value="terminated">Terminado</option>
+                  <option value="cancelled">Cancelado</option>
+                </select>
+              </div>
+              <DialogFooter className="pt-4">
+                <Button 
+                  type="submit" 
+                  disabled={updateServiceMutation.isPending} 
+                  className="bg-brand text-brand-foreground w-full rounded-2xl h-12"
+                >
+                  {updateServiceMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
+

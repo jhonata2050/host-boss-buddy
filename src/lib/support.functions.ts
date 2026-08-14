@@ -339,3 +339,38 @@ export const updateProduct = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const updateServiceDetails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => 
+    z.object({
+      serviceId: z.string().uuid(),
+      username: z.string().nullable(),
+      domain: z.string().nullable(),
+      server_id: z.string().uuid().nullable(),
+      status: z.enum(["active", "pending", "suspended", "terminated", "cancelled"]).nullable(),
+    }).parse(data)
+  )
+  .handler(async ({ data: input, context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    if (!isAdmin) throw new Error("Acesso restrito a administradores.");
+
+    const { error } = await context.supabase
+      .from("services")
+      .update({
+        username: input.username,
+        domain: input.domain,
+        server_id: input.server_id,
+        status: input.status ?? undefined
+      })
+      .eq("id", input.serviceId);
+
+    if (error) throw new Error(`Erro ao atualizar serviço: ${error.message}`);
+    return { success: true };
+  });
+
+
