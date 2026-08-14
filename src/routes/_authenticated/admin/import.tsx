@@ -174,6 +174,7 @@ function AdminWHMCSImportPage() {
       );
       if (stats.errors.length > 0) {
         toast.warning(`${stats.errors.length} erro(s). Veja o histórico.`);
+        // Note: The global banner in __root.tsx already shows the error message requested by user.
       }
       void queryClient.invalidateQueries();
     },
