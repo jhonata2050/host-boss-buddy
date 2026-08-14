@@ -133,8 +133,8 @@ export async function createDAAccount(serverId: string, details: {
 
   if (error || !server) throw new Error("Servidor não encontrado");
 
-  // Gerar senha EXTREMAMENTE forte (Alfanumérica + Símbolos + Tamanho > 16)
-  const password = `Pass_${Math.random().toString(36).slice(-8)}${Math.random().toString(36).slice(-8).toUpperCase()}!@#$%`;
+  // Gerar senha EXTREMAMENTE forte (Alfanumérica + Símbolos + Tamanho > 20)
+  const password = `StrongPass${Math.random().toString(36).slice(-10).toUpperCase()}@${Math.random().toString(36).slice(-10)}#$!`;
 
   return await callDA({
     hostname: server.hostname,
