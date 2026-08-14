@@ -124,7 +124,7 @@ function ClientsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" asChild>
-                      <Link to="/admin/clients/$clientId" params={{ clientId: client.id }}>
+                      <Link to="/admin/clients_/$clientId" params={{ clientId: client.id }}>
                         <ExternalLink className="size-4" />
                       </Link>
                     </Button>
