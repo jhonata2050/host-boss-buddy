@@ -27,8 +27,8 @@ export const updateBranding = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     try {
       const { updateBrandingImplementation } = await import("./admin.server");
-      // O input na página é { data: form }, então passamos data.data
-      const result = await updateBrandingImplementation(data.data, context.supabase);
+      // Passamos o contexto completo que contém supabase, userId e claims
+      const result = await updateBrandingImplementation(data.data, context);
       return result;
     } catch (error) {
       console.error("Error in updateBranding server function:", error);
