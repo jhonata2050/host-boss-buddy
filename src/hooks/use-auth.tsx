@@ -65,10 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setImpersonatedClientId(null);
         } else {
           if (event === "SIGNED_IN") {
-            void logSessionEvent({ data: {
-              action: "login.succeeded",
-              description: "Acesso autenticado com sucesso",
-            }});
+            window.setTimeout(() => {
+              void logSessionEvent({ data: {
+                action: "login.succeeded",
+                description: "Acesso autenticado com sucesso",
+              }});
+            }, 0);
           }
           void queryClient.invalidateQueries();
         }
