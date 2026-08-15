@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { DEFAULT_BRANDING, type BrandingSettings } from "./branding";
 import { getRequestHeader } from "@tanstack/react-start/server";
 
@@ -22,7 +22,7 @@ export async function getBrandingImplementation() {
 
 export async function updateBrandingImplementation(
   data: BrandingSettings,
-  context: { supabase: any; userId: string; claims: any },
+  context: { supabase: SupabaseClient<Database>; userId: string; claims: any },
 ) {
   const { data: isAdmin } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
@@ -32,7 +32,7 @@ export async function updateBrandingImplementation(
 
   const { error } = await context.supabase.from("system_settings").upsert({
     key: "branding",
-    value: data as never,
+    value: data as unknown as Json,
     updated_at: new Date().toISOString(),
   });
 
@@ -52,9 +52,9 @@ export async function updateBrandingImplementation(
       actor_id: context.userId,
       actor_email: email,
       description: `Branding atualizado: ${data.app_name}`,
-      ip_address: ipAddress,
+      ip_address: ipAddress as any,
       user_agent: userAgent,
-      details: { branding: data } as any,
+      metadata: { branding: data } as unknown as Json,
     });
   } catch (e) {
     console.error("Erro ao logar alteração de branding:", e);
@@ -65,18 +65,18 @@ export async function updateBrandingImplementation(
 
 export async function updateClientProfileImplementation(
   data: any,
-  context: { supabase: any },
+  context: { supabase: SupabaseClient<Database> },
 ) {
   const { id, ...updates } = data;
 
-  const sanitizedUpdates: Record<string, string | null> = {};
+  const sanitizedUpdates: Record<string, any> = {};
   Object.entries(updates).forEach(([key, value]) => {
-    sanitizedUpdates[key] = value === undefined ? null : value as any;
+    sanitizedUpdates[key] = value === undefined ? null : value;
   });
 
   const { error } = await context.supabase
     .from("profiles")
-    .update(sanitizedUpdates as never)
+    .update(sanitizedUpdates as any)
     .eq("id", id);
 
   if (error) throw error;
@@ -85,7 +85,7 @@ export async function updateClientProfileImplementation(
 
 export async function bulkDeleteClientsImplementation(
   clientIds: string[],
-  context: { supabase: any },
+  context: { supabase: SupabaseClient<Database> },
 ) {
   const { error } = await context.supabase
     .from("profiles")
