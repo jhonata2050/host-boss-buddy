@@ -20,6 +20,16 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/admin/logs")({
+  head: () => ({
+    meta: [
+      { title: "Auditoria e logs — HostPanel" },
+      { name: "description", content: "Auditoria de acessos, alterações, eventos e e-mails da HostPanel." },
+      { property: "og:title", content: "Auditoria e logs — HostPanel" },
+      { property: "og:description", content: "Auditoria de acessos, alterações, eventos e e-mails da HostPanel." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: LogsPage,
 });
 
