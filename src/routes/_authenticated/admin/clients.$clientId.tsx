@@ -213,13 +213,15 @@ function ClientDetailPage() {
         </div>
 
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-12 p-1 bg-muted/50 rounded-2xl">
-            <TabsTrigger value="info" className="rounded-xl flex gap-2"><User className="size-4" /> Dados</TabsTrigger>
-            <TabsTrigger value="services" className="rounded-xl flex gap-2"><Server className="size-4" /> Serviços</TabsTrigger>
-            <TabsTrigger value="finance" className="rounded-xl flex gap-2"><CreditCard className="size-4" /> Financeiro</TabsTrigger>
-            <TabsTrigger value="emails" className="rounded-xl flex gap-2"><Mail className="size-4" /> E-mails</TabsTrigger>
-            <TabsTrigger value="tickets" className="rounded-xl flex gap-2"><LifeBuoy className="size-4" /> Tickets</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-2">
+            <TabsList className="bg-muted/50 p-1 rounded-2xl h-12 w-max min-w-full justify-start sm:w-auto">
+              <TabsTrigger value="info" className="rounded-xl flex gap-2"><User className="size-4" /> Dados</TabsTrigger>
+              <TabsTrigger value="services" className="rounded-xl flex gap-2"><Server className="size-4" /> Serviços</TabsTrigger>
+              <TabsTrigger value="finance" className="rounded-xl flex gap-2"><CreditCard className="size-4" /> Financeiro</TabsTrigger>
+              <TabsTrigger value="emails" className="rounded-xl flex gap-2"><Mail className="size-4" /> E-mails</TabsTrigger>
+              <TabsTrigger value="tickets" className="rounded-xl flex gap-2"><LifeBuoy className="size-4" /> Tickets</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="info" className="mt-6">
             <Card className="rounded-3xl border-none bg-card shadow-sm">
@@ -320,17 +322,18 @@ function ClientDetailPage() {
               </CardHeader>
               <CardContent>
                 {dossiersQuery.isLoading ? <Skeleton className="h-40" /> : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Serviço</TableHead>
-                        <TableHead>Domínio</TableHead>
-                        <TableHead>Servidor</TableHead>
-                        <TableHead>Vencimento</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-20"></TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap">Serviço</TableHead>
+                          <TableHead className="whitespace-nowrap">Domínio</TableHead>
+                          <TableHead className="hidden sm:table-cell">Servidor</TableHead>
+                          <TableHead className="hidden md:table-cell">Vencimento</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-20 text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {dossiersQuery.data?.services.map((s: any) => (
                         <TableRow key={s.id}>
@@ -347,14 +350,14 @@ function ClientDetailPage() {
                           <TableCell className="text-muted-foreground">
                             {s.domain || "—"}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             {s.server_id ? (
                               <span className="text-xs">{servers?.find(sv => sv.id === s.server_id)?.name || "Servidor"}</span>
                             ) : (
                               <span className="text-[10px] text-destructive italic">Não vinculado</span>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             {s.next_due_date ? format(new Date(s.next_due_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}
                           </TableCell>
                           <TableCell>
