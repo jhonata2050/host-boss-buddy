@@ -33,9 +33,9 @@ function LogsPage() {
     queryFn: () => getSystemLogs({ data: { type: activeTab, offset: (page - 1) * pageSize, limit: pageSize } }),
   });
 
-  const logs = data?.logs ?? [];
-  const totalItems = data?.count ?? 0;
-  const totalPages = Math.ceil(totalItems / pageSize);
+  const logs = data?.logs || [];
+  const totalItems = data?.count || 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
   return (
     <AppShell
@@ -121,10 +121,25 @@ function LogsPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="p-12 text-center text-muted-foreground">
-                <Search className="size-12 mx-auto mb-4 opacity-20" />
-                <p>Nenhum log disponível para esta categoria no momento.</p>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data/Hora</TableHead>
+                    <TableHead>Evento</TableHead>
+                    <TableHead>Detalhes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2">
+                        <Search className="size-8 opacity-20" />
+                        <p>Nenhum log de {activeTab === "auth" ? "autenticação" : "sistema"} encontrado.</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             )}
           </div>
 
