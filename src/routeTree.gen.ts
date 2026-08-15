@@ -36,6 +36,7 @@ import { Route as AuthenticatedServicesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedServicesServiceIdRouteImport } from './routes/_authenticated/services.$serviceId'
 import { Route as AuthenticatedTicketsIndexRouteImport } from './routes/_authenticated/tickets.index'
 import { Route as AuthenticatedTicketsTicketIdRouteImport } from './routes/_authenticated/tickets.$ticketId'
+import { Route as ApiPublicPasswordResetRouteImport } from './routes/api/public/password-reset'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin/clients.index'
 import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients.$clientId'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
@@ -197,6 +198,11 @@ const AuthenticatedTicketsTicketIdRoute =
     path: '/$ticketId',
     getParentRoute: () => AuthenticatedTicketsRoute,
   } as any)
+const ApiPublicPasswordResetRoute = ApiPublicPasswordResetRouteImport.update({
+  id: '/api/public/password-reset',
+  path: '/api/public/password-reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminClientsIndexRoute =
   AuthenticatedAdminClientsIndexRouteImport.update({
     id: '/',
@@ -273,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/services/$serviceId': typeof AuthenticatedServicesServiceIdRoute
   '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
+  '/api/public/password-reset': typeof ApiPublicPasswordResetRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/services/': typeof AuthenticatedServicesIndexRoute
@@ -305,6 +312,7 @@ export interface FileRoutesByTo {
   '/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/services/$serviceId': typeof AuthenticatedServicesServiceIdRoute
   '/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
+  '/api/public/password-reset': typeof ApiPublicPasswordResetRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/services': typeof AuthenticatedServicesIndexRoute
@@ -344,6 +352,7 @@ export interface FileRoutesById {
   '/_authenticated/invoices/$invoiceId': typeof AuthenticatedInvoicesInvoiceIdRoute
   '/_authenticated/services/$serviceId': typeof AuthenticatedServicesServiceIdRoute
   '/_authenticated/tickets/$ticketId': typeof AuthenticatedTicketsTicketIdRoute
+  '/api/public/password-reset': typeof ApiPublicPasswordResetRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/services/': typeof AuthenticatedServicesIndexRoute
@@ -383,6 +392,7 @@ export interface FileRouteTypes {
     | '/invoices/$invoiceId'
     | '/services/$serviceId'
     | '/tickets/$ticketId'
+    | '/api/public/password-reset'
     | '/admin/'
     | '/invoices/'
     | '/services/'
@@ -415,6 +425,7 @@ export interface FileRouteTypes {
     | '/invoices/$invoiceId'
     | '/services/$serviceId'
     | '/tickets/$ticketId'
+    | '/api/public/password-reset'
     | '/admin'
     | '/invoices'
     | '/services'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/$invoiceId'
     | '/_authenticated/services/$serviceId'
     | '/_authenticated/tickets/$ticketId'
+    | '/api/public/password-reset'
     | '/_authenticated/admin/'
     | '/_authenticated/invoices/'
     | '/_authenticated/services/'
@@ -472,6 +484,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicPasswordResetRoute: typeof ApiPublicPasswordResetRoute
   ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
   ApiPublicWebhooksAbacatepayRoute: typeof ApiPublicWebhooksAbacatepayRoute
   ApiPublicWebhooksCajupayRoute: typeof ApiPublicWebhooksCajupayRoute
@@ -672,6 +685,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsTicketIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
+    '/api/public/password-reset': {
+      id: '/api/public/password-reset'
+      path: '/api/public/password-reset'
+      fullPath: '/api/public/password-reset'
+      preLoaderRoute: typeof ApiPublicPasswordResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/clients/': {
       id: '/_authenticated/admin/clients/'
       path: '/'
@@ -859,6 +879,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicPasswordResetRoute: ApiPublicPasswordResetRoute,
   ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
   ApiPublicWebhooksAbacatepayRoute: ApiPublicWebhooksAbacatepayRoute,
   ApiPublicWebhooksCajupayRoute: ApiPublicWebhooksCajupayRoute,
