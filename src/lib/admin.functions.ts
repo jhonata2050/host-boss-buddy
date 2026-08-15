@@ -39,7 +39,21 @@ export const updateBranding = createServerFn({ method: "POST" })
     brand_color: z.string(),
     favicon_url: z.string().nullable(),
   }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Log do evento de branding
+    try {
+      const { logSessionEvent } = await import("@/lib/audit.functions");
+      await logSessionEvent({ data: {
+        action: "branding.update",
+        category: "branding",
+        description: `Branding atualizado: ${data.app_name}`,
+        status: "success",
+        metadata: { branding: data }
+      }});
+    } catch (e) {
+      console.error("Erro ao logar alteração de branding:", e);
+    }
+
     const { error } = await supabase
       .from("system_settings")
       .upsert({
