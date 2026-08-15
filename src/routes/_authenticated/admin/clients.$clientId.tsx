@@ -239,7 +239,7 @@ function ClientDetailPage() {
                 >
                   <div className="space-y-2">
                     <Label htmlFor="full_name">Nome Completo</Label>
-                    <Input id="full_name" name="full_name" defaultValue={client.full_name || ""} key={`${client.id}-${client.full_name}`} disabled={!isEditing} className="rounded-xl h-11" />
+                    <Input id="full_name" name="full_name" defaultValue={client.full_name || ""} disabled={!isEditing} className="rounded-xl h-11" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">E-mail</Label>
