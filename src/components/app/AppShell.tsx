@@ -258,18 +258,20 @@ export function AppShell({
               <SheetContent side="left" className="w-72 p-0 border-none rounded-r-3xl overflow-hidden">
                 <div className="flex h-full flex-col bg-sidebar px-3 py-4">
                   <div className="flex items-center justify-between px-2 pb-4">
-                    <Link 
-                      to="/" 
+                    <Link
+                      to="/"
                       className={cn(
-                        "flex items-center", 
-                        branding.logo_url ? "w-full" : "size-8 justify-center rounded-full bg-brand"
+                        "flex items-center",
+                        branding.logo_url
+                          ? "w-full justify-start rounded-2xl bg-foreground px-3 py-2"
+                          : "size-8 justify-center rounded-full bg-brand",
                       )}
                     >
                       {branding.logo_url ? (
-                        <img 
-                          src={branding.logo_url} 
-                          alt={branding.app_name} 
-                          className="h-10 w-auto object-contain max-w-full" 
+                        <img
+                          src={branding.logo_url}
+                          alt={branding.app_name}
+                          className="h-8 w-auto max-w-full object-contain"
                         />
                       ) : (
                         <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
@@ -346,18 +348,20 @@ export function AppShell({
       <div className="flex min-h-0 flex-1">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
           <div className="flex items-center justify-between px-2 pb-4">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className={cn(
-                "flex min-w-0 items-center", 
-                branding.logo_url ? "w-full" : "size-8 justify-center rounded-full bg-brand overflow-hidden"
+                "flex min-w-0 items-center",
+                branding.logo_url
+                  ? "w-full justify-start rounded-2xl bg-foreground px-3 py-2"
+                  : "size-8 justify-center overflow-hidden rounded-full bg-brand",
               )}
             >
               {branding.logo_url ? (
-                <img 
-                  src={branding.logo_url} 
-                  alt={branding.app_name} 
-                  className="h-12 w-auto object-contain max-w-full" 
+                <img
+                  src={branding.logo_url}
+                  alt={branding.app_name}
+                  className="h-8 w-auto max-w-full object-contain"
                 />
               ) : (
                 <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
