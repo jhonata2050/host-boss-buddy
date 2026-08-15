@@ -188,3 +188,7 @@
   background-image: var(--gradient-lime);
 }
 
+#lovable-badge {
+  display: none !important;
+}
+
