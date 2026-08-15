@@ -233,7 +233,6 @@ function ClientDetailPage() {
               </CardHeader>
               <CardContent>
                 <form 
-                  key={client.id}
                   onSubmit={handleSubmit} 
                   className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
