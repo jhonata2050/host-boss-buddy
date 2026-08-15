@@ -1,12 +1,29 @@
 
-import { supabaseAdmin } from './src/integrations/supabase/client.server.js';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  process.exit(1);
+}
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 async function checkEmails() {
   const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
   if (error) {
-    console.error(error);
+    console.error('Error listing users:', error);
     return;
   }
+
+  console.log(`Total users in auth.users: ${users.length}`);
 
   const emailCounts = {};
   users.forEach(user => {
@@ -17,9 +34,12 @@ async function checkEmails() {
   console.log('Duplicate emails in auth.users:', duplicates);
   
   if (duplicates.length > 0) {
-    duplicates.forEach(([email]) => {
+    duplicates.forEach(([email, count]) => {
       const usersWithEmail = users.filter(u => u.email === email);
-      console.log(`Users with email ${email}:`, usersWithEmail.map(u => ({ id: u.id, role: u.role, created_at: u.created_at })));
+      console.log(`Email ${email} has ${count} users:`);
+      usersWithEmail.forEach(u => {
+        console.log(`  - ID: ${u.id}, Created At: ${u.created_at}, Last Sign In: ${u.last_sign_in_at}, Meta: ${JSON.stringify(u.user_metadata)}`);
+      });
     });
   } else {
     console.log('No duplicate emails found in auth.users.');
