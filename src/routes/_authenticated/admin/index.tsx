@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getBranding, updateBranding, type BrandingSettings } from "@/lib/admin.functions";
+import { getBranding, updateBranding } from "@/lib/admin.functions";
+import type { BrandingSettings } from "@/lib/branding";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: BrandingSettingsPage,
