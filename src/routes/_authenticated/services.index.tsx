@@ -171,12 +171,17 @@ function ClientServicesPage() {
                       size="sm" 
                       className="rounded-xl border-brand/20 text-brand hover:bg-brand/5"
                       onClick={async () => {
-                        try {
+                        const promise = (async () => {
                           const url = await getDASSOUrl({ data: { serverId: svc.server_id, username: svc.username, redirectUrl: '/' } });
                           window.open(url, '_blank');
-                        } catch (err: any) {
-                          toast.error("Erro ao gerar acesso: " + err.message);
-                        }
+                          return url;
+                        })();
+
+                        toast.promise(promise, {
+                          loading: 'Gerando acesso...',
+                          success: 'Redirecionando...',
+                          error: (err) => `Erro: ${err.message}`
+                        });
                       }}
                     >
                       <ExternalLink className="size-3 mr-1" />
