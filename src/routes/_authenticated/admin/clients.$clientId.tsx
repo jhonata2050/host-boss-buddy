@@ -105,11 +105,9 @@ function ClientDetailPage() {
 
   const updateProfile = useMutation({
     mutationFn: async (values: any) => {
-      // Garantir que não estamos tentando atualizar o ID
-      const { id, ...dataToUpdate } = values;
       const { error } = await supabase
         .from("profiles")
-        .update(dataToUpdate)
+        .update(values)
         .eq("id", clientId);
       if (error) throw error;
     },
