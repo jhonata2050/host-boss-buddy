@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBranding, updateBranding, type BrandingSettings } from "@/lib/admin.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/index")({
+export const Route = createFileRoute("/_authenticated/admin/")({
   component: BrandingSettingsPage,
 });
 
