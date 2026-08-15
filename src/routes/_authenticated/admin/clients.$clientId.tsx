@@ -361,13 +361,18 @@ function ClientDetailPage() {
                                   size="icon"
                                   className="size-8 rounded-lg text-brand hover:text-brand hover:bg-brand/10"
                                   onClick={async () => {
-                                    try {
-                                      const { getDASSOUrl } = await import("@/lib/support.functions");
+                                    const { getDASSOUrl } = await import("@/lib/support.functions");
+                                    const promise = (async () => {
                                       const url = await getDASSOUrl({ data: { serverId: s.server_id, username: s.username, redirectUrl: '/' } });
                                       window.open(url, '_blank');
-                                    } catch (err: any) {
-                                      toast.error("Erro ao gerar acesso: " + err.message);
-                                    }
+                                      return url;
+                                    })();
+
+                                    toast.promise(promise, {
+                                      loading: 'Gerando acesso...',
+                                      success: 'Redirecionando...',
+                                      error: (err) => `Erro: ${err.message}`
+                                    });
                                   }}
                                   title="Acessar Painel"
                                 >
