@@ -67,23 +67,25 @@ function LogsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setPage(1); }} className="w-full">
-          <TabsList className="bg-muted/50 p-1 rounded-2xl h-12">
-            <TabsTrigger value="all" className="rounded-xl flex gap-2">
-              <Activity className="size-4" /> Todos
-            </TabsTrigger>
-            <TabsTrigger value="auth" className="rounded-xl flex gap-2">
-              <Shield className="size-4" /> Autenticação
-            </TabsTrigger>
-            <TabsTrigger value="data" className="rounded-xl flex gap-2">
-              <Database className="size-4" /> Alterações
-            </TabsTrigger>
-            <TabsTrigger value="system" className="rounded-xl flex gap-2">
-              <Activity className="size-4" /> Sistema
-            </TabsTrigger>
-            <TabsTrigger value="email" className="rounded-xl flex gap-2">
-              <Mail className="size-4" /> E-mails
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-2">
+            <TabsList className="bg-muted/50 p-1 rounded-2xl h-12 w-max min-w-full justify-start sm:w-auto">
+              <TabsTrigger value="all" className="rounded-xl flex gap-2">
+                <Activity className="size-4" /> Todos
+              </TabsTrigger>
+              <TabsTrigger value="auth" className="rounded-xl flex gap-2">
+                <Shield className="size-4" /> Autenticação
+              </TabsTrigger>
+              <TabsTrigger value="data" className="rounded-xl flex gap-2">
+                <Database className="size-4" /> Alterações
+              </TabsTrigger>
+              <TabsTrigger value="system" className="rounded-xl flex gap-2">
+                <Activity className="size-4" /> Sistema
+              </TabsTrigger>
+              <TabsTrigger value="email" className="rounded-xl flex gap-2">
+                <Mail className="size-4" /> E-mails
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <div className="mt-6 border border-border rounded-2xl overflow-hidden bg-card">
             {isLoading ? (
@@ -91,17 +93,18 @@ function LogsPage() {
                 <Skeleton className="h-40 w-full rounded-xl" />
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data/Hora</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Usuário</TableHead>
-                    <TableHead>Evento</TableHead>
-                    <TableHead>Detalhes</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="whitespace-nowrap">Data/Hora</TableHead>
+                      <TableHead className="hidden sm:table-cell">Categoria</TableHead>
+                      <TableHead>Usuário</TableHead>
+                      <TableHead>Evento</TableHead>
+                      <TableHead className="hidden md:table-cell">Detalhes</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {logs.length > 0 ? (
                     logs.map((log) => (
@@ -109,12 +112,12 @@ function LogsPage() {
                         <TableCell className="text-xs">
                           {format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
                         </TableCell>
-                        <TableCell className="text-xs capitalize">{log.category}</TableCell>
+                        <TableCell className="text-xs capitalize hidden sm:table-cell">{log.category}</TableCell>
                         <TableCell className="text-xs">
                           {log.profileName || log.actorEmail || "Sistema"}
                         </TableCell>
                         <TableCell className="text-xs font-medium">{log.action}</TableCell>
-                        <TableCell className="text-sm max-w-[320px]">
+                        <TableCell className="text-sm max-w-[320px] hidden md:table-cell">
                           <p>{log.description}</p>
                           {(log.entityType || log.ipAddress) && (
                             <p className="mt-1 text-xs text-muted-foreground">
@@ -140,7 +143,8 @@ function LogsPage() {
                     </TableRow>
                   )}
                 </TableBody>
-              </Table>
+                </Table>
+              </div>
             )}
           </div>
 
