@@ -3,6 +3,7 @@ import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsStaff, useRoles } from "@/hooks/use-auth";
+import { useBranding } from "@/hooks/use-branding";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminLayout() {
+  const branding = useBranding();
   const { data: roles, error, isLoading: rolesLoading } = useRoles();
   const { isStaff, isLoading: staffLoading } = useIsStaff();
   const navigate = useNavigate();

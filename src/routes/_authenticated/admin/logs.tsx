@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Database, Mail, Shield, Activity, Search } from "lucide-react";
+import { Database, Mail, Shield, Activity, Search, Palette } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { Pagination } from "@/components/app/Pagination";
@@ -83,6 +83,9 @@ function LogsPage() {
               </TabsTrigger>
               <TabsTrigger value="email" className="rounded-xl flex gap-2">
                 <Mail className="size-4" /> E-mails
+              </TabsTrigger>
+              <TabsTrigger value="branding" className="rounded-xl flex gap-2">
+                <Palette className="size-4" /> Branding
               </TabsTrigger>
             </TabsList>
           </div>

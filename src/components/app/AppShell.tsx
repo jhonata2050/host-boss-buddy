@@ -26,6 +26,7 @@ import {
   Wallet,
   LogOut as LogOutIcon,
   Menu,
+  Palette,
 } from "lucide-react";
 
 import { useState, type ReactNode } from "react";
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth, useIsStaff, useProfile } from "@/hooks/use-auth";
+import { useBranding } from "@/hooks/use-branding";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { logSessionEvent } from "@/lib/audit.functions";
@@ -81,6 +83,7 @@ const ADMIN_SECTIONS: NavSection[] = [
       { label: "E-mails e SMTP", to: "/admin/emails", icon: Mail },
       { label: "Domínios", to: "/admin/domains", icon: Globe },
       { label: "Logs do Sistema", to: "/admin/logs", icon: History },
+      { label: "Branding e Visual", to: "/admin", icon: Palette },
       { label: "Importador WHMCS", to: "/admin/import", icon: RefreshCw },
     ],
   },
@@ -166,6 +169,7 @@ export function AppShell({
   const { isStaff } = useIsStaff();
   const { user, impersonatedClientId, setImpersonatedClientId } = useAuth();
   const { data: profile } = useProfile();
+  const branding = useBranding();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [hideBanner, setHideBanner] = useState(false);
@@ -255,7 +259,11 @@ export function AppShell({
                 <div className="flex h-full flex-col bg-sidebar px-3 py-4">
                   <div className="flex items-center justify-between px-2 pb-4">
                     <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand">
-                      <span className="text-sm font-bold text-brand-foreground">H</span>
+                      {branding.logo_url ? (
+                        <img src={branding.logo_url} alt={branding.app_name} className="size-full object-contain" />
+                      ) : (
+                        <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
+                      )}
                     </Link>
                   </div>
                   <nav className="flex-1 space-y-1 overflow-y-auto">
@@ -315,7 +323,7 @@ export function AppShell({
                 </div>
               </SheetContent>
             </Sheet>
-            <span className="text-lg font-semibold">HostPanel</span>
+            <span className="text-lg font-semibold">{branding.app_name}</span>
           </div>
           <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground relative">
             <Bell className="size-5" />
@@ -329,8 +337,12 @@ export function AppShell({
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
 
           <div className="flex items-center justify-between px-2 pb-4">
-            <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand">
-              <span className="text-sm font-bold text-brand-foreground">H</span>
+            <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand overflow-hidden">
+              {branding.logo_url ? (
+                <img src={branding.logo_url} alt={branding.app_name} className="size-full object-contain" />
+              ) : (
+                <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
+              )}
             </Link>
             <PanelsTopLeft className="size-4 text-muted-foreground" />
           </div>

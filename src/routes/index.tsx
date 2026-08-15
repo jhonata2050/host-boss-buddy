@@ -6,6 +6,7 @@ import { Check, HardDrive, Mail, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranding } from "@/hooks/use-branding";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/")({
 const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 function Index() {
+  const branding = useBranding();
   const plans = useQuery({
     queryKey: ["public-catalog"],
     queryFn: async () => {
@@ -50,10 +52,14 @@ function Index() {
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6">
         <span className="flex items-center gap-2 text-lg font-semibold">
-          <span className="flex size-8 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground">
-            H
+          <span className="flex size-8 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground overflow-hidden">
+            {branding.logo_url ? (
+              <img src={branding.logo_url} alt={branding.app_name} className="size-full object-contain" />
+            ) : (
+              branding.app_name.charAt(0)
+            )}
           </span>
-          HostPanel
+          {branding.app_name}
         </span>
         <Button asChild variant="outline" className="rounded-xl">
           <Link to="/auth">Área do cliente</Link>
@@ -143,7 +149,7 @@ function Index() {
       </section>
 
       <footer className="border-t border-border px-4 py-8 text-center text-sm text-muted-foreground">
-        HostPanel — plataforma de gestão de hospedagem web.
+        {branding.app_name} — plataforma de gestão de hospedagem web.
       </footer>
     </div>
   );

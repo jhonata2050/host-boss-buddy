@@ -1,197 +1,221 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowRight,
-  CreditCard,
-  Gauge,
-  Package,
-  QrCode,
-  Receipt,
-  Users,
-  Wallet,
-} from "lucide-react";
-import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Cog, Palette, Layout, Globe, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { AppShell } from "@/components/app/AppShell";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getBranding, updateBranding, type BrandingSettings } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  head: () => ({
-    meta: [
-      { title: "Painel administrativo — HostPanel" },
-      {
-        name: "description",
-        content: "Visão master da plataforma: vendas, faturas, clientes e serviços de hospedagem.",
-      },
-      { property: "og:title", content: "Painel administrativo — HostPanel" },
-      { property: "og:description", content: "Visão master da plataforma de hospedagem." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: AdminDashboardPage,
+  component: BrandingSettingsPage,
 });
 
-const PERIODS = ["Hoje", "Esse mês", "Últimos 30 dias", "Últimos 90 dias", "Todo o período"];
-
-const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-
-function AdminDashboardPage() {
-  const [period, setPeriod] = useState("Hoje");
-
-  const stats = useQuery({
-    queryKey: ["admin-dashboard-stats"],
-    queryFn: async () => {
-      // Use indexed queries and head: true for counts where possible
-      const [clients, products, invoices, transactions, services] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("products").select("id", { count: "exact", head: true }),
-        supabase.from("invoices").select("total_amount").eq("status", "pending"),
-        supabase.from("transactions").select("amount"),
-        supabase.from("services").select("id", { count: "exact", head: true }),
-      ]);
-
-      return {
-        clients: clients.count ?? 0,
-        products: products.count ?? 0,
-        services: services.count ?? 0,
-        salesTotal: transactions.data?.reduce((acc, t) => acc + Number(t.amount), 0) ?? 0,
-        transactionCount: transactions.data?.length ?? 0,
-        pendingTotal: invoices.data?.reduce((acc, i) => acc + Number(i.total_amount), 0) ?? 0,
-      };
-    },
-    staleTime: 1000 * 60 * 10, // Dashboard stats can be more stale
+function BrandingSettingsPage() {
+  const queryClient = useQueryClient();
+  const { data: branding, isLoading } = useQuery({
+    queryKey: ["admin-branding"],
+    queryFn: () => getBranding(),
   });
+
+  const [form, setForm] = useState<BrandingSettings>({
+    logo_url: "",
+    app_name: "HostPanel",
+    primary_color: "oklch(0.88 0.19 128)",
+    brand_color: "oklch(0.72 0.19 148)",
+    favicon_url: "",
+  });
+
+  useEffect(() => {
+    if (branding) {
+      setForm(branding);
+    }
+  }, [branding]);
+
+  const mutation = useMutation({
+    mutationFn: (data: BrandingSettings) => updateBranding({ data }),
+    onSuccess: () => {
+      toast.success("Configurações de branding salvas com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["admin-branding"] });
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao salvar configurações: " + error.message);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutation.mutate(form);
+  };
+
+  if (isLoading) {
+    return (
+      <AppShell area="admin" breadcrumb={<span>Admin / Branding</span>}>
+        <div className="p-8 text-center text-muted-foreground text-sm">Carregando configurações...</div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell
       area="admin"
       breadcrumb={
-        <span className="flex items-center gap-2 text-base font-medium text-foreground">
-          <Gauge className="size-4" />
-          Painel administrativo
-        </span>
+        <>
+          <span className="flex items-center gap-2">
+            <Cog className="size-4" />
+            Sistema
+          </span>
+          <span>/</span>
+          <span className="flex items-center gap-2 font-medium text-foreground">
+            <Palette className="size-4" />
+            Branding e Visual
+          </span>
+        </>
       }
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-6 flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Visão geral da plataforma</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Dados consolidados de todas as contas de clientes.
+          <h1 className="text-2xl font-semibold tracking-tight">Branding do Sistema</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Configure a identidade visual da sua plataforma, incluindo logo, cores e nome.
           </p>
         </div>
-      </div>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {PERIODS.map((item) => (
-          <Button
-            key={item}
-            size="sm"
-            variant={period === item ? "default" : "outline"}
-            className={cn("rounded-xl", period === item && "bg-primary text-primary-foreground hover:bg-primary/90")}
-            onClick={() => setPeriod(item)}
-          >
-            {item}
-          </Button>
-        ))}
-      </div>
+        <form onSubmit={handleSubmit}>
+          <Tabs defaultValue="general" className="w-full">
+            <TabsList className="bg-muted/50 p-1 rounded-xl h-11 mb-4">
+              <TabsTrigger value="general" className="rounded-lg h-9 gap-2">
+                <Globe className="size-4" /> Geral
+              </TabsTrigger>
+              <TabsTrigger value="colors" className="rounded-lg h-9 gap-2">
+                <Palette className="size-4" /> Cores
+              </TabsTrigger>
+              <TabsTrigger value="layout" className="rounded-lg h-9 gap-2">
+                <Layout className="size-4" /> Layout
+              </TabsTrigger>
+            </TabsList>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <KpiCard label="Total em vendas" value={stats.isLoading ? undefined : brl.format(stats.data?.salesTotal ?? 0)} />
-        <KpiCard label="Transações" value={stats.isLoading ? undefined : String(stats.data?.transactionCount ?? 0)} />
-        <KpiCard label="Faturas em aberto" value={stats.isLoading ? undefined : brl.format(stats.data?.pendingTotal ?? 0)} />
-      </div>
+            <TabsContent value="general">
+              <Card className="rounded-3xl border-border/50 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Identidade Básica</CardTitle>
+                  <CardDescription>Nome e imagens principais da plataforma.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="app_name">Nome da Aplicação</Label>
+                    <Input
+                      id="app_name"
+                      value={form.app_name}
+                      onChange={(e) => setForm({ ...form, app_name: e.target.value })}
+                      placeholder="Ex: HostPanel"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="logo_url">URL do Logotipo</Label>
+                    <Input
+                      id="logo_url"
+                      value={form.logo_url || ""}
+                      onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
+                      placeholder="https://exemplo.com/logo.png"
+                      className="rounded-xl"
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">Use uma imagem transparente (PNG/SVG) para melhor resultado.</p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="favicon_url">URL do Favicon</Label>
+                    <Input
+                      id="favicon_url"
+                      value={form.favicon_url || ""}
+                      onChange={(e) => setForm({ ...form, favicon_url: e.target.value })}
+                      placeholder="https://exemplo.com/favicon.ico"
+                      className="rounded-xl"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-3">
-        <KpiCard label="Clientes cadastrados" value={stats.isLoading ? undefined : String(stats.data?.clients ?? 0)} />
-        <KpiCard label="Serviços provisionados" value={stats.isLoading ? undefined : String(stats.data?.services ?? 0)} />
-        <KpiCard label="Planos no catálogo" value={stats.isLoading ? undefined : String(stats.data?.products ?? 0)} />
-      </div>
+            <TabsContent value="colors">
+              <Card className="rounded-3xl border-border/50 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Paleta de Cores</CardTitle>
+                  <CardDescription>Defina as cores principais do sistema (formato CSS/OKLCH).</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="primary_color">Cor Primária (OKLCH)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="primary_color"
+                          value={form.primary_color}
+                          onChange={(e) => setForm({ ...form, primary_color: e.target.value })}
+                          className="rounded-xl font-mono text-xs"
+                        />
+                        <div 
+                          className="size-11 rounded-xl border border-border" 
+                          style={{ backgroundColor: form.primary_color }} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="brand_color">Cor da Marca (OKLCH)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="brand_color"
+                          value={form.brand_color}
+                          onChange={(e) => setForm({ ...form, brand_color: e.target.value })}
+                          className="rounded-xl font-mono text-xs"
+                        />
+                        <div 
+                          className="size-11 rounded-xl border border-border" 
+                          style={{ backgroundColor: form.brand_color }} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-muted/30 rounded-2xl border border-dashed border-border text-xs text-muted-foreground">
+                    <p className="font-semibold mb-1">Dica:</p>
+                    O sistema usa OKLCH por padrão para melhor acessibilidade e contraste. 
+                    Exemplo de verde limão: <code className="bg-muted px-1 rounded">oklch(0.88 0.19 128)</code>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-      <div className="mt-6 rounded-2xl border border-border p-4 lg:p-6">
-        <h2 className="flex items-center gap-2 text-sm font-medium">
-          <Wallet className="size-4 text-muted-foreground" />
-          Métodos de pagamento
-        </h2>
-        <div className="mt-4 h-3 w-full rounded-full bg-muted" />
-        <div className="mt-6 space-y-3 border-t border-border pt-4 text-sm">
-          <MethodRow icon={CreditCard} label="Cartão de crédito" value={brl.format(0)} />
-          <MethodRow icon={QrCode} label="Pix" value={brl.format(0)} />
-          <MethodRow icon={Receipt} label="Boleto" value={brl.format(0)} />
-        </div>
-      </div>
+            <TabsContent value="layout">
+              <Card className="rounded-3xl border-border/50 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Preferências de Layout</CardTitle>
+                  <CardDescription>Ajustes visuais globais da interface.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground italic">Em breve: Opções de arredondamento de bordas, densidade da UI e modo escuro padrão.</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <ShortcutCard to="/admin/clients" icon={Users} title="Clientes" description="Gerencie todas as contas" />
-        <ShortcutCard to="/admin/invoices" icon={Receipt} title="Faturas" description="Cobranças de toda a base" />
-        <ShortcutCard to="/admin/products" icon={Package} title="Catálogo" description="Planos e preços" />
+          <div className="mt-8 flex justify-end">
+            <Button 
+              type="submit" 
+              disabled={mutation.isPending}
+              className="rounded-xl px-8 h-12 bg-primary text-primary-foreground hover:bg-primary/90 flex gap-2"
+            >
+              <Save className="size-4" />
+              {mutation.isPending ? "Salvando..." : "Salvar Configurações"}
+            </Button>
+          </div>
+        </form>
       </div>
     </AppShell>
-  );
-}
-
-function KpiCard({ label, value }: { label: string; value?: string | undefined }) {
-  return (
-    <div className="rounded-2xl border border-border bg-secondary/40 p-5">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      {value === undefined ? (
-        <Skeleton className="mt-2 h-8 w-28" />
-      ) : (
-        <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
-      )}
-    </div>
-  );
-}
-
-function MethodRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof CreditCard;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="flex items-center gap-2 text-foreground">
-        <Icon className="size-4 text-muted-foreground" />
-        {label}
-      </span>
-      <span className="text-muted-foreground">{value}</span>
-    </div>
-  );
-}
-
-function ShortcutCard({
-  to,
-  icon: Icon,
-  title,
-  description,
-}: {
-  to: string;
-  icon: typeof Users;
-  title: string;
-  description: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className="group flex items-center justify-between rounded-2xl border border-border p-5 transition-colors hover:border-brand/50"
-    >
-      <span className="flex items-center gap-3">
-        <span className="flex size-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
-          <Icon className="size-5" />
-        </span>
-        <span>
-          <span className="block text-sm font-semibold text-foreground">{title}</span>
-          <span className="block text-xs text-muted-foreground">{description}</span>
-        </span>
-      </span>
-      <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-    </Link>
   );
 }

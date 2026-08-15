@@ -6,7 +6,7 @@ export const getSystemLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => 
     z.object({
-      type: z.enum(["email", "auth", "data", "system", "all"]).default("all"),
+      type: z.enum(["email", "auth", "data", "system", "branding", "all"]).default("all"),
       limit: z.number().int().min(1).max(100).default(20),
       offset: z.number().int().min(0).default(0)
     }).parse(data)
@@ -63,6 +63,7 @@ export const getSystemLogs = createServerFn({ method: "GET" })
     if (data.type === "auth") query = query.eq("category", "auth");
     if (data.type === "data") query = query.eq("category", "data");
     if (data.type === "system") query = query.in("category", ["system", "security"]);
+    if (data.type === "branding") query = query.eq("category", "branding");
 
     const { data: logs, count, error } = await query
       .order("created_at", { ascending: false })
