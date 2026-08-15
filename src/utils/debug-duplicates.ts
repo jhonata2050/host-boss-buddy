@@ -14,7 +14,7 @@ async function checkDuplicates() {
   }
 
   const byEmail: Record<string, any[]> = {};
-  data.forEach(p => {
+  data?.forEach(p => {
     if (!p.email) return;
     if (!byEmail[p.email]) byEmail[p.email] = [];
     byEmail[p.email].push(p);
