@@ -26,6 +26,7 @@ import {
   Wallet,
   LogOut as LogOutIcon,
   Menu,
+  Palette,
 } from "lucide-react";
 
 import { useState, type ReactNode } from "react";
@@ -82,6 +83,7 @@ const ADMIN_SECTIONS: NavSection[] = [
       { label: "E-mails e SMTP", to: "/admin/emails", icon: Mail },
       { label: "Domínios", to: "/admin/domains", icon: Globe },
       { label: "Logs do Sistema", to: "/admin/logs", icon: History },
+      { label: "Branding e Visual", to: "/admin", icon: Palette },
       { label: "Importador WHMCS", to: "/admin/import", icon: RefreshCw },
     ],
   },
