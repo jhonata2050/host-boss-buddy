@@ -172,7 +172,7 @@ function ClientServicesPage() {
                       className="rounded-xl border-brand/20 text-brand hover:bg-brand/5"
                       onClick={async () => {
                         try {
-                          const url = await getDASSOUrl({ data: { serverId: svc.server_id, username: svc.username } });
+                          const url = await getDASSOUrl({ data: { serverId: svc.server_id, username: svc.username, redirectUrl: '/' } });
                           window.open(url, '_blank');
                         } catch (err: any) {
                           toast.error("Erro ao gerar acesso: " + err.message);
