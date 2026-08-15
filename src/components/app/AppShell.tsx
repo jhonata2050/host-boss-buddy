@@ -241,9 +241,9 @@ export function AppShell({
           </button>
         </div>
       )}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Mobile Header */}
-        <header className="flex h-16 w-full items-center justify-between border-b border-border bg-card px-4 lg:hidden">
+      {/* Mobile Header */}
+      <header className="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
+
           <div className="flex items-center gap-2">
             <Sheet>
               <SheetTrigger asChild>
@@ -323,9 +323,11 @@ export function AppShell({
               <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full border-2 border-background" />
             )}
           </Button>
-        </header>
+      </header>
 
+      <div className="flex min-h-0 flex-1">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
+
           <div className="flex items-center justify-between px-2 pb-4">
             <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand">
               <span className="text-sm font-bold text-brand-foreground">H</span>
@@ -417,7 +419,7 @@ export function AppShell({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 px-2 py-4 lg:px-6 lg:py-6 overflow-y-auto h-[calc(100vh-4rem)] lg:h-screen">
+        <main className="min-w-0 flex-1 px-3 py-4 lg:px-6 lg:py-6 lg:h-screen lg:overflow-y-auto">
           <header className="hidden items-center justify-between gap-4 pb-4 lg:flex">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">{breadcrumb}</div>
             <div className="flex items-center gap-2">
