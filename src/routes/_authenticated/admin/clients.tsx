@@ -180,7 +180,12 @@ export function ClientsPage() {
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={term}
-          onChange={(e) => setTerm(e.target.value)}
+          onChange={(e) => {
+            setTerm(e.target.value);
+            // Limpa a seleção ao mudar a busca para evitar excluir clientes
+            // que ficaram selecionados fora do filtro atual.
+            setSelectedIds([]);
+          }}
           placeholder="Pesquisar por nome, e-mail ou documento"
           className="h-11 rounded-xl pl-9"
         />

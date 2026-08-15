@@ -23,8 +23,25 @@ export const bulkDeleteClients = createServerFn({ method: "POST" })
     // auth.users deletion cascades to profiles, user_roles, services, invoices, etc. 
     // because of the ON DELETE CASCADE set up in migrations.
     
+    // 2a. Proteção: nunca excluir a si mesmo nem contas admin/staff
+    const { data: privileged } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .in("user_id", data.clientIds)
+      .in("role", ["admin", "staff"]);
+
+    const protectedIds = new Set([
+      context.userId,
+      ...(privileged ?? []).map((r) => r.user_id),
+    ]);
+
+    const deletableIds = data.clientIds.filter((id) => !protectedIds.has(id));
+    if (deletableIds.length === 0) {
+      throw new Error("Nenhum cliente elegível: contas de admin/staff não podem ser excluídas aqui.");
+    }
+
     const results = await Promise.all(
-      data.clientIds.map(async (id) => {
+      deletableIds.map(async (id) => {
         const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
         return { id, success: !error, error };
       })
