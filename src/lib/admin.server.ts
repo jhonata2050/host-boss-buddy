@@ -16,8 +16,21 @@ export async function getBrandingImplementation() {
     .eq("key", "branding")
     .maybeSingle();
 
-  if (error || !data) return DEFAULT_BRANDING;
-  return { ...DEFAULT_BRANDING, ...(data.value as unknown as BrandingSettings) };
+  if (error) {
+    console.error("[Branding] Erro ao buscar configurações:", error);
+    return DEFAULT_BRANDING;
+  }
+  
+  if (!data) return DEFAULT_BRANDING;
+  
+  // Garantir que os dados lidos do banco preencham os campos faltantes com o padrão
+  const value = data.value as unknown as BrandingSettings;
+  return { 
+    ...DEFAULT_BRANDING, 
+    ...value,
+    // Garante que logo_url null (ou ausente) não sobrescreva a inicial se houver erro na lógica do componente
+    logo_url: value.logo_url || null 
+  };
 }
 
 export async function updateBrandingImplementation(

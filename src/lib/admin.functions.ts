@@ -6,8 +6,15 @@ import type { BrandingSettings } from "./branding";
 export type { BrandingSettings };
 
 export const getBranding = createServerFn({ method: "GET" }).handler(async () => {
-  const { getBrandingImplementation } = await import("./admin.server");
-  return getBrandingImplementation();
+  try {
+    const { getBrandingImplementation } = await import("./admin.server");
+    return await getBrandingImplementation();
+  } catch (error) {
+    console.error("Error in getBranding server function:", error);
+    // Fallback import directly to avoid recursive issues if the server file has errors
+    const { DEFAULT_BRANDING } = await import("./branding");
+    return DEFAULT_BRANDING;
+  }
 });
 
 export const updateBranding = createServerFn({ method: "POST" })
