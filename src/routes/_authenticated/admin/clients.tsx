@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Store, Users, ExternalLink, Trash2 } from "lucide-react";
+import { Search, Store, Users, ExternalLink, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { useState } from "react";
 import { toast } from "sonner";
@@ -63,34 +63,33 @@ export function ClientsPage() {
   const [term, setTerm] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
   const queryClient = useQueryClient();
 
   const clients = useQuery({
-    queryKey: ["admin-clients"],
+    queryKey: ["admin-clients", page, term],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("profiles")
-        .select("id, full_name, email, company_name, tax_id, phone, status, created_at")
+        .select("id, full_name, email, company_name, tax_id, phone, status, created_at", { count: 'exact' });
+
+      if (term) {
+        query = query.or(`full_name.ilike.%${term}%,email.ilike.%${term}%,company_name.ilike.%${term}%,tax_id.ilike.%${term}%`);
+      }
+
+      const { data, count, error } = await query
         .order("created_at", { ascending: false })
-        .limit(100);
+        .range((page - 1) * pageSize, page * pageSize - 1);
       if (error) throw error;
-      return data;
+      return { data, count: count || 0 };
     },
     staleTime: 1000 * 60 * 5,
   });
 
-  const needle = term.trim().toLowerCase();
-  
-  // Garantir que não existam duplicatas de ID na lista visual (medida de segurança)
-  const uniqueClients = (clients.data ?? []).filter((c, index, self) => 
-    self.findIndex(t => t.id === c.id) === index
-  );
-
-  const filtered = uniqueClients.filter((c) =>
-    [c.full_name, c.email, c.company_name, c.tax_id]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(needle)),
-  );
+  const filtered = clients.data?.data ?? [];
+  const totalItems = clients.data?.count ?? 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => 
@@ -182,6 +181,7 @@ export function ClientsPage() {
           value={term}
           onChange={(e) => {
             setTerm(e.target.value);
+            setPage(1);
             // Limpa a seleção ao mudar a busca para evitar excluir clientes
             // que ficaram selecionados fora do filtro atual.
             setSelectedIds([]);
@@ -254,6 +254,31 @@ export function ClientsPage() {
               ))}
             </TableBody>
           </Table>
+          <div className="mt-6 flex items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground">
+              Mostrando {filtered.length} de {totalItems} clientes
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                <ChevronLeft className="size-4 mr-2" /> Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+              >
+                Próximo <ChevronRight className="size-4 ml-2" />
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </AppShell>

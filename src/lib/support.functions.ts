@@ -55,7 +55,13 @@ export const updateSystemSettings = createServerFn({ method: "POST" })
 
 export const getTickets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator((data: unknown) => 
+    z.object({
+      limit: z.number().default(20),
+      offset: z.number().default(0)
+    }).parse(data)
+  )
+  .handler(async ({ data, context }) => {
     const { data: roles } = await context.supabase
       .from("user_roles")
       .select("role")
@@ -75,10 +81,17 @@ export const getTickets = createServerFn({ method: "GET" })
       query = query.eq("user_id", context.userId);
     }
 
-    const { data, error } = await query;
+    const { count } = await query.select("*", { count: 'exact', head: true });
+
+    const { data: tickets, error } = await query
+      .select(`
+        *,
+        profile:profiles(full_name)
+      `)
+      .range(data.offset, data.offset + data.limit - 1);
 
     if (error) throw new Error(error.message);
-    return data;
+    return { tickets, count: count || 0 };
   });
 
 export const getTicketDetails = createServerFn({ method: "GET" })

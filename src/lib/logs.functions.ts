@@ -7,7 +7,7 @@ export const getSystemLogs = createServerFn({ method: "GET" })
   .validator((data: unknown) => 
     z.object({
       type: z.enum(["email", "auth", "system", "all"]).default("all"),
-      limit: z.number().default(50),
+      limit: z.number().default(20),
       offset: z.number().default(0)
     }).parse(data)
   )
@@ -32,8 +32,12 @@ export const getSystemLogs = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false })
         .range(data.offset, data.offset + data.limit - 1);
       
+      const { count } = await context.supabase
+        .from("email_logs")
+        .select("*", { count: 'exact', head: true });
+        
       if (error) throw error;
-      return { type: "email", logs };
+      return { type: "email", logs, count: count || 0 };
     }
 
     // Auth and System logs would come from other tables if implemented
