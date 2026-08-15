@@ -77,14 +77,15 @@ export const updateClientProfile = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Só envia os campos realmente preenchidos no formulário
-    const payload: Record<string, unknown> = {};
+    const payload: Record<string, string | null> = {};
     for (const [key, value] of Object.entries(data.values)) {
-      if (value !== undefined) payload[key] = value === "" ? null : value;
+      if (value === undefined) continue;
+      payload[key] = value === "" || value === null ? null : String(value);
     }
 
     const { data: updated, error } = await supabaseAdmin
       .from("profiles")
-      .update(payload)
+      .update(payload as never)
       .eq("id", data.clientId)
       .select("id")
       .maybeSingle();
