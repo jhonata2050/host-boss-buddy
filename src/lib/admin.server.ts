@@ -1,8 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { getRequestHeader } from "@tanstack/react-start/server";
+import { type BrandingSettings } from "./branding";
 
-const DEFAULT_BRANDING = {
+const DEFAULT_BRANDING: BrandingSettings = {
   logo_url: null,
   app_name: "HostPanel",
   primary_color: "oklch(0.88 0.19 128)",
