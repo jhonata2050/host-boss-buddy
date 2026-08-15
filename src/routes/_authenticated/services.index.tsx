@@ -101,7 +101,7 @@ function ClientServicesPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {services.isLoading ? (
           [0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-48 rounded-2xl" />
