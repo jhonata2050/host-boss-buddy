@@ -363,7 +363,7 @@ function ClientDetailPage() {
                                   onClick={async () => {
                                     try {
                                       const { getDASSOUrl } = await import("@/lib/support.functions");
-                                      const url = await getDASSOUrl({ data: { serverId: s.server_id, username: s.username } });
+                                      const url = await getDASSOUrl({ data: { serverId: s.server_id, username: s.username, redirectUrl: '/' } });
                                       window.open(url, '_blank');
                                     } catch (err: any) {
                                       toast.error("Erro ao gerar acesso: " + err.message);
