@@ -76,23 +76,40 @@ export const updateClientProfile = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Só envia os campos realmente preenchidos no formulário
+    // Só envia os campos realmente preenchidos no formulário e remove sensíveis
     const payload: Record<string, string | null> = {};
+    const allowedFields = [
+      "full_name", "company_name", "tax_id", "phone", 
+      "address_line", "address_line2", "city", "state", 
+      "postal_code", "country", "notes", "status"
+    ];
+
     for (const [key, value] of Object.entries(data.values)) {
+      if (!allowedFields.includes(key)) continue;
       if (value === undefined) continue;
       payload[key] = value === "" || value === null ? null : String(value);
     }
+
+    console.log(`[Admin] Updating client profile ${data.clientId} with payload:`, payload);
 
     const { data: updated, error } = await supabaseAdmin
       .from("profiles")
       .update(payload as never)
       .eq("id", data.clientId)
-      .select("id")
+      .select("id, email")
       .maybeSingle();
 
-    if (error) throw new Error(error.message);
-    if (!updated) throw new Error("Perfil do cliente não encontrado para atualização.");
+    if (error) {
+      console.error(`[Admin] Error updating client profile ${data.clientId}:`, error);
+      throw new Error(error.message);
+    }
+    
+    if (!updated) {
+      console.warn(`[Admin] Client profile ${data.clientId} not found for update.`);
+      throw new Error("Perfil do cliente não encontrado para atualização.");
+    }
 
+    console.log(`[Admin] Successfully updated client ${updated.id} (${updated.email})`);
     return { id: updated.id };
   });
 
