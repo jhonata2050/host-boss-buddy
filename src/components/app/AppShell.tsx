@@ -251,7 +251,7 @@ export function AppShell({
                   <Menu className="size-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
+              <SheetContent side="left" className="w-72 p-0 border-none rounded-r-3xl overflow-hidden">
                 <div className="flex h-full flex-col bg-sidebar px-3 py-4">
                   <div className="flex items-center justify-between px-2 pb-4">
                     <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand">
@@ -417,7 +417,7 @@ export function AppShell({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-4 lg:px-6 overflow-y-auto h-[calc(100vh-4rem)] lg:h-screen">
+        <main className="min-w-0 flex-1 px-2 py-4 lg:px-6 lg:py-6 overflow-y-auto h-[calc(100vh-4rem)] lg:h-screen">
           <header className="hidden items-center justify-between gap-4 pb-4 lg:flex">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">{breadcrumb}</div>
             <div className="flex items-center gap-2">

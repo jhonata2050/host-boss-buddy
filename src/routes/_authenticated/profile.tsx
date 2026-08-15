@@ -135,7 +135,7 @@ function ProfilePage() {
       </p>
 
       <form
-        className="mt-6 grid max-w-3xl gap-4 md:grid-cols-2"
+        className="mt-6 grid max-w-3xl gap-4 grid-cols-1 md:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
           save.mutate(form);

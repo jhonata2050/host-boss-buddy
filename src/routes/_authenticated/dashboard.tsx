@@ -69,7 +69,7 @@ function ClientDashboardPage() {
         Aqui você acompanha suas hospedagens, faturas e atendimentos.
       </p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <KpiCard
           label="Serviços ativos"
           value={stats.isLoading ? undefined : String(stats.data?.activeServices ?? 0)}

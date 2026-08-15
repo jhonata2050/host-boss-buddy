@@ -116,18 +116,18 @@ function InvoiceDetailsPage() {
             </div>
 
             <div className="mt-8 overflow-hidden rounded-xl border border-border">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-[13px] sm:text-sm">
                 <thead className="bg-secondary/30 text-xs font-semibold uppercase text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-3">Descrição</th>
-                    <th className="px-4 py-3 text-right">Valor</th>
+                    <th className="px-2 sm:px-4 py-3">Descrição</th>
+                    <th className="px-2 sm:px-4 py-3 text-right">Valor</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {inv.invoice_items?.map((item: any) => (
                     <tr key={item.id}>
-                      <td className="px-4 py-4 font-medium">{item.description}</td>
-                      <td className="px-4 py-4 text-right font-semibold">{brl.format(Number(item.amount))}</td>
+                      <td className="px-2 sm:px-4 py-4 font-medium">{item.description}</td>
+                      <td className="px-2 sm:px-4 py-4 text-right font-semibold">{brl.format(Number(item.amount))}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -171,7 +171,7 @@ function InvoiceDetailsPage() {
                 
                 {pixResult ? (
                   <div className="mt-6 space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                    <div className="mx-auto flex aspect-square w-full max-w-[200px] items-center justify-center rounded-xl bg-white p-2 border border-border">
+                    <div className="mx-auto flex aspect-square w-full max-w-[180px] items-center justify-center rounded-xl bg-white p-2 border border-border">
                       <img src={pixResult.qrCodeUrl} alt="PIX QR Code" className="w-full" />
                     </div>
                     <div className="space-y-2">
@@ -244,7 +244,7 @@ function InvoiceDetailsPage() {
                           <Button
                             key={g.id}
                             variant={gateway === g.id ? "default" : "outline"}
-                            className="h-8 rounded-xl px-1 text-[10px]"
+                            className="h-9 rounded-xl px-1 text-[10px]"
                             onClick={() => setGateway(g.id)}
                           >
                             {g.name}
