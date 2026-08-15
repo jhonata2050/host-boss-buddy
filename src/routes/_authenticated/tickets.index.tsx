@@ -156,10 +156,10 @@ function ClientTicketsPage() {
             const StatusIcon = status.icon;
 
             return (
-              <div key={ticket.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-border bg-card p-6 transition-all hover:shadow-[var(--shadow-card)] group hover:bg-brand/[0.02]">
-                <div className="flex items-center gap-6">
-                  <div className={cn("flex size-12 items-center justify-center rounded-2xl shrink-0", status.color)}>
-                    <StatusIcon className="size-6" />
+              <div key={ticket.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-border bg-card p-4 sm:p-6 transition-all hover:shadow-[var(--shadow-card)] group hover:bg-brand/[0.02]">
+                <div className="flex items-center gap-3 sm:gap-6">
+                  <div className={cn("flex size-10 sm:size-12 items-center justify-center rounded-2xl shrink-0", status.color)}>
+                    <StatusIcon className="size-5 sm:size-6" />
                   </div>
                   <div>
                     <h3 className="font-bold text-lg text-foreground group-hover:text-brand transition-colors">{ticket.subject}</h3>

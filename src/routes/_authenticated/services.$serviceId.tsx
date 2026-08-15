@@ -134,8 +134,8 @@ function ServiceManagementPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-3">
-            <Skeleton className="h-64 rounded-3xl col-span-2" />
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+            <Skeleton className="h-64 rounded-3xl md:col-span-2" />
             <Skeleton className="h-64 rounded-3xl" />
             <Skeleton className="h-40 rounded-3xl" />
             <Skeleton className="h-40 rounded-3xl" />
@@ -229,7 +229,7 @@ function ServiceManagementPage() {
             </div>
 
             {/* Quick Actions Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
               <QuickActionCard 
                 icon={<Mail className="size-6" />} 
                 title="E-mails" 
@@ -267,7 +267,7 @@ function QuickActionCard({ icon, title, onClick }: { icon: React.ReactNode, titl
   return (
     <button 
       onClick={onClick}
-      className="flex flex-col items-center justify-center p-6 rounded-3xl bg-card border border-border/50 hover:border-brand/50 hover:shadow-[var(--shadow-card)] transition-all group"
+      className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-3xl bg-card border border-border/50 hover:border-brand/50 hover:shadow-[var(--shadow-card)] transition-all group"
     >
       <div className="p-3 rounded-2xl bg-secondary/50 text-muted-foreground group-hover:text-brand group-hover:bg-brand/10 transition-colors mb-3">
         {icon}

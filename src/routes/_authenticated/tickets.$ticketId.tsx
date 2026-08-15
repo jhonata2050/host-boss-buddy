@@ -105,7 +105,7 @@ function TicketDetailsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-4">
             <Card className="rounded-3xl border-none shadow-sm overflow-hidden flex flex-col h-[600px]">
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-muted/5">
+              <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-6 bg-muted/5">
                 {messages.map((msg: any) => (
                   <div 
                     key={msg.id} 
@@ -122,7 +122,7 @@ function TicketDetailsPage() {
                     </div>
                     <div className="space-y-1">
                       <div className={cn(
-                        "p-4 rounded-3xl text-sm leading-relaxed shadow-sm",
+                        "p-3 sm:p-4 rounded-3xl text-sm leading-relaxed shadow-sm",
                         msg.is_staff_reply ? "bg-brand/10 text-foreground border border-brand/20 rounded-tl-none" : "bg-white text-foreground border border-border rounded-tr-none"
                       )}>
                         <p className="whitespace-pre-wrap">{msg.message}</p>
