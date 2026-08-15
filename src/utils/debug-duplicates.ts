@@ -14,11 +14,12 @@ export async function checkDuplicates() {
 
   const byEmail: Record<string, any[]> = {};
   if (data) {
-    data.forEach(p => {
-      if (!p.email) return;
-      if (!byEmail[p.email]) byEmail[p.email] = [];
-      byEmail[p.email].push(p);
-    });
+    for (const p of data) {
+      const email = p.email;
+      if (!email) continue;
+      if (!byEmail[email]) byEmail[email] = [];
+      byEmail[email].push(p);
+    }
   }
 
   const duplicates = Object.entries(byEmail).filter(([_, list]) => list.length > 1);
