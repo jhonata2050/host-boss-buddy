@@ -11,28 +11,29 @@ export const getBranding = createServerFn({ method: "GET" }).handler(async () =>
     return await getBrandingImplementation();
   } catch (error) {
     console.error("Error in getBranding server function:", error);
-    // Fallback import directly to avoid recursive issues if the server file has errors
-    const { DEFAULT_BRANDING } = await import("./branding");
-    return DEFAULT_BRANDING;
+    return {
+      logo_url: null,
+      app_name: "HostPanel",
+      primary_color: "oklch(0.88 0.19 128)",
+      brand_color: "oklch(0.72 0.19 148)",
+      favicon_url: null,
+    };
   }
 });
 
 export const updateBranding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    z
-      .object({
-        logo_url: z.string().nullable(),
-        app_name: z.string().min(1),
-        primary_color: z.string(),
-        brand_color: z.string(),
-        favicon_url: z.string().nullable(),
-      })
-      .parse(data),
-  )
+  .inputValidator((data: any) => data)
   .handler(async ({ data, context }) => {
-    const { updateBrandingImplementation } = await import("./admin.server");
-    return updateBrandingImplementation(data as BrandingSettings, context);
+    try {
+      const { updateBrandingImplementation } = await import("./admin.server");
+      // Passamos o contexto completo que contém supabase, userId e claims
+      const result = await updateBrandingImplementation(data.data, context);
+      return result;
+    } catch (error) {
+      console.error("Error in updateBranding server function:", error);
+      throw error;
+    }
   });
 
 export const impersonateClient = createServerFn({ method: "POST" })
