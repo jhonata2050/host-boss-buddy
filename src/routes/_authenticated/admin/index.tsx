@@ -43,7 +43,32 @@ function BrandingSettingsPage() {
   }, [branding]);
 
   const mutation = useMutation({
-    mutationFn: (data: BrandingSettings) => updateBranding({ data }),
+    mutationFn: async (data: BrandingSettings) => {
+      const token = (await queryClient.fetchQuery({
+        queryKey: ["supabase-session"],
+        queryFn: async () => {
+          const { supabase } = await import("@/integrations/supabase/client");
+          const { data } = await supabase.auth.getSession();
+          return data.session?.access_token;
+        }
+      }));
+      
+      const response = await fetch("/api/public/branding", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Erro ao salvar branding");
+      }
+      
+      return await response.json();
+    },
     onSuccess: () => {
       toast.success("Configurações de branding salvas com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["admin-branding"] });
