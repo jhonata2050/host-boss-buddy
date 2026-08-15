@@ -6,6 +6,7 @@ import { Check, HardDrive, Mail, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useBranding } from "@/hooks/use-branding";
 
 export const Route = createFileRoute("/")({
   head: () => ({
