@@ -11,7 +11,9 @@ import {
   AlertCircle,
   Search,
   Filter,
-  Plus
+  Plus,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -29,10 +31,17 @@ const STATUS_MAP = {
 };
 
 function AdminTicketsPage() {
-  const { data: tickets, isLoading } = useQuery({
-    queryKey: ["admin-tickets"],
-    queryFn: () => getTickets(),
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-tickets", page],
+    queryFn: () => getTickets({ data: { offset: (page - 1) * pageSize, limit: pageSize } }),
   });
+
+  const tickets = data?.tickets ?? [];
+  const totalItems = data?.count ?? 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
     <AppShell area="admin" breadcrumb={<span>Atendimento / Tickets</span>}>
@@ -124,6 +133,31 @@ function AdminTicketsPage() {
                 </Link>
               );
             })}
+            <div className="flex items-center justify-between gap-4 mt-6">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {tickets.length} de {totalItems} tickets
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="size-4 mr-2" /> Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                >
+                  Próximo <ChevronRight className="size-4 ml-2" />
+                </Button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 bg-muted/30 rounded-3xl border-2 border-dashed border-muted">

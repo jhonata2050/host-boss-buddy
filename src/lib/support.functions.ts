@@ -71,23 +71,18 @@ export const getTickets = createServerFn({ method: "GET" })
 
     let query = context.supabase
       .from("tickets")
-      .select(`
-        *,
-        profile:profiles(full_name)
-      `)
-      .order("updated_at", { ascending: false });
+      .select("*", { count: 'exact' });
 
     if (!isAdmin) {
       query = query.eq("user_id", context.userId);
     }
 
-    const { count } = await query.select("*", { count: 'exact', head: true });
-
-    const { data: tickets, error } = await query
+    const { data: tickets, count, error } = await query
       .select(`
         *,
         profile:profiles(full_name)
       `)
+      .order("updated_at", { ascending: false })
       .range(data.offset, data.offset + data.limit - 1);
 
     if (error) throw new Error(error.message);

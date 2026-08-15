@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MessageSquare, Plus, Search, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
+import { MessageSquare, Plus, Search, AlertCircle, Clock, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 import { AppShell } from "@/components/app/AppShell";
@@ -32,14 +32,20 @@ const STATUS_MAP = {
 
 function ClientTicketsPage() {
   const [term, setTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { data: tickets, isLoading } = useQuery({
-    queryKey: ["client-tickets", user?.id],
-    queryFn: () => getTickets(),
+  const { data, isLoading } = useQuery({
+    queryKey: ["client-tickets", user?.id, page],
+    queryFn: () => getTickets({ data: { offset: (page - 1) * pageSize, limit: pageSize } }),
   });
+
+  const tickets = data?.tickets ?? [];
+  const totalItems = data?.count ?? 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   const createTicketMutation = useMutation({
     mutationFn: (data: any) => createTicket({ data }),
@@ -64,7 +70,7 @@ function ClientTicketsPage() {
     createTicketMutation.mutate(data);
   };
 
-  const filtered = (tickets ?? []).filter((t) =>
+  const filtered = tickets.filter((t) =>
     t.subject.toLowerCase().includes(term.trim().toLowerCase())
   );
 
@@ -181,6 +187,31 @@ function ClientTicketsPage() {
             );
           })
         )}
+        <div className="flex items-center justify-between gap-4 mt-6">
+          <div className="text-sm text-muted-foreground">
+            Mostrando {filtered.length} de {totalItems} tickets
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              <ChevronLeft className="size-4 mr-2" /> Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Próximo <ChevronRight className="size-4 ml-2" />
+            </Button>
+          </div>
+        </div>
       </div>
     </AppShell>
   );
