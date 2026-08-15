@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/app/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -142,7 +143,7 @@ function AdminTicketsPage() {
                   variant="outline"
                   size="sm"
                   className="rounded-xl"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  onClick={() => setPage((p: number) => Math.max(1, p - 1))}
                   disabled={page <= 1}
                 >
                   <ChevronLeft className="size-4 mr-2" /> Anterior
@@ -151,7 +152,7 @@ function AdminTicketsPage() {
                   variant="outline"
                   size="sm"
                   className="rounded-xl"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  onClick={() => setPage((p: number) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
                 >
                   Próximo <ChevronRight className="size-4 ml-2" />
