@@ -8,12 +8,17 @@ export type { BrandingSettings };
 export const getBranding = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const { getBrandingImplementation } = await import("./admin.server");
-    return await getBrandingImplementation();
+    const data = await getBrandingImplementation();
+    return data;
   } catch (error) {
     console.error("Error in getBranding server function:", error);
-    // Fallback import directly to avoid recursive issues if the server file has errors
-    const { DEFAULT_BRANDING } = await import("./branding");
-    return DEFAULT_BRANDING;
+    return {
+      logo_url: null,
+      app_name: "HostPanel",
+      primary_color: "oklch(0.88 0.19 128)",
+      brand_color: "oklch(0.72 0.19 148)",
+      favicon_url: null,
+    };
   }
 });
 
