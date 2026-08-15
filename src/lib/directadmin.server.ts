@@ -73,6 +73,7 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
         'Authorization': authHeader,
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json, text/plain',
+        'User-Agent': 'Mozilla/5.0 (compatible; HostPanel/1.0; +https://hostpanel.app)',
       },
       body: method === 'POST' ? searchParams.toString() : null,
       signal: AbortSignal.timeout(60_000), // Aumentado para 60s para maior resiliência
@@ -85,8 +86,15 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
 
     if (!response.ok) {
       const errorText = await response.text();
+      if (response.status === 403 && /imunify|bot-protection/i.test(errorText)) {
+        throw new Error(
+          `O Imunify360 do servidor ${hostname} bloqueou a requisição (proteção anti-bot). ` +
+            `É necessário liberar o IP do HostPanel na whitelist do Imunify360 (Firewall > White List) ou desativar a proteção anti-bot para a porta 2222.`,
+        );
+      }
       throw new Error(`DirectAdmin API Error (${response.status}): ${errorText}`);
     }
+
 
     const text = await response.text();
     try {
