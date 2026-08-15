@@ -111,9 +111,9 @@ function ClientInvoicesPage() {
           filtered.map((inv: any) => {
             const status = STATUS_LABELS[inv.status] || { label: inv.status, color: "bg-muted" };
             return (
-              <div key={inv.id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]">
+              <div key={inv.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]">
                 <div className="flex items-center gap-4">
-                  <div className={cn("flex size-10 items-center justify-center rounded-full", inv.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning')}>
+                  <div className={cn("flex size-10 items-center justify-center rounded-full shrink-0", inv.status === 'paid' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning')}>
                     <Receipt className="size-5" />
                   </div>
                   <div>
@@ -122,8 +122,8 @@ function ClientInvoicesPage() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
+                <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-6">
+                  <div className="text-left sm:text-right">
                     <p className="text-sm font-semibold text-foreground">{brl.format(Number(inv.total_amount))}</p>
                     <Badge className={cn("mt-1 rounded-full border-none px-3 text-[10px] font-bold uppercase", status.color)}>
                       {status.label}
