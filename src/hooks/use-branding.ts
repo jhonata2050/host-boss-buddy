@@ -43,15 +43,16 @@ export function useBranding() {
     
     // Atualiza favicon
     if (settings.favicon_url) {
-      const head = document.getElementsByTagName("head")[0];
-      if (head) {
-        let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-        if (!link) {
-          link = document.createElement("link");
-          link.rel = "icon";
-          head.appendChild(link);
-        }
+      const links = document.querySelectorAll("link[rel*='icon']");
+      if (links.length > 0) {
+        links.forEach(link => {
+          (link as HTMLLinkElement).href = settings.favicon_url!;
+        });
+      } else {
+        const link = document.createElement("link");
+        link.rel = "icon";
         link.href = settings.favicon_url;
+        document.head.appendChild(link);
       }
     }
   }, [settings]);
