@@ -154,7 +154,7 @@ function ProductsPage() {
       ) : filtered.length === 0 ? (
         <p className="py-24 text-center text-sm text-muted-foreground">Nenhum produto encontrado</p>
       ) : (
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((product) => {
             const monthly = product.product_prices?.find((p) => p.cycle === "monthly" && p.is_active);
             return (

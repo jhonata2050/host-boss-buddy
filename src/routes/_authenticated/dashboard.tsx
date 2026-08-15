@@ -69,7 +69,7 @@ function ClientDashboardPage() {
         Aqui você acompanha suas hospedagens, faturas e atendimentos.
       </p>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <KpiCard
           label="Serviços ativos"
           value={stats.isLoading ? undefined : String(stats.data?.activeServices ?? 0)}
@@ -84,7 +84,7 @@ function ClientDashboardPage() {
         />
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border p-6">
           <h2 className="flex items-center gap-2 text-sm font-medium">
             <Server className="size-4 text-muted-foreground" />

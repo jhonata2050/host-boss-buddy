@@ -25,6 +25,7 @@ import {
   Users,
   Wallet,
   LogOut as LogOutIcon,
+  Menu,
 } from "lucide-react";
 
 import { useState, type ReactNode } from "react";
@@ -37,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth, useIsStaff, useProfile } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -213,7 +215,7 @@ export function AppShell({
 
   return (
 
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {impersonatedClientId && (
         <div className="bg-brand p-3 text-center text-brand-foreground font-medium border-b border-brand/20 flex items-center justify-center gap-4">
           Você está visualizando o painel como cliente ({profile?.full_name || profile?.email}).
@@ -239,7 +241,90 @@ export function AppShell({
           </button>
         </div>
       )}
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile Header */}
+        <header className="flex h-16 w-full items-center justify-between border-b border-border bg-card px-4 lg:hidden">
+          <div className="flex items-center gap-2">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-xl">
+                  <Menu className="size-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-0">
+                <div className="flex h-full flex-col bg-sidebar px-3 py-4">
+                  <div className="flex items-center justify-between px-2 pb-4">
+                    <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand">
+                      <span className="text-sm font-bold text-brand-foreground">H</span>
+                    </Link>
+                  </div>
+                  <nav className="flex-1 space-y-1 overflow-y-auto">
+                    <Link
+                      to={homeTo}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+                        pathname === homeTo
+                          ? "bg-primary font-medium text-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent",
+                      )}
+                    >
+                      <Gauge className="size-4" />
+                      {isAdminArea ? "Painel administrativo" : "Painel"}
+                    </Link>
+                    {!isAdminArea && (
+                      <Link
+                        to="/"
+                        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+                      >
+                        <Store className="size-4" />
+                        Contratar planos
+                      </Link>
+                    )}
+                    {sections.map((section) => (
+                      <SidebarSection key={section.label} section={section} pathname={pathname} />
+                    ))}
+                  </nav>
+                  <div className="mt-auto space-y-1 border-t border-sidebar-border pt-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent"
+                        >
+                          <Avatar className="size-7">
+                            <AvatarFallback className="bg-accent text-xs text-accent-foreground">{initials}</AvatarFallback>
+                          </Avatar>
+                          <span className="flex-1 truncate text-left">{name}</span>
+                          <MoreVertical className="size-4 text-muted-foreground" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-52">
+                        <DropdownMenuItem asChild>
+                          <Link to="/profile">
+                            <UserIcon className="mr-2 size-4" />
+                            Meus dados
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={signOut}>
+                          <LogOut className="mr-2 size-4" />
+                          Sair
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+            <span className="text-lg font-semibold">HostPanel</span>
+          </div>
+          <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground relative">
+            <Bell className="size-5" />
+            {hasOverdue && (
+              <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full border-2 border-background" />
+            )}
+          </Button>
+        </header>
+
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
           <div className="flex items-center justify-between px-2 pb-4">
             <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand">
@@ -332,8 +417,8 @@ export function AppShell({
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-4 lg:px-6">
-          <header className="flex items-center justify-between gap-4 pb-4">
+        <main className="min-w-0 flex-1 px-4 py-4 lg:px-6 overflow-y-auto h-[calc(100vh-4rem)] lg:h-screen">
+          <header className="hidden items-center justify-between gap-4 pb-4 lg:flex">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">{breadcrumb}</div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground relative">

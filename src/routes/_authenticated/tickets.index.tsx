@@ -156,9 +156,9 @@ function ClientTicketsPage() {
             const StatusIcon = status.icon;
 
             return (
-              <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-card p-6 transition-all hover:shadow-[var(--shadow-card)] group hover:bg-brand/[0.02]">
+              <div key={ticket.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-border bg-card p-6 transition-all hover:shadow-[var(--shadow-card)] group hover:bg-brand/[0.02]">
                 <div className="flex items-center gap-6">
-                  <div className={cn("flex size-12 items-center justify-center rounded-2xl", status.color)}>
+                  <div className={cn("flex size-12 items-center justify-center rounded-2xl shrink-0", status.color)}>
                     <StatusIcon className="size-6" />
                   </div>
                   <div>
@@ -173,7 +173,7 @@ function ClientTicketsPage() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4 ml-auto sm:ml-0">
+                <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4">
                   <Badge variant="outline" className={cn("rounded-full border-none px-3 py-1 text-[10px] font-bold uppercase", status.color)}>
                     {status.label}
                   </Badge>

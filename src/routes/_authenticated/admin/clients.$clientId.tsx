@@ -213,13 +213,15 @@ function ClientDetailPage() {
         </div>
 
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 h-12 p-1 bg-muted/50 rounded-2xl">
-            <TabsTrigger value="info" className="rounded-xl flex gap-2"><User className="size-4" /> Dados</TabsTrigger>
-            <TabsTrigger value="services" className="rounded-xl flex gap-2"><Server className="size-4" /> Serviços</TabsTrigger>
-            <TabsTrigger value="finance" className="rounded-xl flex gap-2"><CreditCard className="size-4" /> Financeiro</TabsTrigger>
-            <TabsTrigger value="emails" className="rounded-xl flex gap-2"><Mail className="size-4" /> E-mails</TabsTrigger>
-            <TabsTrigger value="tickets" className="rounded-xl flex gap-2"><LifeBuoy className="size-4" /> Tickets</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-2">
+            <TabsList className="bg-muted/50 p-1 rounded-2xl h-12 w-max min-w-full justify-start sm:w-auto">
+              <TabsTrigger value="info" className="rounded-xl flex gap-2"><User className="size-4" /> Dados</TabsTrigger>
+              <TabsTrigger value="services" className="rounded-xl flex gap-2"><Server className="size-4" /> Serviços</TabsTrigger>
+              <TabsTrigger value="finance" className="rounded-xl flex gap-2"><CreditCard className="size-4" /> Financeiro</TabsTrigger>
+              <TabsTrigger value="emails" className="rounded-xl flex gap-2"><Mail className="size-4" /> E-mails</TabsTrigger>
+              <TabsTrigger value="tickets" className="rounded-xl flex gap-2"><LifeBuoy className="size-4" /> Tickets</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="info" className="mt-6">
             <Card className="rounded-3xl border-none bg-card shadow-sm">
@@ -320,95 +322,97 @@ function ClientDetailPage() {
               </CardHeader>
               <CardContent>
                 {dossiersQuery.isLoading ? <Skeleton className="h-40" /> : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Serviço</TableHead>
-                        <TableHead>Domínio</TableHead>
-                        <TableHead>Servidor</TableHead>
-                        <TableHead>Vencimento</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-20"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {dossiersQuery.data?.services.map((s: any) => (
-                        <TableRow key={s.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex flex-col">
-                              <span>{s.products?.name || "Produto"}</span>
-                              {s.username ? (
-                                <span className="text-[10px] text-muted-foreground">Usuário: {s.username}</span>
-                              ) : (
-                                <span className="text-[10px] text-destructive italic">Usuário ausente</span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {s.domain || "—"}
-                          </TableCell>
-                          <TableCell>
-                            {s.server_id ? (
-                              <span className="text-xs">{servers?.find(sv => sv.id === s.server_id)?.name || "Servidor"}</span>
-                            ) : (
-                              <span className="text-[10px] text-destructive italic">Não vinculado</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {s.next_due_date ? format(new Date(s.next_due_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={s.status === 'active' ? 'default' : s.status === 'suspended' ? 'secondary' : 'destructive'}>
-                              {s.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              {s.status === 'active' && s.username && s.server_id && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8 rounded-lg text-brand hover:text-brand hover:bg-brand/10"
-                                  onClick={async () => {
-                                    const { getDASSOUrl } = await import("@/lib/support.functions");
-                                    const promise = (async () => {
-                                      const url = await getDASSOUrl({ data: { serverId: s.server_id, username: s.username, redirectUrl: '/' } });
-                                      window.open(url, '_blank');
-                                      return url;
-                                    })();
-
-                                    toast.promise(promise, {
-                                      loading: 'Gerando acesso...',
-                                      success: 'Redirecionando...',
-                                      error: (err) => `Erro: ${err.message}`
-                                    });
-                                  }}
-                                  title="Acessar Painel"
-                                >
-                                  <ExternalLink className="size-3" />
-                                </Button>
-                              )}
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="size-8 rounded-lg"
-                                onClick={() => setEditingService(s)}
-                                title="Editar Detalhes"
-                              >
-                                <Edit2 className="size-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-
-                      {dossiersQuery.data?.services.length === 0 && (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Nenhum serviço encontrado</TableCell>
+                          <TableHead className="whitespace-nowrap">Serviço</TableHead>
+                          <TableHead className="whitespace-nowrap">Domínio</TableHead>
+                          <TableHead className="hidden sm:table-cell">Servidor</TableHead>
+                          <TableHead className="hidden md:table-cell">Vencimento</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-20 text-right">Ações</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {dossiersQuery.data?.services.map((s: any) => (
+                          <TableRow key={s.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex flex-col">
+                                <span>{s.products?.name || "Produto"}</span>
+                                {s.username ? (
+                                  <span className="text-[10px] text-muted-foreground">Usuário: {s.username}</span>
+                                ) : (
+                                  <span className="text-[10px] text-destructive italic">Usuário ausente</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {s.domain || "—"}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              {s.server_id ? (
+                                <span className="text-xs">{servers?.find(sv => sv.id === s.server_id)?.name || "Servidor"}</span>
+                              ) : (
+                                <span className="text-[10px] text-destructive italic">Não vinculado</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {s.next_due_date ? format(new Date(s.next_due_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={s.status === 'active' ? 'default' : s.status === 'suspended' ? 'secondary' : 'destructive'}>
+                                {s.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {s.status === 'active' && s.username && s.server_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 rounded-lg text-brand hover:text-brand hover:bg-brand/10"
+                                    onClick={async () => {
+                                      const { getDASSOUrl } = await import("@/lib/support.functions");
+                                      const promise = (async () => {
+                                        const url = await getDASSOUrl({ data: { serverId: s.server_id, username: s.username, redirectUrl: '/' } });
+                                        window.open(url, '_blank');
+                                        return url;
+                                      })();
+
+                                      toast.promise(promise, {
+                                        loading: 'Gerando acesso...',
+                                        success: 'Redirecionando...',
+                                        error: (err) => `Erro: ${err.message}`
+                                      });
+                                    }}
+                                    title="Acessar Painel"
+                                  >
+                                    <ExternalLink className="size-3" />
+                                  </Button>
+                                )}
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="size-8 rounded-lg"
+                                  onClick={() => setEditingService(s)}
+                                  title="Editar Detalhes"
+                                >
+                                  <Edit2 className="size-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+
+                        {dossiersQuery.data?.services.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Nenhum serviço encontrado</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -422,16 +426,17 @@ function ClientDetailPage() {
               </CardHeader>
               <CardContent>
                 {dossiersQuery.isLoading ? <Skeleton className="h-40" /> : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Fatura</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Vencimento</TableHead>
-                        <TableHead>Pago em</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap">Fatura</TableHead>
+                          <TableHead className="whitespace-nowrap">Valor</TableHead>
+                          <TableHead className="whitespace-nowrap">Vencimento</TableHead>
+                          <TableHead className="hidden sm:table-cell whitespace-nowrap">Pago em</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {dossiersQuery.data?.invoices.map((inv: any) => (
                         <TableRow key={inv.id}>
@@ -440,7 +445,7 @@ function ClientDetailPage() {
                           <TableCell>
                             {format(new Date(inv.due_date), "dd/MM/yyyy", { locale: ptBR })}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             {inv.paid_at ? format(new Date(inv.paid_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—"}
                           </TableCell>
                           <TableCell>
@@ -456,7 +461,8 @@ function ClientDetailPage() {
                         </TableRow>
                       )}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -470,15 +476,16 @@ function ClientDetailPage() {
               </CardHeader>
               <CardContent>
                 {dossiersQuery.isLoading ? <Skeleton className="h-40" /> : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Assunto</TableHead>
-                        <TableHead>Template</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap">Data</TableHead>
+                          <TableHead className="whitespace-nowrap">Assunto</TableHead>
+                          <TableHead className="hidden sm:table-cell whitespace-nowrap">Template</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {dossiersQuery.data?.emailLogs.map((log: any) => (
                         <TableRow key={log.id}>
@@ -486,7 +493,7 @@ function ClientDetailPage() {
                             {format(new Date(log.created_at), "dd/MM HH:mm", { locale: ptBR })}
                           </TableCell>
                           <TableCell className="font-medium">{log.subject}</TableCell>
-                          <TableCell className="text-muted-foreground">{log.template_name || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground hidden sm:table-cell">{log.template_name || "—"}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-[10px] h-5">
                               {log.status}
@@ -500,7 +507,8 @@ function ClientDetailPage() {
                         </TableRow>
                       )}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -514,23 +522,24 @@ function ClientDetailPage() {
               </CardHeader>
               <CardContent>
                 {dossiersQuery.isLoading ? <Skeleton className="h-40" /> : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Assunto</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Prioridade</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap">Assunto</TableHead>
+                          <TableHead className="hidden sm:table-cell whitespace-nowrap">Data</TableHead>
+                          <TableHead className="hidden md:table-cell whitespace-nowrap">Prioridade</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {dossiersQuery.data?.tickets.map((t: any) => (
                         <TableRow key={t.id}>
                           <TableCell className="font-medium">{t.subject}</TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             {format(new Date(t.created_at), "dd/MM/yyyy", { locale: ptBR })}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             <Badge variant="outline">{t.priority}</Badge>
                           </TableCell>
                           <TableCell>
@@ -546,7 +555,8 @@ function ClientDetailPage() {
                         </TableRow>
                       )}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>

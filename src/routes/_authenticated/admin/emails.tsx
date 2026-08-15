@@ -60,7 +60,7 @@ function AdminSettingsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>SMTP Host</Label>
                   <Input name="smtp_host" defaultValue={settings?.["smtp_host"]?.replace(/"/g, '')} className="rounded-xl" placeholder="smtp.exemplo.com" />

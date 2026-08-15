@@ -90,7 +90,7 @@ function AdminFinanceSettingsPage() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {GATEWAYS.map((gateway) => {
               const configured = isGatewayConfigured(gateway.id, settings as Record<string, unknown>);
               return (

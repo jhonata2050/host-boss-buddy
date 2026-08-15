@@ -198,17 +198,17 @@ function AuthPage() {
                   className="h-12 rounded-xl"
                 />
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                 <button
                   type="button"
-                  className="text-xs text-brand hover:underline"
+                  className="text-left text-xs text-brand hover:underline"
                   onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
                 >
                   {mode === "signup" ? "Já tem conta? Entrar" : "Criar uma conta"}
                 </button>
                 <button
                   type="button"
-                  className="text-xs text-muted-foreground hover:text-brand hover:underline transition-colors"
+                  className="text-left sm:text-right text-xs text-muted-foreground hover:text-brand hover:underline transition-colors"
                   onClick={() => {
                     if (!email) {
                       toast.error("Informe seu e-mail para recuperar a senha");
