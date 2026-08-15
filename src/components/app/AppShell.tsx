@@ -323,9 +323,11 @@ export function AppShell({
               <span className="absolute top-2 right-2 size-2 bg-destructive rounded-full border-2 border-background" />
             )}
           </Button>
-        </header>
+      </header>
 
+      <div className="flex min-h-0 flex-1">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
+
           <div className="flex items-center justify-between px-2 pb-4">
             <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand">
               <span className="text-sm font-bold text-brand-foreground">H</span>
