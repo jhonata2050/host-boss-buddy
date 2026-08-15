@@ -86,7 +86,8 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
 
     if (!response.ok) {
       const errorText = await response.text();
-      if (response.status === 403 && /imunify|bot-protection/i.test(errorText)) {
+      // Verificação específica para Imunify360 (proteção anti-bot ou firewall)
+      if (response.status === 403 && (errorText.includes('Imunify360') || errorText.includes('bot-protection') || errorText.includes('shield-root'))) {
         throw new Error(
           `O Imunify360 do servidor ${hostname} bloqueou a requisição (proteção anti-bot). ` +
             `É necessário liberar o IP do HostPanel na whitelist do Imunify360 (Firewall > White List) ou desativar a proteção anti-bot para a porta 2222.`,
