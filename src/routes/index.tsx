@@ -51,15 +51,21 @@ function Index() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6">
-        <span className="flex items-center gap-2 text-lg font-semibold">
-          <span className="flex size-8 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground overflow-hidden">
-            {branding.logo_url ? (
-              <img src={branding.logo_url} alt={branding.app_name} className="size-full object-contain" />
-            ) : (
-              branding.app_name.charAt(0)
-            )}
-          </span>
-          {branding.app_name}
+        <span className="flex min-w-0 items-center gap-2 text-lg font-semibold">
+          {branding.logo_url ? (
+            <img
+              src={branding.logo_url}
+              alt={branding.app_name}
+              className="h-8 w-auto max-w-[150px] object-contain sm:h-10 sm:max-w-[200px]"
+            />
+          ) : (
+            <>
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground">
+                {branding.app_name.charAt(0)}
+              </span>
+              <span className="truncate">{branding.app_name}</span>
+            </>
+          )}
         </span>
         <Button asChild variant="outline" className="rounded-xl">
           <Link to="/auth">Área do cliente</Link>

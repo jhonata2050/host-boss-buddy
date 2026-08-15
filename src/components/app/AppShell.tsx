@@ -258,9 +258,9 @@ export function AppShell({
               <SheetContent side="left" className="w-72 p-0 border-none rounded-r-3xl overflow-hidden">
                 <div className="flex h-full flex-col bg-sidebar px-3 py-4">
                   <div className="flex items-center justify-between px-2 pb-4">
-                    <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand">
+                    <Link to="/" className={cn("flex items-center", branding.logo_url ? "h-9 max-w-[170px]" : "size-8 justify-center rounded-full bg-brand")}>
                       {branding.logo_url ? (
-                        <img src={branding.logo_url} alt={branding.app_name} className="size-full object-contain" />
+                        <img src={branding.logo_url} alt={branding.app_name} className="h-full w-auto max-w-full object-contain" />
                       ) : (
                         <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
                       )}
@@ -337,9 +337,9 @@ export function AppShell({
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
 
           <div className="flex items-center justify-between px-2 pb-4">
-            <Link to="/" className="flex size-8 items-center justify-center rounded-full bg-brand overflow-hidden">
+            <Link to="/" className={cn("flex min-w-0 items-center", branding.logo_url ? "h-9 max-w-[170px]" : "size-8 justify-center rounded-full bg-brand overflow-hidden")}>
               {branding.logo_url ? (
-                <img src={branding.logo_url} alt={branding.app_name} className="size-full object-contain" />
+                <img src={branding.logo_url} alt={branding.app_name} className="h-full w-auto max-w-full object-contain" />
               ) : (
                 <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
               )}
