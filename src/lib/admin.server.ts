@@ -4,11 +4,17 @@ import { DEFAULT_BRANDING, type BrandingSettings } from "./branding";
 import { getRequestHeader } from "@tanstack/react-start/server";
 
 export async function getBrandingImplementation() {
-  const supabasePublic = createClient<Database>(
-    process.env["SUPABASE_URL"]!,
-    process.env["SUPABASE_PUBLISHABLE_KEY"]!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
+  const supabaseUrl = process.env["SUPABASE_URL"];
+  const supabaseKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn("[Branding] Supabase environment variables are missing");
+    return DEFAULT_BRANDING;
+  }
+
+  const supabasePublic = createClient<Database>(supabaseUrl, supabaseKey, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
 
   const { data, error } = await supabasePublic
     .from("system_settings")

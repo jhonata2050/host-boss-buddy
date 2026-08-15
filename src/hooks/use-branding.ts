@@ -5,7 +5,16 @@ import { useEffect } from "react";
 export function useBranding() {
   const { data: branding } = useQuery({
     queryKey: ["branding"],
-    queryFn: () => getBranding(),
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/public/branding");
+        if (!response.ok) throw new Error("Failed to fetch branding from API");
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching branding via public API, falling back to server function:", error);
+        return getBranding();
+      }
+    },
     staleTime: 1000 * 60 * 60, // 1 hora
   });
 
