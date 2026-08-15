@@ -80,7 +80,13 @@ export function ClientsPage() {
   });
 
   const needle = term.trim().toLowerCase();
-  const filtered = (clients.data ?? []).filter((c) =>
+  
+  // Garantir que não existam duplicatas de ID na lista visual (medida de segurança)
+  const uniqueClients = (clients.data ?? []).filter((c, index, self) => 
+    self.findIndex(t => t.id === c.id) === index
+  );
+
+  const filtered = uniqueClients.filter((c) =>
     [c.full_name, c.email, c.company_name, c.tax_id]
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(needle)),
