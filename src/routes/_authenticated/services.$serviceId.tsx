@@ -49,7 +49,8 @@ function ServiceManagementPage() {
       toast.error("O usuário ou servidor ainda não foi vinculado a este serviço. Verifique a importação.");
       return;
     }
-    try {
+
+    const promise = (async () => {
       const url = await getDASSOUrl({ 
         data: { 
           // @ts-ignore
@@ -59,12 +60,15 @@ function ServiceManagementPage() {
           redirectUrl: command || '/'
         } 
       });
-      
       window.open(url, '_blank');
+      return url;
+    })();
 
-    } catch (err: any) {
-      toast.error("Erro ao acessar painel: " + err.message);
-    }
+    toast.promise(promise, {
+      loading: 'Gerando acesso seguro ao painel...',
+      success: 'Redirecionando para o DirectAdmin...',
+      error: (err) => `Erro ao acessar painel: ${err.message}`
+    });
   };
 
   if (error) {

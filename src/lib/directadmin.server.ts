@@ -75,7 +75,7 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
         'Accept': 'application/json, text/plain',
       },
       body: method === 'POST' ? searchParams.toString() : null,
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(60_000), // Aumentado para 60s para maior resiliência
       redirect: 'manual',
     });
 
