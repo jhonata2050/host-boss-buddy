@@ -148,25 +148,40 @@ function BrandingSettingsPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="logo_url">URL do Logotipo</Label>
-                    <Input
-                      id="logo_url"
-                      value={form.logo_url || ""}
-                      onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
-                      placeholder="https://exemplo.com/logo.png"
-                      className="rounded-xl"
-                    />
-                    <p className="text-[10px] text-muted-foreground italic">Use uma imagem transparente (PNG/SVG) para melhor resultado.</p>
+                    <Label htmlFor="logo_url">URL do Logotipo (Área Superior)</Label>
+                    <div className="flex gap-4 items-start">
+                      <Input
+                        id="logo_url"
+                        value={form.logo_url || ""}
+                        onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
+                        placeholder="https://exemplo.com/logo.png"
+                        className="rounded-xl flex-1"
+                      />
+                      {form.logo_url && (
+                        <div className="size-12 rounded-xl border border-border overflow-hidden bg-muted flex items-center justify-center p-1">
+                          <img src={form.logo_url} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground italic">Exibido no menu lateral e topo da página inicial.</p>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="favicon_url">URL do Favicon</Label>
-                    <Input
-                      id="favicon_url"
-                      value={form.favicon_url || ""}
-                      onChange={(e) => setForm({ ...form, favicon_url: e.target.value })}
-                      placeholder="https://exemplo.com/favicon.ico"
-                      className="rounded-xl"
-                    />
+                    <Label htmlFor="favicon_url">URL do Favicon / Ícone do Navegador</Label>
+                    <div className="flex gap-4 items-start">
+                      <Input
+                        id="favicon_url"
+                        value={form.favicon_url || ""}
+                        onChange={(e) => setForm({ ...form, favicon_url: e.target.value })}
+                        placeholder="https://exemplo.com/favicon.ico"
+                        className="rounded-xl flex-1"
+                      />
+                      {form.favicon_url && (
+                        <div className="size-12 rounded-xl border border-border overflow-hidden bg-muted flex items-center justify-center p-2">
+                          <img src={form.favicon_url} alt="Preview Favicon" className="size-6 object-contain" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground italic">Ícone que aparece na aba do navegador.</p>
                   </div>
                 </CardContent>
               </Card>
