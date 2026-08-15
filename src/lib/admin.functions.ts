@@ -23,20 +23,17 @@ export const getBranding = createServerFn({ method: "GET" }).handler(async () =>
 
 export const updateBranding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    z
-      .object({
-        logo_url: z.string().nullable(),
-        app_name: z.string().min(1),
-        primary_color: z.string(),
-        brand_color: z.string(),
-        favicon_url: z.string().nullable(),
-      })
-      .parse(data),
-  )
+  .inputValidator((data: any) => data)
   .handler(async ({ data, context }) => {
-    const { updateBrandingImplementation } = await import("./admin.server");
-    return updateBrandingImplementation(data as BrandingSettings, context);
+    try {
+      const { updateBrandingImplementation } = await import("./admin.server");
+      // O input na página é { data: form }, então passamos data.data
+      const result = await updateBrandingImplementation(data.data, context.supabase);
+      return result;
+    } catch (error) {
+      console.error("Error in updateBranding server function:", error);
+      throw error;
+    }
   });
 
 export const impersonateClient = createServerFn({ method: "POST" })
