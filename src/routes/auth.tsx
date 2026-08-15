@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
+import { logPublicAuthEvent, logSessionEvent } from "@/lib/audit.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -57,6 +58,10 @@ function AuthPage() {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
+      void logPublicAuthEvent({ data: {
+        action: "login.failed",
+        description: "Falha ao entrar com Google",
+      }});
       setBusy(false);
       toast.error("Não foi possível entrar com o Google.");
       return;
@@ -90,6 +95,7 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        if (data.session) void logSessionEvent({ data: { action: "signup.succeeded", description: "Conta criada com sucesso" } });
         if (!data.session) {
           setCheckEmail(true);
           return;
@@ -104,6 +110,11 @@ function AuthPage() {
         await navigate({ to: "/dashboard" });
       }
     } catch (error) {
+      void logPublicAuthEvent({ data: {
+        action: mode === "signup" ? "signup.failed" : "login.failed",
+        email: parsedEmail.data,
+        description: mode === "signup" ? "Falha ao criar conta" : "Tentativa de acesso recusada",
+      }});
       toast.error(error instanceof Error ? error.message : "Não foi possível continuar.");
     } finally {
       setBusy(false);

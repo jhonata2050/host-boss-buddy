@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { impersonateClient, updateClientProfile } from "@/lib/admin.functions";
+import { logSessionEvent } from "@/lib/audit.functions";
 
 
 import { AppShell } from "@/components/app/AppShell";
@@ -133,6 +134,12 @@ function ClientDetailPage() {
     setIsImpersonating(true);
     try {
       await impersonateClient({ data: { clientId } });
+      await logSessionEvent({ data: {
+        action: "impersonation.started",
+        description: "Administrador iniciou o modo cliente",
+        entityType: "profile",
+        entityId: clientId,
+      }});
       setImpersonatedClientId(clientId);
       toast.success("Logado como cliente");
       navigate({ to: "/dashboard" });

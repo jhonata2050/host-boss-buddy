@@ -16,6 +16,18 @@ export const Route = createFileRoute('/api/public/password-reset')({
             })
           }
 
+          const forwarded = request.headers.get('x-forwarded-for')
+          const ipAddress = forwarded?.split(',')[0]?.trim() || request.headers.get('cf-connecting-ip')
+          await supabaseAdmin.from('audit_logs').insert({
+            category: 'auth',
+            action: 'password_reset.requested',
+            status: 'success',
+            actor_email: email,
+            description: 'Recuperação de senha solicitada',
+            ip_address: ipAddress,
+            user_agent: request.headers.get('user-agent')?.slice(0, 500) || null,
+          })
+
           // Supabase handle password reset email
           const { error } = await supabaseAdmin.auth.admin.generateLink({
             type: 'recovery',
@@ -27,6 +39,15 @@ export const Route = createFileRoute('/api/public/password-reset')({
 
           if (error) {
             console.error('[PasswordReset] Error:', error)
+            await supabaseAdmin.from('audit_logs').insert({
+              category: 'auth',
+              action: 'password_reset.failed',
+              status: 'failure',
+              actor_email: email,
+              description: 'Falha interna ao gerar recuperação de senha',
+              ip_address: ipAddress,
+              user_agent: request.headers.get('user-agent')?.slice(0, 500) || null,
+            })
             // We return 200 even on error to avoid email enumeration
           }
 
