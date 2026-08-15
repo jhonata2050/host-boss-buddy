@@ -109,6 +109,8 @@ async function callDA({ hostname, apiUser, apiToken, command, method = 'GET', pa
     if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
       throw new Error(`O servidor DirectAdmin (${hostname}) demorou muito para responder (timeout). Verifique se o IP do HostPanel está liberado no firewall do servidor.`);
     }
+    if (error instanceof Error && /Imunify360/i.test(error.message)) throw error;
+
     console.error("DirectAdmin Fetch Error:", error);
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
     throw new Error(`Falha na comunicação com o DirectAdmin: ${message}. Verifique o hostname e as permissões da chave no servidor ${hostname}.`);
