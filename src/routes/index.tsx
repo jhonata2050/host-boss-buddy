@@ -56,7 +56,7 @@ function Index() {
             <img
               src={branding.logo_url}
               alt={branding.app_name}
-              className="h-8 w-auto max-w-[150px] object-contain sm:h-10 sm:max-w-[200px]"
+              className="h-auto w-full max-w-[180px] object-contain sm:max-w-[240px]"
             />
           ) : (
             <>
