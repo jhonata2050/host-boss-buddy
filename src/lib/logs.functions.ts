@@ -4,11 +4,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getSystemLogs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => 
+  .inputValidator((data: unknown) => 
     z.object({
-      type: z.enum(["email", "auth", "system", "all"]).default("all"),
-      limit: z.number().default(20),
-      offset: z.number().default(0)
+      type: z.enum(["email", "auth", "data", "system", "all"]).default("all"),
+      limit: z.number().int().min(1).max(100).default(20),
+      offset: z.number().int().min(0).default(0)
     }).parse(data)
   )
   .handler(async ({ data, context }) => {
@@ -40,11 +40,18 @@ export const getSystemLogs = createServerFn({ method: "GET" })
       return { type: "email", logs, count: count || 0 };
     }
 
-    // Auth and System logs
-    if (data.type === "auth" || data.type === "system" || data.type === "all") {
-      // For now, we only have email_logs implemented in the database.
-      return { type: data.type, logs: [], count: 0 };
-    }
+    let query = context.supabase
+      .from("audit_logs")
+      .select("id, category, action, status, actor_id, actor_email, entity_type, entity_id, description, ip_address, user_agent, metadata, created_at", { count: "exact" });
 
-    return { type: data.type, logs: [], count: 0 };
+    if (data.type === "auth") query = query.eq("category", "auth");
+    if (data.type === "data") query = query.eq("category", "data");
+    if (data.type === "system") query = query.in("category", ["system", "security"]);
+
+    const { data: logs, count, error } = await query
+      .order("created_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
+
+    if (error) throw error;
+    return { type: data.type, logs: logs ?? [], count: count ?? 0 };
   });

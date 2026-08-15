@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { logSessionEvent } from "@/lib/audit.functions";
 
 export const Route = createFileRoute("/auth/reset-password")({
   component: ResetPasswordPage,
@@ -32,6 +33,10 @@ function ResetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
+      void logSessionEvent({ data: {
+        action: "password.changed",
+        description: "Senha da conta alterada pelo usuário",
+      }});
       toast.success("Senha alterada com sucesso!");
       navigate({ to: "/auth" });
     } catch (err: any) {

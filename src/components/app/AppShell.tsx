@@ -40,6 +40,7 @@ import {
 import { useAuth, useIsStaff, useProfile } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { logSessionEvent } from "@/lib/audit.functions";
 
 type IconType = typeof Package;
 type NavLink = { label: string; to: string; icon?: IconType };
@@ -193,11 +194,18 @@ export function AppShell({
   const initials = name.slice(0, 2).toUpperCase();
 
   async function signOut() {
+    await logSessionEvent({ data: { action: "logout", description: "Sessão encerrada pelo usuário" } });
     await supabase.auth.signOut();
     await navigate({ to: "/auth" });
   }
 
   const stopImpersonating = () => {
+    void logSessionEvent({ data: {
+      action: "impersonation.ended",
+      description: "Administrador encerrou o modo cliente",
+      entityType: "profile",
+      entityId: impersonatedClientId ?? undefined,
+    }});
     setImpersonatedClientId(null);
     queryClient.invalidateQueries();
     navigate({ to: "/admin/clients" });
