@@ -55,7 +55,13 @@ export const updateSystemSettings = createServerFn({ method: "POST" })
 
 export const getTickets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator((data: unknown) => 
+    z.object({
+      limit: z.number().default(20),
+      offset: z.number().default(0)
+    }).parse(data)
+  )
+  .handler(async ({ data, context }) => {
     const { data: roles } = await context.supabase
       .from("user_roles")
       .select("role")
@@ -65,20 +71,22 @@ export const getTickets = createServerFn({ method: "GET" })
 
     let query = context.supabase
       .from("tickets")
-      .select(`
-        *,
-        profile:profiles(full_name)
-      `)
-      .order("updated_at", { ascending: false });
+      .select("*", { count: 'exact' });
 
     if (!isAdmin) {
       query = query.eq("user_id", context.userId);
     }
 
-    const { data, error } = await query;
+    const { data: tickets, count, error } = await query
+      .select(`
+        *,
+        profile:profiles(full_name)
+      `)
+      .order("updated_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
 
     if (error) throw new Error(error.message);
-    return data;
+    return { tickets, count: count || 0 };
   });
 
 export const getTicketDetails = createServerFn({ method: "GET" })

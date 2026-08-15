@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { History, Mail, Shield, Activity, Search } from "lucide-react";
+import { History, Mail, Shield, Activity, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/app/AppShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -24,11 +25,17 @@ export const Route = createFileRoute("/_authenticated/admin/logs")({
 
 function LogsPage() {
   const [activeTab, setActiveTab] = useState<"email" | "auth" | "system" | "all">("email");
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-logs", activeTab],
-    queryFn: () => getSystemLogs({ data: { type: activeTab } }),
+    queryKey: ["admin-logs", activeTab, page],
+    queryFn: () => getSystemLogs({ data: { type: activeTab, offset: (page - 1) * pageSize, limit: pageSize } }),
   });
+
+  const logs = data?.logs ?? [];
+  const totalItems = data?.count ?? 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
     <AppShell
@@ -49,7 +56,7 @@ function LogsPage() {
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setPage(1); }} className="w-full">
           <TabsList className="bg-muted/50 p-1 rounded-2xl h-12">
             <TabsTrigger value="email" className="rounded-xl flex gap-2">
               <Mail className="size-4" /> E-mails
@@ -79,8 +86,8 @@ function LogsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.logs && data.logs.length > 0 ? (
-                    data.logs.map((log: any) => (
+                  {logs.length > 0 ? (
+                    logs.map((log: any) => (
                       <TableRow key={log.id}>
                         <TableCell className="text-xs">
                           {format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}
@@ -120,6 +127,34 @@ function LogsPage() {
               </div>
             )}
           </div>
+
+          {activeTab === "email" && !isLoading && logs.length > 0 && (
+            <div className="mt-6 flex items-center justify-between gap-4">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {logs.length} de {totalItems} logs
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="size-4 mr-2" /> Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                >
+                  Próximo <ChevronRight className="size-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
         </Tabs>
       </div>
     </AppShell>
