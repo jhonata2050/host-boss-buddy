@@ -8,8 +8,7 @@ export type { BrandingSettings };
 export const getBranding = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const { getBrandingImplementation } = await import("./admin.server");
-    const data = await getBrandingImplementation();
-    return data;
+    return await getBrandingImplementation();
   } catch (error) {
     console.error("Error in getBranding server function:", error);
     return {
