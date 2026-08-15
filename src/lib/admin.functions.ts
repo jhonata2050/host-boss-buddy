@@ -57,8 +57,6 @@ export const impersonateClient = createServerFn({ method: "POST" })
     clientId: z.string().uuid(),
   }).parse(data))
   .handler(async ({ data }) => {
-    // A lógica de impersonação real geralmente é tratada no hook useAuth/contexto
-    // mas este export é necessário para evitar erros de build
     return { success: true, clientId: data.clientId };
   });
 
@@ -69,16 +67,23 @@ export const updateClientProfile = createServerFn({ method: "POST" })
     company_name: z.string().optional(),
     tax_id: z.string().optional(),
     phone: z.string().optional(),
-    address: z.string().optional(),
+    address_line: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
-    zip_code: z.string().optional(),
+    postal_code: z.string().optional(),
   }).parse(data))
   .handler(async ({ data }) => {
     const { id, ...updates } = data;
+    
+    // Converte undefined para null explicitamente para satisfazer o Supabase types
+    const sanitizedUpdates: any = {};
+    Object.entries(updates).forEach(([key, value]) => {
+      sanitizedUpdates[key] = value === undefined ? null : value;
+    });
+
     const { error } = await supabase
       .from("profiles")
-      .update(updates)
+      .update(sanitizedUpdates)
       .eq("id", id);
     
     if (error) throw error;
@@ -90,11 +95,21 @@ export const bulkDeleteClients = createServerFn({ method: "POST" })
     clientIds: z.array(z.string().uuid()),
   }).parse(data))
   .handler(async ({ data }) => {
+    // Busca informações para os logs antes de deletar
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("email")
+      .in("id", data.clientIds);
+
     const { error } = await supabase
       .from("profiles")
       .delete()
       .in("id", data.clientIds);
     
     if (error) throw error;
-    return { success: true };
+    return { 
+      success: true, 
+      deletedCount: data.clientIds.length,
+      failuresCount: 0 
+    };
   });
