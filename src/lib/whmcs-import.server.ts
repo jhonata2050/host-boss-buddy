@@ -199,9 +199,11 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
 
     try {
       const existing = await resolveUserId(email, whmcsId);
+      
       if (existing) {
-        const { error } = await (supabaseAdmin
-          .from("profiles") as any)
+        console.log(`[Import] Atualizando perfil existente ID: ${existing}`);
+        const { error } = await supabaseAdmin
+          .from("profiles")
           .update(profile)
           .eq("id", existing);
         if (error) throw new Error(error.message);
@@ -209,29 +211,39 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
         continue;
       }
 
-      const { data: created, error: authError } =
-        await supabaseAdmin.auth.admin.createUser({
-          email,
-          email_confirm: true,
-          password: crypto.randomUUID() + "Aa1!",
-          user_metadata: { full_name: fullName, imported_from: "whmcs", whmcs_id: whmcsId },
-        });
+      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+      const existingAuthUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
-      if (authError || !created.user) {
-        throw new Error(authError?.message ?? "Falha ao criar usuário");
+      let userId = existingAuthUser?.id;
+
+      if (!userId) {
+        const { data: created, error: authError } =
+          await supabaseAdmin.auth.admin.createUser({
+            email,
+            email_confirm: true,
+            password: crypto.randomUUID() + "Aa1!",
+            user_metadata: { full_name: fullName, imported_from: "whmcs", whmcs_id: whmcsId },
+          });
+
+        if (authError || !created.user) {
+          throw new Error(authError?.message ?? "Falha ao criar usuário no Auth");
+        }
+        userId = created.user.id;
+        stats.clients.created++;
+      } else {
+        console.log(`[Import] Usuário Auth já existe (${userId}), vinculando/atualizando perfil.`);
+        stats.clients.updated++;
       }
 
-      const { error: profileError } = await (supabaseAdmin
-        .from("profiles") as any)
-        .upsert({ id: created.user.id, ...profile }, { onConflict: "id" });
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .upsert({ id: userId, ...profile }, { onConflict: "id" });
+      
       if (profileError) throw new Error(profileError.message);
-
 
       await supabaseAdmin
         .from("user_roles")
-        .upsert({ user_id: created.user.id, role: "client" }, { onConflict: "user_id,role" });
-
-      stats.clients.created++;
+        .upsert({ user_id: userId, role: "client" }, { onConflict: "user_id,role" });
     } catch (e) {
       stats.clients.failed++;
       if (stats.errors.length < 50) {

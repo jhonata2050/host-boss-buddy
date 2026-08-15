@@ -113,6 +113,7 @@ function ClientDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-client-dossier", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-clients"] });
       setIsEditing(false);
       toast.success("Perfil atualizado com sucesso");
     },
@@ -126,7 +127,9 @@ function ClientDetailPage() {
     const formData = new FormData(e.currentTarget);
     const values = Object.fromEntries(formData.entries());
     
-    const { email, ...updateValues } = values;
+    // Removemos o email para não tentar atualizar o campo de email no profiles (que pode ser read-only ou causar conflitos no auth)
+    // E removemos o ID para garantir que o .update().eq('id', clientId) não tente mudar a PK
+    const { email, id, ...updateValues } = values;
     updateProfile.mutate(updateValues);
   };
 
@@ -229,7 +232,10 @@ function ClientDetailPage() {
                 )}
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form 
+                  onSubmit={handleSubmit} 
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="full_name">Nome Completo</Label>
                     <Input id="full_name" name="full_name" defaultValue={client.full_name || ""} disabled={!isEditing} className="rounded-xl h-11" />
