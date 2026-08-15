@@ -127,7 +127,9 @@ function ClientDetailPage() {
     const formData = new FormData(e.currentTarget);
     const values = Object.fromEntries(formData.entries());
     
-    const { email, ...updateValues } = values;
+    // Removemos o email para não tentar atualizar o campo de email no profiles (que pode ser read-only ou causar conflitos no auth)
+    // E removemos o ID para garantir que o .update().eq('id', clientId) não tente mudar a PK
+    const { email, id, ...updateValues } = values;
     updateProfile.mutate(updateValues);
   };
 
