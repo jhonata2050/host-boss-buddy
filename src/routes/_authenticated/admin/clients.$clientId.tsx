@@ -45,7 +45,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
