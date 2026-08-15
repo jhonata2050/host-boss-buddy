@@ -122,6 +122,7 @@ async function resolveUserId(email: string, whmcsClientId?: string): Promise<str
     // Se não achou no perfil, tenta ver se foi injetado no metadata do usuário
     const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
     if (!error && users) {
+      // Find the first user with this whmcs_id in metadata
       const user = users.find(u => u.user_metadata?.['whmcs_id']?.toString() === cleanWhmcsId);
       if (user) {
         console.log(`[Import] Resolvido via auth metadata whmcs_id (${cleanWhmcsId}): ${user.id}`);
@@ -202,15 +203,23 @@ async function importClients(rows: Record<string, string>[], stats: ImportStats)
       
       if (existing) {
         console.log(`[Import] Atualizando perfil existente ID: ${existing}`);
+        // We only update if it's the SAME email or if it's explicitly linked by whmcs_id
         const { error } = await supabaseAdmin
           .from("profiles")
           .update(profile)
           .eq("id", existing);
         if (error) throw new Error(error.message);
+        
+        // Also ensure user_metadata in auth is updated if linked
+        await supabaseAdmin.auth.admin.updateUserById(existing, {
+          user_metadata: { full_name: fullName, whmcs_id: whmcsId }
+        });
+
         stats.clients.updated++;
         continue;
       }
 
+      // Double check in Auth by email to be absolutely sure before creating
       const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
       const existingAuthUser = users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
