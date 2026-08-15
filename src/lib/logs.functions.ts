@@ -40,7 +40,11 @@ export const getSystemLogs = createServerFn({ method: "GET" })
       return { type: "email", logs, count: count || 0 };
     }
 
-    // Auth and System logs would come from other tables if implemented
-    // For now, we return empty if not email logs
-    return { type: data.type, logs: [] };
+    // Auth and System logs
+    if (data.type === "auth" || data.type === "system" || data.type === "all") {
+      // For now, we only have email_logs implemented in the database.
+      return { type: data.type, logs: [], count: 0 };
+    }
+
+    return { type: data.type, logs: [], count: 0 };
   });
