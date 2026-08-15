@@ -25,7 +25,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
-import { impersonateClient } from "@/lib/admin.functions";
+import { impersonateClient, updateClientProfile } from "@/lib/admin.functions";
 
 
 import { AppShell } from "@/components/app/AppShell";
@@ -104,12 +104,8 @@ function ClientDetailPage() {
 
 
   const updateProfile = useMutation({
-    mutationFn: async (values: any) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update(values)
-        .eq("id", clientId);
-      if (error) throw error;
+    mutationFn: async (values: Record<string, string>) => {
+      return updateClientProfile({ data: { clientId, values } });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-client-dossier", clientId] });
@@ -125,13 +121,13 @@ function ClientDetailPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const values = Object.fromEntries(formData.entries());
-    
-    // Removemos o email para não tentar atualizar o campo de email no profiles (que pode ser read-only ou causar conflitos no auth)
-    // E removemos o ID para garantir que o .update().eq('id', clientId) não tente mudar a PK
-    const { email, id, ...updateValues } = values;
-    updateProfile.mutate(updateValues);
+    const raw = Object.fromEntries(formData.entries()) as Record<string, string>;
+
+    // O e-mail é gerenciado pela autenticação e o ID nunca deve ser alterado
+    const { email, id, ...values } = raw;
+    updateProfile.mutate(values);
   };
+
 
   const handleImpersonate = async () => {
     setIsImpersonating(true);
