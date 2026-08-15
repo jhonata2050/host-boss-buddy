@@ -53,11 +53,13 @@ function Index() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6">
         <span className="flex min-w-0 items-center gap-2 text-lg font-semibold">
           {branding.logo_url ? (
-            <img
-              src={branding.logo_url}
-              alt={branding.app_name}
-              className="h-12 w-auto object-contain max-w-full sm:h-16"
-            />
+            <span className="flex items-center rounded-2xl bg-foreground px-4 py-2.5">
+              <img
+                src={branding.logo_url}
+                alt={branding.app_name}
+                className="h-8 w-auto max-w-[180px] object-contain sm:h-9 sm:max-w-[220px]"
+              />
+            </span>
           ) : (
             <>
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-foreground">
