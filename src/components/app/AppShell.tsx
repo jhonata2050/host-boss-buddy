@@ -76,7 +76,7 @@ const ADMIN_SECTIONS: NavSection[] = [
       { label: "Financeiro e Gateways", to: "/admin/finance", icon: Wallet },
       { label: "E-mails e SMTP", to: "/admin/emails", icon: Mail },
       { label: "Domínios", to: "/admin/domains", icon: Globe },
-      { label: "Logs do Sistema", to: "/admin/logs", icon: History },
+      { label: "Logs do Sistema", to: "/admin/logs", icon: HistoryIcon },
       { label: "Importador WHMCS", to: "/admin/import", icon: RefreshCw },
     ],
   },
