@@ -105,10 +105,11 @@ function ClientDetailPage() {
 
   const updateProfile = useMutation({
     mutationFn: async (values: any) => {
-      console.log('Updating profile for ID:', clientId, 'with values:', values);
+      // Garantir que não estamos tentando atualizar o ID
+      const { id, ...dataToUpdate } = values;
       const { error } = await supabase
         .from("profiles")
-        .update(values)
+        .update(dataToUpdate)
         .eq("id", clientId);
       if (error) throw error;
     },
@@ -230,7 +231,11 @@ function ClientDetailPage() {
                 )}
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form 
+                  key={client.id}
+                  onSubmit={handleSubmit} 
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
                   <div className="space-y-2">
                     <Label htmlFor="full_name">Nome Completo</Label>
                     <Input id="full_name" name="full_name" defaultValue={client.full_name || ""} disabled={!isEditing} className="rounded-xl h-11" />
