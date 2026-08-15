@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { logSessionEvent } from "@/lib/audit.functions";
 
 export type AppRole = "admin" | "staff" | "client";
 
@@ -63,6 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           window.sessionStorage.removeItem('impersonated_id');
           setImpersonatedClientId(null);
         } else {
+          if (event === "SIGNED_IN") {
+            void logSessionEvent({ data: {
+              action: "login.succeeded",
+              description: "Acesso autenticado com sucesso",
+            }});
+          }
           void queryClient.invalidateQueries();
         }
       }

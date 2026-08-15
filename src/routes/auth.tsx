@@ -95,12 +95,7 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        if (data.session) {
-          void logSessionEvent({ data: {
-            action: "signup.succeeded",
-            description: "Conta criada e autenticada com sucesso",
-          }});
-        }
+        if (data.session) void logSessionEvent({ data: { action: "signup.succeeded", description: "Conta criada com sucesso" } });
         if (!data.session) {
           setCheckEmail(true);
           return;
@@ -112,10 +107,6 @@ function AuthPage() {
           password: parsedPassword.data,
         });
         if (error) throw error;
-        void logSessionEvent({ data: {
-          action: "login.succeeded",
-          description: "Acesso realizado com e-mail e senha",
-        }});
         await navigate({ to: "/dashboard" });
       }
     } catch (error) {
