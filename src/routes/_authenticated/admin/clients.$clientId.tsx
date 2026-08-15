@@ -334,84 +334,85 @@ function ClientDetailPage() {
                           <TableHead className="w-20 text-right">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
-                    <TableBody>
-                      {dossiersQuery.data?.services.map((s: any) => (
-                        <TableRow key={s.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex flex-col">
-                              <span>{s.products?.name || "Produto"}</span>
-                              {s.username ? (
-                                <span className="text-[10px] text-muted-foreground">Usuário: {s.username}</span>
+                      <TableBody>
+                        {dossiersQuery.data?.services.map((s: any) => (
+                          <TableRow key={s.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex flex-col">
+                                <span>{s.products?.name || "Produto"}</span>
+                                {s.username ? (
+                                  <span className="text-[10px] text-muted-foreground">Usuário: {s.username}</span>
+                                ) : (
+                                  <span className="text-[10px] text-destructive italic">Usuário ausente</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {s.domain || "—"}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              {s.server_id ? (
+                                <span className="text-xs">{servers?.find(sv => sv.id === s.server_id)?.name || "Servidor"}</span>
                               ) : (
-                                <span className="text-[10px] text-destructive italic">Usuário ausente</span>
+                                <span className="text-[10px] text-destructive italic">Não vinculado</span>
                               )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {s.domain || "—"}
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            {s.server_id ? (
-                              <span className="text-xs">{servers?.find(sv => sv.id === s.server_id)?.name || "Servidor"}</span>
-                            ) : (
-                              <span className="text-[10px] text-destructive italic">Não vinculado</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {s.next_due_date ? format(new Date(s.next_due_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={s.status === 'active' ? 'default' : s.status === 'suspended' ? 'secondary' : 'destructive'}>
-                              {s.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              {s.status === 'active' && s.username && s.server_id && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8 rounded-lg text-brand hover:text-brand hover:bg-brand/10"
-                                  onClick={async () => {
-                                    const { getDASSOUrl } = await import("@/lib/support.functions");
-                                    const promise = (async () => {
-                                      const url = await getDASSOUrl({ data: { serverId: s.server_id, username: s.username, redirectUrl: '/' } });
-                                      window.open(url, '_blank');
-                                      return url;
-                                    })();
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {s.next_due_date ? format(new Date(s.next_due_date), "dd/MM/yyyy", { locale: ptBR }) : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={s.status === 'active' ? 'default' : s.status === 'suspended' ? 'secondary' : 'destructive'}>
+                                {s.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {s.status === 'active' && s.username && s.server_id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 rounded-lg text-brand hover:text-brand hover:bg-brand/10"
+                                    onClick={async () => {
+                                      const { getDASSOUrl } = await import("@/lib/support.functions");
+                                      const promise = (async () => {
+                                        const url = await getDASSOUrl({ data: { serverId: s.server_id, username: s.username, redirectUrl: '/' } });
+                                        window.open(url, '_blank');
+                                        return url;
+                                      })();
 
-                                    toast.promise(promise, {
-                                      loading: 'Gerando acesso...',
-                                      success: 'Redirecionando...',
-                                      error: (err) => `Erro: ${err.message}`
-                                    });
-                                  }}
-                                  title="Acessar Painel"
+                                      toast.promise(promise, {
+                                        loading: 'Gerando acesso...',
+                                        success: 'Redirecionando...',
+                                        error: (err) => `Erro: ${err.message}`
+                                      });
+                                    }}
+                                    title="Acessar Painel"
+                                  >
+                                    <ExternalLink className="size-3" />
+                                  </Button>
+                                )}
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="size-8 rounded-lg"
+                                  onClick={() => setEditingService(s)}
+                                  title="Editar Detalhes"
                                 >
-                                  <ExternalLink className="size-3" />
+                                  <Edit2 className="size-3" />
                                 </Button>
-                              )}
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="size-8 rounded-lg"
-                                onClick={() => setEditingService(s)}
-                                title="Editar Detalhes"
-                              >
-                                <Edit2 className="size-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
 
-                      {dossiersQuery.data?.services.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">Nenhum serviço encontrado</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                        {dossiersQuery.data?.services.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Nenhum serviço encontrado</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
