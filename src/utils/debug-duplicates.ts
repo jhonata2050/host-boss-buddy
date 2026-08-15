@@ -1,7 +1,6 @@
-import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 
-async function checkDuplicates() {
+export async function checkDuplicates() {
   console.log("Checking for profile duplicates...");
   const { data, error } = await supabase
     .from("profiles")
@@ -14,11 +13,13 @@ async function checkDuplicates() {
   }
 
   const byEmail: Record<string, any[]> = {};
-  data?.forEach(p => {
-    if (!p.email) return;
-    if (!byEmail[p.email]) byEmail[p.email] = [];
-    byEmail[p.email].push(p);
-  });
+  if (data) {
+    data.forEach(p => {
+      if (!p.email) return;
+      if (!byEmail[p.email]) byEmail[p.email] = [];
+      byEmail[p.email].push(p);
+    });
+  }
 
   const duplicates = Object.entries(byEmail).filter(([_, list]) => list.length > 1);
   
@@ -31,7 +32,3 @@ async function checkDuplicates() {
     });
   }
 }
-
-// This is a diagnostic script to be run in the browser console or via exec if possible.
-// Since we can't easily run TS scripts that depend on supabase client via shell, 
-// I'll rely on the line_replace logs if the user reproduces it.
