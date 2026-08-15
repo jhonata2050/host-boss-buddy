@@ -115,6 +115,7 @@ function ClientDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-client-dossier", clientId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-clients"] });
       setIsEditing(false);
       toast.success("Perfil atualizado com sucesso");
     },
