@@ -21,7 +21,11 @@ function BrandingSettingsPage() {
   const queryClient = useQueryClient();
   const { data: branding, isLoading } = useQuery({
     queryKey: ["admin-branding"],
-    queryFn: () => getBranding(),
+    queryFn: async () => {
+      const response = await fetch("/api/public/branding");
+      if (!response.ok) throw new Error("Failed to fetch branding");
+      return await response.json();
+    },
   });
 
   const [form, setForm] = useState<BrandingSettings>({
