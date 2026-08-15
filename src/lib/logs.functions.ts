@@ -37,7 +37,23 @@ export const getSystemLogs = createServerFn({ method: "GET" })
         .select("*", { count: 'exact', head: true });
         
       if (error) throw error;
-      return { type: "email", logs, count: count || 0 };
+      return {
+        type: "email",
+        logs: (logs ?? []).map((log) => ({
+          id: log.id,
+          createdAt: log.created_at ?? new Date(0).toISOString(),
+          category: "email",
+          action: log.template_name ?? "email.sent",
+          status: log.status ?? "unknown",
+          actorEmail: log.to_email,
+          description: log.subject,
+          entityType: "email",
+          entityId: log.user_id,
+          ipAddress: null,
+          profileName: log.profile?.full_name ?? null,
+        })),
+        count: count || 0,
+      };
     }
 
     let query = context.supabase
@@ -53,5 +69,21 @@ export const getSystemLogs = createServerFn({ method: "GET" })
       .range(data.offset, data.offset + data.limit - 1);
 
     if (error) throw error;
-    return { type: data.type, logs: logs ?? [], count: count ?? 0 };
+    return {
+      type: data.type,
+      logs: (logs ?? []).map((log) => ({
+        id: log.id,
+        createdAt: log.created_at,
+        category: log.category,
+        action: log.action,
+        status: log.status,
+        actorEmail: log.actor_email,
+        description: log.description,
+        entityType: log.entity_type,
+        entityId: log.entity_id,
+        ipAddress: typeof log.ip_address === "string" ? log.ip_address : null,
+        profileName: null,
+      })),
+      count: count ?? 0,
+    };
   });
