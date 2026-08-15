@@ -42,6 +42,59 @@ export const bulkDeleteClients = createServerFn({ method: "POST" })
     };
   });
 
+const profileFields = z.object({
+  full_name: z.string().nullish(),
+  company_name: z.string().nullish(),
+  tax_id: z.string().nullish(),
+  phone: z.string().nullish(),
+  address_line: z.string().nullish(),
+  address_line2: z.string().nullish(),
+  city: z.string().nullish(),
+  state: z.string().nullish(),
+  postal_code: z.string().nullish(),
+  country: z.string().nullish(),
+  notes: z.string().nullish(),
+  status: z.string().nullish(),
+});
+
+/** Atualiza o perfil de um cliente específico (somente admin/staff). */
+export const updateClientProfile = createServerFn({ method: "POST" })
+  .validator((data: unknown) =>
+    z.object({ clientId: z.string().uuid(), values: profileFields }).parse(data),
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data, context }) => {
+    const { data: roles, error: roleError } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+
+    if (roleError) throw roleError;
+    if (!roles?.some((r) => r.role === "admin" || r.role === "staff")) {
+      throw new Error("Unauthorized");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Só envia os campos realmente preenchidos no formulário
+    const payload: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data.values)) {
+      if (value !== undefined) payload[key] = value === "" ? null : value;
+    }
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("profiles")
+      .update(payload)
+      .eq("id", data.clientId)
+      .select("id")
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    if (!updated) throw new Error("Perfil do cliente não encontrado para atualização.");
+
+    return { id: updated.id };
+  });
+
 export const impersonateClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => z.object({ clientId: z.string().uuid() }).parse(data))
