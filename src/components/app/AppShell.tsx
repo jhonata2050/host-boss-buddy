@@ -262,14 +262,14 @@ export function AppShell({
                       to="/" 
                       className={cn(
                         "flex items-center", 
-                        branding.logo_url ? "h-auto w-full max-w-[180px]" : "size-8 justify-center rounded-full bg-brand"
+                        branding.logo_url ? "w-full" : "size-8 justify-center rounded-full bg-brand"
                       )}
                     >
                       {branding.logo_url ? (
                         <img 
                           src={branding.logo_url} 
                           alt={branding.app_name} 
-                          className="h-auto w-full max-w-full object-contain" 
+                          className="h-10 w-auto object-contain max-w-full" 
                         />
                       ) : (
                         <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
@@ -350,14 +350,14 @@ export function AppShell({
               to="/" 
               className={cn(
                 "flex min-w-0 items-center", 
-                branding.logo_url ? "h-auto w-full max-w-[200px]" : "size-8 justify-center rounded-full bg-brand overflow-hidden"
+                branding.logo_url ? "w-full" : "size-8 justify-center rounded-full bg-brand overflow-hidden"
               )}
             >
               {branding.logo_url ? (
                 <img 
                   src={branding.logo_url} 
                   alt={branding.app_name} 
-                  className="h-auto w-full max-w-full object-contain" 
+                  className="h-12 w-auto object-contain max-w-full" 
                 />
               ) : (
                 <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
