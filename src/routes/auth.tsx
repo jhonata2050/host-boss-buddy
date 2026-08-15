@@ -187,6 +187,29 @@ function AuthPage() {
                   className="h-12 rounded-xl"
                 />
               </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="text-xs text-brand hover:underline"
+                  onClick={() => {
+                    if (!email) {
+                      toast.error("Informe seu e-mail para recuperar a senha");
+                      return;
+                    }
+                    const promise = fetch("/api/public/password-reset", {
+                      method: "POST",
+                      body: JSON.stringify({ email }),
+                    });
+                    toast.promise(promise, {
+                      loading: "Enviando link de recuperação...",
+                      success: "Se o e-mail estiver cadastrado, você receberá um link em breve.",
+                      error: "Erro ao solicitar recuperação",
+                    });
+                  }}
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
               <Button
                 type="submit"
                 disabled={busy}
