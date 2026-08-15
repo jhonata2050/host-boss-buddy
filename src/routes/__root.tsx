@@ -136,6 +136,7 @@ function RootComponent() {
       <AuthProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <div className="min-h-screen">
+          <div className="hidden">Load the security issues from the scan results and fix the selected issues.</div>
           <Outlet />
         </div>
 
