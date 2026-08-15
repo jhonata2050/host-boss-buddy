@@ -197,63 +197,65 @@ export function ClientsPage() {
       ) : filtered.length === 0 ? (
         <p className="py-24 text-center text-sm text-muted-foreground">Nenhum cliente encontrado</p>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-2xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox 
-                    checked={selectedIds.length === filtered.length && filtered.length > 0}
-                    onCheckedChange={toggleSelectAll}
-                    aria-label="Selecionar todos"
-                  />
-                </TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Documento</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Situação</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-
-            </TableHeader>
-            <TableBody>
-              {filtered.map((client) => (
-                <TableRow key={client.id} className={selectedIds.includes(client.id) ? "bg-muted/30" : ""}>
-                  <TableCell>
+        <div className="mt-6">
+          <div className="overflow-x-auto rounded-2xl border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
                     <Checkbox 
-                      checked={selectedIds.includes(client.id)}
-                      onCheckedChange={() => toggleSelect(client.id)}
-                      aria-label={`Selecionar ${client.full_name}`}
+                      checked={selectedIds.length === filtered.length && filtered.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Selecionar todos"
                     />
-                  </TableCell>
-
-
-                  <TableCell className="font-medium">
-                    {client.full_name ?? "Sem nome"}
-                    {client.company_name && (
-                      <span className="block text-xs text-muted-foreground">{client.company_name}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{client.email ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{client.tax_id ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{client.phone ?? "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant={client.status === "active" ? "default" : "secondary"}>
-                      {client.status === "active" ? "Ativo" : client.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" asChild>
-                      <Link to="/admin/clients/$clientId" params={{ clientId: client.id }}>
-                        <ExternalLink className="size-4" />
-                      </Link>
-                    </Button>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="hidden md:table-cell">E-mail</TableHead>
+                  <TableHead className="hidden sm:table-cell">Documento</TableHead>
+                  <TableHead className="hidden lg:table-cell">Telefone</TableHead>
+                  <TableHead>Situação</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((client) => (
+                  <TableRow key={client.id} className={selectedIds.includes(client.id) ? "bg-muted/30" : ""}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedIds.includes(client.id)}
+                        onCheckedChange={() => toggleSelect(client.id)}
+                        aria-label={`Selecionar ${client.full_name}`}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col">
+                        <span>{client.full_name ?? "Sem nome"}</span>
+                        <span className="text-xs text-muted-foreground md:hidden">{client.email}</span>
+                      </div>
+                      {client.company_name && (
+                        <span className="block text-xs text-muted-foreground">{client.company_name}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden text-muted-foreground md:table-cell">{client.email ?? "—"}</TableCell>
+                    <TableCell className="hidden text-muted-foreground sm:table-cell">{client.tax_id ?? "—"}</TableCell>
+                    <TableCell className="hidden text-muted-foreground lg:table-cell">{client.phone ?? "—"}</TableCell>
+                    <TableCell>
+                      <Badge variant={client.status === "active" ? "default" : "secondary"}>
+                        {client.status === "active" ? "Ativo" : client.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link to="/admin/clients/$clientId" params={{ clientId: client.id }}>
+                          <ExternalLink className="size-4" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           <div className="mt-6 flex items-center justify-between gap-4">
             <div className="text-sm text-muted-foreground">
               Mostrando {filtered.length} de {totalItems} clientes
