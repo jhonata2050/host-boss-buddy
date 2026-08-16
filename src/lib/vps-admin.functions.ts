@@ -19,9 +19,18 @@ export const getVPSAdminData = createServerFn({ method: "GET" })
 
     if (!role) throw new Error("Forbidden");
 
-    const { data: instances, error } = await supabase
+    const { data: instances, error } = await supabaseAdmin
       .from('vps_instances')
-      .select('*, service:services(*, profile:profiles(email, full_name))');
+      .select(`
+        *,
+        service:services (
+          *,
+          profile:profiles (
+            email,
+            full_name
+          )
+        )
+      `);
 
     if (error) throw error;
     return instances;

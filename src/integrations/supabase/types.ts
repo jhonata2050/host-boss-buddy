@@ -659,6 +659,13 @@ export type Database = {
             referencedRelation: "servers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "services_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       system_settings: {

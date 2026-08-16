@@ -13,7 +13,7 @@ export const getMyVPSInstances = createServerFn({ method: "GET" })
 
     const { data: instances, error } = await supabase
       .from('vps_instances')
-      .select('*, service:services(*)')
+      .select('*, service!inner(*)')
       .eq('service.user_id', userId);
 
     if (error) throw error;
