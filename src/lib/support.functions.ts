@@ -352,6 +352,83 @@ export const getServiceServerDetails = createServerFn({ method: "GET" })
   });
 
 
+export const getProductGroups = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("product_groups")
+      .select("*")
+      .order("sort_order");
+
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const createProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => 
+    z.object({
+      name: z.string(),
+      slug: z.string(),
+      group_id: z.string().uuid(),
+      description: z.string().nullable(),
+      product_type: z.string().default("hosting"),
+      directadmin_package: z.string().nullable(),
+      is_visible: z.boolean().default(true),
+      sort_order: z.number().default(0),
+      prices: z.array(z.object({
+        cycle: z.enum(["monthly", "quarterly", "semiannually", "annually", "biennially"]),
+        price: z.number(),
+        is_active: z.boolean()
+      }))
+    }).parse(data)
+  )
+  .handler(async ({ data: input, context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
+
+    const { data: product, error: prodError } = await context.supabase
+      .from("products")
+      .insert({
+        name: input.name,
+        slug: input.slug,
+        group_id: input.group_id,
+        description: input.description,
+        product_type: input.product_type,
+        directadmin_package: input.directadmin_package,
+        is_visible: input.is_visible,
+        sort_order: input.sort_order,
+        setup_fee: 0,
+        auto_provision: true,
+        is_featured: false
+      })
+      .select()
+      .single();
+
+    if (prodError) throw new Error(prodError.message);
+
+    const pricesToInsert = input.prices.map(p => ({
+      product_id: product.id,
+      cycle: p.cycle,
+      price: p.price,
+      is_active: p.is_active,
+      currency: 'BRL'
+    }));
+
+    const { error: priceError } = await context.supabase
+      .from("product_prices")
+      .insert(pricesToInsert);
+
+    if (priceError) throw new Error(priceError.message);
+
+    return product;
+  });
+
 export const updateProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => 
