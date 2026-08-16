@@ -93,7 +93,10 @@ const CLIENT_SECTIONS: NavSection[] = [
   {
     label: "Meus serviços",
     icon: Server,
-    links: [{ label: "Hospedagens", to: "/services", icon: LayoutPanelLeft }],
+    links: [
+      { label: "Hospedagens", to: "/services", icon: LayoutPanelLeft },
+      { label: "Servidores VPS", to: "/vps", icon: Server },
+    ],
   },
   {
     label: "Financeiro",

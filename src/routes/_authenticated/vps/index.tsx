@@ -21,7 +21,7 @@ function VPSManagementPage() {
 
   const actionMutation = useMutation({
     mutationFn: (vars: { instanceId: string; action: 'start' | 'stop' | 'restart' | 'reinstall' }) => 
-      contaboAction(vars),
+      contaboAction({ data: vars }),
     onSuccess: (_, vars) => {
       toast.success(`Comando ${vars.action} enviado com sucesso!`);
       queryClient.invalidateQueries({ queryKey: ['vps-instances'] });
@@ -32,7 +32,7 @@ function VPSManagementPage() {
   });
 
   return (
-    <AppShell>
+    <AppShell breadcrumb="VPS">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Servidores VPS</h1>
