@@ -437,6 +437,8 @@ export const updateProduct = createServerFn({ method: "POST" })
     z.object({
       id: z.string(),
       name: z.string(),
+      group_id: z.string().uuid(),
+      product_type: z.string(),
       description: z.string().nullable(),
       directadmin_package: z.string().nullable(),
       external_id: z.string().nullable(),
@@ -447,7 +449,6 @@ export const updateProduct = createServerFn({ method: "POST" })
         price: z.number(),
         is_active: z.boolean()
       }))
-
     }).parse(data)
   )
   .handler(async ({ data: input, context }) => {
@@ -463,6 +464,8 @@ export const updateProduct = createServerFn({ method: "POST" })
       .from("products")
       .update({
         name: input.name,
+        group_id: input.group_id,
+        product_type: input.product_type,
         description: input.description,
         directadmin_package: input.directadmin_package || null,
         external_id: input.external_id || null,
