@@ -263,7 +263,7 @@ export function AppShell({
                       className={cn(
                         "flex items-center",
                         branding.logo_url
-                          ? "w-full justify-start rounded-2xl bg-foreground px-3 py-2"
+                          ? "w-full justify-start rounded-2xl px-3 py-2"
                           : "size-8 justify-center rounded-full bg-brand",
                       )}
                     >
@@ -353,7 +353,7 @@ export function AppShell({
               className={cn(
                 "flex min-w-0 items-center",
                 branding.logo_url
-                  ? "w-full justify-start rounded-2xl bg-foreground px-3 py-2"
+                  ? "w-full justify-start rounded-2xl px-3 py-2"
                   : "size-8 justify-center overflow-hidden rounded-full bg-brand",
               )}
             >
