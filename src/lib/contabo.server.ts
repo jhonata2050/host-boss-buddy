@@ -1,13 +1,16 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function getContaboToken() {
-  const clientId = process.env['CONTABO_CLIENT_ID'];
-  const clientSecret = process.env['CONTABO_CLIENT_SECRET'];
-  const apiUser = process.env['CONTABO_API_USER'];
-  const apiPass = process.env['CONTABO_API_PASSWORD'];
+  const { getSystemSettingsImplementation } = await import("./admin.server");
+  const settings = await getSystemSettingsImplementation();
+  
+  const clientId = (settings as any)['contabo_client_id'] || process.env['CONTABO_CLIENT_ID'];
+  const clientSecret = (settings as any)['contabo_client_secret'] || process.env['CONTABO_CLIENT_SECRET'];
+  const apiUser = (settings as any)['contabo_api_user'] || process.env['CONTABO_API_USER'];
+  const apiPass = (settings as any)['contabo_api_password'] || process.env['CONTABO_API_PASSWORD'];
 
   if (!clientId || !clientSecret || !apiUser || !apiPass) {
-    throw new Error("Contabo API credentials not configured");
+    throw new Error("Contabo API credentials not configured in Finance Settings");
   }
 
   const params = new URLSearchParams();

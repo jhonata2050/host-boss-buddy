@@ -100,6 +100,19 @@ export const GATEWAYS: GatewayDef[] = [
       { key: "cajupay_base_url", label: "Base URL da API", placeholder: "https://api.cajupay.com.br", optional: true },
     ],
   },
+  {
+    id: "contabo",
+    name: "Contabo VPS",
+    docs: "https://api.contabo.com",
+    required: ["contabo_client_id", "contabo_client_secret", "contabo_api_user", "contabo_api_password"],
+    methods: [],
+    fields: [
+      { key: "contabo_client_id", label: "Client ID", secret: true },
+      { key: "contabo_client_secret", label: "Client Secret", secret: true },
+      { key: "contabo_api_user", label: "API User", placeholder: "Seu usuário Contabo" },
+      { key: "contabo_api_password", label: "API Password", secret: true },
+    ],
+  },
 ];
 
 export const ALL_GATEWAY_SETTING_KEYS = GATEWAYS.flatMap((g) => g.fields.map((f) => f.key));

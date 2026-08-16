@@ -1,15 +1,24 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useSuspenseQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getVPSAdminData, updateVPSInstance } from '@/lib/vps-admin.functions';
+import { useSuspenseQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { 
+  getVPSAdminData, 
+  updateVPSInstance, 
+  syncContaboInstancesFn, 
+  assignInstanceToClient 
+} from '@/lib/vps-admin.functions';
 import { AppShell } from '@/components/app/AppShell';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { Monitor, Save, User } from 'lucide-react';
+import { Monitor, Save, RefreshCw, Link as LinkIcon, Power, PowerOff, RotateCcw, Search, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { contaboAction } from '@/lib/vps.functions';
 
 export const Route = createFileRoute('/_authenticated/admin/vps/')({
   component: AdminVPSPage,
@@ -24,12 +33,67 @@ function AdminVPSPage() {
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<any>({});
+  
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedExternalInstance, setSelectedExternalInstance] = useState<any>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
+
+  const { data: externalInstances, isLoading: isSyncing, refetch: syncContabo } = useQuery({
+    queryKey: ['contabo-external-instances'],
+    queryFn: () => syncContaboInstancesFn(),
+    enabled: false
+  });
+
+  const { data: clients } = useQuery({
+    queryKey: ['admin-clients-simple'],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('id, full_name, email');
+      return data || [];
+    }
+  });
+
+  const { data: clientServices } = useQuery({
+    queryKey: ['admin-client-services', selectedClientId],
+    queryFn: async () => {
+      if (!selectedClientId) return [];
+      const { data } = await supabase
+        .from('services')
+        .select('id, domain, products(name)')
+        .eq('user_id', selectedClientId)
+        .eq('status', 'active');
+      return data || [];
+    },
+    enabled: !!selectedClientId
+  });
 
   const updateMutation = useMutation({
     mutationFn: (vars: any) => updateVPSInstance({ data: vars }),
     onSuccess: () => {
       toast.success('VPS atualizada com sucesso!');
       setEditingId(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-vps-instances'] });
+    },
+    onError: (err: any) => toast.error(err.message)
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: (vars: any) => assignInstanceToClient({ data: vars }),
+    onSuccess: () => {
+      toast.success('Servidor vinculado ao cliente com sucesso!');
+      setIsAssignModalOpen(false);
+      setIsSyncModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['admin-vps-instances'] });
+    },
+    onError: (err: any) => toast.error(err.message)
+  });
+
+  const actionMutation = useMutation({
+    mutationFn: (vars: { instanceId: string; action: 'start' | 'stop' | 'restart' | 'reinstall' }) => 
+      contaboAction({ data: vars }),
+    onSuccess: (_, vars) => {
+      toast.success(`Ação ${vars.action} enviada com sucesso!`);
       queryClient.invalidateQueries({ queryKey: ['admin-vps-instances'] });
     },
     onError: (err: any) => toast.error(err.message)
@@ -45,13 +109,29 @@ function AdminVPSPage() {
     });
   };
 
+  const handleSyncClick = () => {
+    setIsSyncModalOpen(true);
+    syncContabo();
+  };
+
+  const handleAssignClick = (instance: any) => {
+    setSelectedExternalInstance(instance);
+    setIsAssignModalOpen(true);
+  };
+
   return (
     <AppShell breadcrumb="Admin VPS">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Gerenciamento de VPS</h1>
             <p className="text-muted-foreground">Monitore e gerencie todas as instâncias VPS dos clientes.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleSyncClick} className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90">
+              <RefreshCw className={cn("mr-2 size-4", isSyncing && "animate-spin")} />
+              Sincronizar Contabo
+            </Button>
           </div>
         </div>
 
@@ -107,20 +187,51 @@ function AdminVPSPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {editingId === vps.id ? (
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="text-lime-600"
-                          onClick={() => updateMutation.mutate(editValues)}
-                        >
-                          <Save className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(vps)}>
-                          Editar
-                        </Button>
-                      )}
+                      <div className="flex justify-end gap-1">
+                        {editingId === vps.id ? (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="text-lime-600"
+                            onClick={() => updateMutation.mutate(editValues)}
+                          >
+                            <Save className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              title="Ligar"
+                              onClick={() => actionMutation.mutate({ instanceId: vps.id, action: 'start' })}
+                              disabled={actionMutation.isPending}
+                            >
+                              <Power className="h-4 w-4 text-lime-600" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              title="Desligar"
+                              onClick={() => actionMutation.mutate({ instanceId: vps.id, action: 'stop' })}
+                              disabled={actionMutation.isPending}
+                            >
+                              <PowerOff className="h-4 w-4 text-destructive" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              title="Reiniciar"
+                              onClick={() => actionMutation.mutate({ instanceId: vps.id, action: 'restart' })}
+                              disabled={actionMutation.isPending}
+                            >
+                              <RotateCcw className="h-4 w-4 text-blue-500" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(vps)}>
+                              Editar
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -128,6 +239,141 @@ function AdminVPSPage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Modal de Sincronização */}
+        <Dialog open={isSyncModalOpen} onOpenChange={setIsSyncModalOpen}>
+          <DialogContent className="max-w-4xl rounded-3xl border-none">
+            <DialogHeader>
+              <DialogTitle>Sincronizar com Contabo</DialogTitle>
+              <CardDescription>
+                Listagem de servidores encontrados na sua conta Contabo.
+              </CardDescription>
+            </DialogHeader>
+            
+            <div className="max-h-[60vh] overflow-y-auto mt-4 border border-border rounded-2xl">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>External ID</TableHead>
+                    <TableHead>IP</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isSyncing ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">Carregando...</TableCell>
+                    </TableRow>
+                  ) : externalInstances?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">Nenhum servidor encontrado.</TableCell>
+                    </TableRow>
+                  ) : externalInstances?.map((instance: any) => {
+                    const isAlreadyLinked = instances?.some(i => i.external_id === String(instance.instanceId));
+                    return (
+                      <TableRow key={instance.instanceId}>
+                        <TableCell className="font-medium">{instance.displayName}</TableCell>
+                        <TableCell><code>{instance.instanceId}</code></TableCell>
+                        <TableCell>{instance.ipAddress || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{instance.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isAlreadyLinked ? (
+                            <Badge variant="secondary" className="text-[10px]">JÁ VINCULADO</Badge>
+                          ) : (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="rounded-xl"
+                              onClick={() => handleAssignClick(instance)}
+                            >
+                              <UserPlus className="mr-2 size-3" /> Vincular
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Vinculação */}
+        <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
+          <DialogContent className="max-w-md rounded-3xl border-none">
+            <DialogHeader>
+              <DialogTitle>Vincular Servidor a Cliente</DialogTitle>
+              <CardDescription>
+                Selecione o cliente e o serviço correspondente para vincular a instância <strong>{selectedExternalInstance?.displayName}</strong>.
+              </CardDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Selecionar Cliente</Label>
+                <Select onValueChange={setSelectedClientId} value={selectedClientId}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Escolha um cliente..." />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {clients?.map((client: any) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.full_name} ({client.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedClientId && (
+                <div className="space-y-2">
+                  <Label>Selecionar Serviço Ativo</Label>
+                  <Select onValueChange={setSelectedServiceId} value={selectedServiceId}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Escolha o serviço..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {clientServices?.length === 0 ? (
+                        <div className="p-2 text-xs text-muted-foreground">Nenhum serviço VPS ativo encontrado para este cliente.</div>
+                      ) : clientServices?.map((service: any) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.products?.name} - {service.domain}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAssignModalOpen(false)}
+                className="rounded-xl"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => assignMutation.mutate({
+                  serviceId: selectedServiceId,
+                  externalId: String(selectedExternalInstance?.instanceId),
+                  ipAddress: selectedExternalInstance?.ipAddress,
+                  name: selectedExternalInstance?.displayName
+                })}
+                disabled={!selectedServiceId || assignMutation.isPending}
+                className="rounded-xl bg-brand text-brand-foreground hover:bg-brand/90"
+              >
+                Confirmar Vinculação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   );
