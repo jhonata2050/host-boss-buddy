@@ -28,7 +28,7 @@ export const getSystemLogs = createServerFn({ method: "GET" })
         .from("email_logs")
         .select(
           "id, created_at, template_name, status, to_email, subject, user_id, profile:profiles(full_name)",
-          { count: "planned" },
+          { count: "estimated" },
         )
         .order("created_at", { ascending: false })
         .range(data.offset, data.offset + data.limit - 1);
@@ -55,7 +55,7 @@ export const getSystemLogs = createServerFn({ method: "GET" })
 
     let query = context.supabase
       .from("audit_logs")
-      .select("id, category, action, status, actor_id, actor_email, entity_type, entity_id, description, ip_address, user_agent, metadata, created_at", { count: "exact" });
+      .select("id, category, action, status, actor_email, entity_type, entity_id, description, ip_address, created_at", { count: "estimated" });
 
     if (data.type === "auth") query = query.eq("category", "auth");
     if (data.type === "data") query = query.eq("category", "data");
