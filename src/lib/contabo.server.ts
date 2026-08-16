@@ -134,13 +134,30 @@ export async function getContaboProductTypes() {
     
     // Mapear para o formato esperado pela UI (productId, name, etc)
     // A API /v1/products retorna itens dentro de priceItem
-    const formattedProducts = allProducts.map((p: any) => ({
-      productId: p.priceItem?.itemId || p.priceItem?.key,
-      name: p.priceItem?.name,
-      vCpu: p.priceItem?.specs?.find((s: any) => s.title.toLowerCase().includes('cpu'))?.description || 'N/A',
-      ramMb: parseInt(p.priceItem?.specs?.find((s: any) => s.title.toLowerCase().includes('ram'))?.description) * 1024 || 0,
-      diskGb: p.priceItem?.specs?.find((s: any) => s.title.toLowerCase().includes('disk'))?.description || 'N/A'
-    })).filter((p: any) => p.productId && p.name);
+    const formattedProducts = allProducts.map((p: any) => {
+      const priceItem = p.priceItem || {};
+      const specs = priceItem.specs || [];
+      
+      // Encontrar especificações nos títulos dos itens de specs
+      const cpuSpec = specs.find((s: any) => s.type === 'cpu' || s.title?.toLowerCase().includes('cpu'));
+      const ramSpec = specs.find((s: any) => s.type === 'ram' || s.title?.toLowerCase().includes('ram'));
+      const diskSpec = specs.find((s: any) => s.type === 'storage' || s.title?.toLowerCase().includes('ssd') || s.title?.toLowerCase().includes('nvme') || s.title?.toLowerCase().includes('disk'));
+      
+      // Tentar extrair apenas o número da RAM para compatibilidade com o parser antigo se necessário,
+      // mas aqui vamos manter a string do título para maior clareza já que a UI agora formata.
+      const ramTitle = ramSpec?.title || '';
+      const ramMbMatch = ramTitle.match(/(\d+)\s*GB/i);
+      const ramMb = ramMbMatch ? parseInt(ramMbMatch[1]) * 1024 : 0;
+
+      return {
+        productId: priceItem.itemId || priceItem.key,
+        name: priceItem.name,
+        vCpu: cpuSpec?.title || 'N/A',
+        ramMb: ramMb,
+        ramTitle: ramTitle || 'N/A',
+        diskGb: diskSpec?.title || 'N/A'
+      };
+    }).filter((p: any) => p.productId && p.name);
 
     console.log(`[Contabo] ${formattedProducts.length} produtos formatados.`);
     return formattedProducts;
