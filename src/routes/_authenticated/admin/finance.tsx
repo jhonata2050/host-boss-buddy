@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSystemSettings, updateSystemSettings } from "@/lib/support.functions";
-import { Save, Gift, Wallet, ExternalLink } from "lucide-react";
+import { Save, Gift, Wallet, ExternalLink, Server } from "lucide-react";
 import { toast } from "sonner";
 import { GATEWAYS, METHOD_LABELS, isGatewayConfigured } from "@/lib/gateways";
 
