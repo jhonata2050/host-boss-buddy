@@ -17,6 +17,7 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
           suspensions: 0,
           deletions: 0,
           remindersSent: 0,
+          invoicesGenerated: 0,
           errors: [] as string[]
         };
 
@@ -94,7 +95,60 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
             }
           }
 
-          // 3. Lógica para lembretes de e-mail (necessita integração com lib/emails.server)
+          // 3. Gerar faturas recorrentes
+          const sevenDaysFromNow = new Date();
+          sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+          const { data: servicesToInvoice } = await supabaseAdmin
+            .from('services')
+            .select('*, products(*)')
+            .eq('status', 'active')
+            .eq('auto_renew', true)
+            .lte('next_due_date', sevenDaysFromNow.toISOString())
+            .or(`next_invoice_date.lte.${new Date().toISOString()},next_invoice_date.is.null`);
+
+          if (servicesToInvoice) {
+            for (const service of servicesToInvoice as any) {
+              try {
+                // Criar fatura
+                const { data: invoice, error: invError } = await supabaseAdmin
+                  .from('invoices')
+                  .insert({
+                    user_id: service.user_id,
+                    total_amount: service.products.price || 0, // Ajustar conforme lógica de preços
+                    status: 'pending',
+                    due_date: service.next_due_date
+                  } as any)
+                  .select()
+                  .single();
+
+                if (invError) throw invError;
+
+                // Item da fatura
+                await supabaseAdmin
+                  .from('invoice_items')
+                  .insert({
+                    invoice_id: invoice.id,
+                    amount: service.products.price || 0,
+                    description: `Renovação de serviço: ${service.products.name} (${service.domain || 'N/A'})`,
+                    service_id: service.id,
+                    quantity: 1
+                  } as any);
+
+                // Atualizar data da próxima fatura para evitar duplicatas (ex: setar para após o vencimento atual)
+                await supabaseAdmin
+                  .from('services')
+                  .update({ next_invoice_date: service.next_due_date } as any)
+                  .eq('id', service.id);
+
+                results.invoicesGenerated++;
+              } catch (err: any) {
+                results.errors.push(`Erro ao gerar fatura para serviço ${service.id}: ${err.message}`);
+              }
+            }
+          }
+
+          // 4. Lógica para lembretes de e-mail (necessita integração com lib/emails.server)
 
           return new Response(JSON.stringify({ 
             success: true, 

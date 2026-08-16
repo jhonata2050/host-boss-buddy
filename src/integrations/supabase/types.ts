@@ -584,11 +584,13 @@ export type Database = {
       }
       services: {
         Row: {
+          auto_renew: boolean | null
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
           created_at: string
           domain: string | null
           id: string
           next_due_date: string | null
+          next_invoice_date: string | null
           order_id: string | null
           product_id: string
           server_id: string | null
@@ -600,11 +602,13 @@ export type Database = {
           whmcs_id: string | null
         }
         Insert: {
+          auto_renew?: boolean | null
           billing_cycle: Database["public"]["Enums"]["billing_cycle"]
           created_at?: string
           domain?: string | null
           id?: string
           next_due_date?: string | null
+          next_invoice_date?: string | null
           order_id?: string | null
           product_id: string
           server_id?: string | null
@@ -616,11 +620,13 @@ export type Database = {
           whmcs_id?: string | null
         }
         Update: {
+          auto_renew?: boolean | null
           billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
           created_at?: string
           domain?: string | null
           id?: string
           next_due_date?: string | null
+          next_invoice_date?: string | null
           order_id?: string | null
           product_id?: string
           server_id?: string | null
@@ -813,6 +819,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vps_instances: {
+        Row: {
+          created_at: string | null
+          external_id: string
+          id: string
+          ip_address: string | null
+          os_template: string | null
+          region: string | null
+          service_id: string
+          status: string | null
+          updated_at: string | null
+          vps_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          external_id: string
+          id?: string
+          ip_address?: string | null
+          os_template?: string | null
+          region?: string | null
+          service_id: string
+          status?: string | null
+          updated_at?: string | null
+          vps_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          external_id?: string
+          id?: string
+          ip_address?: string | null
+          os_template?: string | null
+          region?: string | null
+          service_id?: string
+          status?: string | null
+          updated_at?: string | null
+          vps_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vps_instances_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whmcs_imports: {
         Row: {

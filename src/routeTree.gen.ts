@@ -38,11 +38,13 @@ import { Route as AuthenticatedServicesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedServicesServiceIdRouteImport } from './routes/_authenticated/services.$serviceId'
 import { Route as AuthenticatedTicketsIndexRouteImport } from './routes/_authenticated/tickets.index'
 import { Route as AuthenticatedTicketsTicketIdRouteImport } from './routes/_authenticated/tickets.$ticketId'
+import { Route as AuthenticatedVpsIndexRouteImport } from './routes/_authenticated/vps/index'
 import { Route as ApiPublicBrandingRouteImport } from './routes/api/public/branding'
 import { Route as ApiPublicPasswordResetRouteImport } from './routes/api/public/password-reset'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin/clients.index'
 import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients.$clientId'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
+import { Route as ApiPublicVpsWebhookRouteImport } from './routes/api/public/vps/webhook'
 import { Route as ApiPublicWebhooksAbacatepayRouteImport } from './routes/api/public/webhooks/abacatepay'
 import { Route as ApiPublicWebhooksCajupayRouteImport } from './routes/api/public/webhooks/cajupay'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
@@ -211,6 +213,11 @@ const AuthenticatedTicketsTicketIdRoute =
     path: '/$ticketId',
     getParentRoute: () => AuthenticatedTicketsRoute,
   } as any)
+const AuthenticatedVpsIndexRoute = AuthenticatedVpsIndexRouteImport.update({
+  id: '/vps/',
+  path: '/vps/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicBrandingRoute = ApiPublicBrandingRouteImport.update({
   id: '/api/public/branding',
   path: '/api/public/branding',
@@ -239,6 +246,11 @@ const ApiPublicCronMaintenanceRoute =
     path: '/api/public/cron/maintenance',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicVpsWebhookRoute = ApiPublicVpsWebhookRouteImport.update({
+  id: '/api/public/vps/webhook',
+  path: '/api/public/vps/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksAbacatepayRoute =
   ApiPublicWebhooksAbacatepayRouteImport.update({
     id: '/api/public/webhooks/abacatepay',
@@ -305,8 +317,10 @@ export interface FileRoutesByFullPath {
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/services/': typeof AuthenticatedServicesIndexRoute
   '/tickets/': typeof AuthenticatedTicketsIndexRoute
+  '/vps/': typeof AuthenticatedVpsIndexRoute
   '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/vps/webhook': typeof ApiPublicVpsWebhookRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
   '/api/public/webhooks/cajupay': typeof ApiPublicWebhooksCajupayRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -341,8 +355,10 @@ export interface FileRoutesByTo {
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
   '/services': typeof AuthenticatedServicesIndexRoute
   '/tickets': typeof AuthenticatedTicketsIndexRoute
+  '/vps': typeof AuthenticatedVpsIndexRoute
   '/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/vps/webhook': typeof ApiPublicVpsWebhookRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
   '/api/public/webhooks/cajupay': typeof ApiPublicWebhooksCajupayRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -384,8 +400,10 @@ export interface FileRoutesById {
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
   '/_authenticated/services/': typeof AuthenticatedServicesIndexRoute
   '/_authenticated/tickets/': typeof AuthenticatedTicketsIndexRoute
+  '/_authenticated/vps/': typeof AuthenticatedVpsIndexRoute
   '/_authenticated/admin/clients/$clientId': typeof AuthenticatedAdminClientsClientIdRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/api/public/vps/webhook': typeof ApiPublicVpsWebhookRoute
   '/api/public/webhooks/abacatepay': typeof ApiPublicWebhooksAbacatepayRoute
   '/api/public/webhooks/cajupay': typeof ApiPublicWebhooksCajupayRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -427,8 +445,10 @@ export interface FileRouteTypes {
     | '/invoices/'
     | '/services/'
     | '/tickets/'
+    | '/vps/'
     | '/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
+    | '/api/public/vps/webhook'
     | '/api/public/webhooks/abacatepay'
     | '/api/public/webhooks/cajupay'
     | '/api/public/webhooks/mercadopago'
@@ -463,8 +483,10 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/services'
     | '/tickets'
+    | '/vps'
     | '/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
+    | '/api/public/vps/webhook'
     | '/api/public/webhooks/abacatepay'
     | '/api/public/webhooks/cajupay'
     | '/api/public/webhooks/mercadopago'
@@ -505,8 +527,10 @@ export interface FileRouteTypes {
     | '/_authenticated/invoices/'
     | '/_authenticated/services/'
     | '/_authenticated/tickets/'
+    | '/_authenticated/vps/'
     | '/_authenticated/admin/clients/$clientId'
     | '/api/public/cron/maintenance'
+    | '/api/public/vps/webhook'
     | '/api/public/webhooks/abacatepay'
     | '/api/public/webhooks/cajupay'
     | '/api/public/webhooks/mercadopago'
@@ -523,6 +547,7 @@ export interface RootRouteChildren {
   ApiPublicBrandingRoute: typeof ApiPublicBrandingRoute
   ApiPublicPasswordResetRoute: typeof ApiPublicPasswordResetRoute
   ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
+  ApiPublicVpsWebhookRoute: typeof ApiPublicVpsWebhookRoute
   ApiPublicWebhooksAbacatepayRoute: typeof ApiPublicWebhooksAbacatepayRoute
   ApiPublicWebhooksCajupayRoute: typeof ApiPublicWebhooksCajupayRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
@@ -736,6 +761,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsTicketIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
+    '/_authenticated/vps/': {
+      id: '/_authenticated/vps/'
+      path: '/vps'
+      fullPath: '/vps/'
+      preLoaderRoute: typeof AuthenticatedVpsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/branding': {
       id: '/api/public/branding'
       path: '/api/public/branding'
@@ -769,6 +801,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/maintenance'
       fullPath: '/api/public/cron/maintenance'
       preLoaderRoute: typeof ApiPublicCronMaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/vps/webhook': {
+      id: '/api/public/vps/webhook'
+      path: '/api/public/vps/webhook'
+      fullPath: '/api/public/vps/webhook'
+      preLoaderRoute: typeof ApiPublicVpsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/webhooks/abacatepay': {
@@ -920,6 +959,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedServicesRoute: typeof AuthenticatedServicesRouteWithChildren
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRouteWithChildren
   AuthenticatedCheckoutProductIdRoute: typeof AuthenticatedCheckoutProductIdRoute
+  AuthenticatedVpsIndexRoute: typeof AuthenticatedVpsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -930,6 +970,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedServicesRoute: AuthenticatedServicesRouteWithChildren,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRouteWithChildren,
   AuthenticatedCheckoutProductIdRoute: AuthenticatedCheckoutProductIdRoute,
+  AuthenticatedVpsIndexRoute: AuthenticatedVpsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -952,6 +993,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBrandingRoute: ApiPublicBrandingRoute,
   ApiPublicPasswordResetRoute: ApiPublicPasswordResetRoute,
   ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
+  ApiPublicVpsWebhookRoute: ApiPublicVpsWebhookRoute,
   ApiPublicWebhooksAbacatepayRoute: ApiPublicWebhooksAbacatepayRoute,
   ApiPublicWebhooksCajupayRoute: ApiPublicWebhooksCajupayRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
