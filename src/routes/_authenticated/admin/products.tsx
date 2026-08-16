@@ -83,7 +83,13 @@ function ProductsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => data.id ? updateProduct({ data }) : createProduct({ data }),
+    mutationFn: async (data: any) => {
+      if (data.id) {
+        return await updateProduct({ data });
+      } else {
+        return await createProduct({ data });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       setEditingProduct(null);
