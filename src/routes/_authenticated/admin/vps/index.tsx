@@ -62,10 +62,20 @@ function AdminVPSPage() {
       if (!selectedClientId) return [];
       const { data } = await supabase
         .from('services')
-        .select('id, domain, products(name)')
-        .eq('user_id', selectedClientId)
-        .eq('status', 'active');
-      return data || [];
+        .select(`
+          id, 
+          domain, 
+          status,
+          products(name, product_type)
+        `)
+        .eq('user_id', selectedClientId);
+      
+      // Filtramos no cliente para garantir que mostramos o que é relevante
+      return (data || []).filter(s => 
+        (s.products as any)?.product_type === 'vps' || 
+        s.status === 'pending' || 
+        s.status === 'active'
+      );
     },
     enabled: !!selectedClientId
   });
@@ -341,10 +351,20 @@ function AdminVPSPage() {
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
                       {clientServices?.length === 0 ? (
-                        <div className="p-2 text-xs text-muted-foreground">Nenhum serviço VPS ativo encontrado para este cliente.</div>
+                        <div className="p-4 text-center">
+                          <p className="text-xs text-muted-foreground mb-2">Nenhum serviço VPS encontrado para este cliente.</p>
+                          <Button 
+                            variant="link" 
+                            size="sm" 
+                            asChild
+                            className="text-brand h-auto p-0"
+                          >
+                            <a href="/admin/clients" target="_blank">Criar pedido manual para o cliente</a>
+                          </Button>
+                        </div>
                       ) : clientServices?.map((service: any) => (
                         <SelectItem key={service.id} value={service.id}>
-                          {service.products?.name} - {service.domain}
+                          {service.products?.name} - {service.domain} ({service.status})
                         </SelectItem>
                       ))}
                     </SelectContent>
