@@ -109,6 +109,25 @@ export async function performContaboAction(instanceId: string, action: string, u
   return { success: true };
 }
 
+export async function getContaboProductTypes() {
+  const token = await getContaboToken();
+  // Documentação Contabo: GET /v1/compute/instances/products
+  const res = await fetch('https://api.contabo.com/v1/compute/instances/products', {
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'x-request-id': crypto.randomUUID()
+    }
+  });
+  
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => 'Unknown error');
+    console.error(`[Contabo] Erro ao buscar produtos (${res.status}):`, errorText);
+    throw new Error(`Falha ao buscar tipos de produtos na Contabo (${res.status})`);
+  }
+  const response = await res.json();
+  return response.data || [];
+}
+
 export async function provisionContaboVPS(serviceId: string, config: any) {
   console.log("Provisioning Contabo VPS for service:", serviceId);
 }
