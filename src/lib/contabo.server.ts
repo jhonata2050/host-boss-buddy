@@ -42,14 +42,19 @@ export async function getContaboInstances() {
 }
 
 export async function performContaboAction(instanceId: string, action: string, userId: string) {
-  const { data: vps } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('vps_instances')
-    .select('external_id, service:user_services(user_id)')
+    .select('external_id, service:services(user_id)')
     .eq('id', instanceId)
     .single();
 
-  if (!vps || (vps.service as any).user_id !== userId) {
+  if (error || !data) {
     throw new Error("Instance not found or unauthorized");
+  }
+
+  const vps = data as any;
+  if (vps.service.user_id !== userId) {
+    throw new Error("Unauthorized access to instance");
   }
 
   const token = await getContaboToken();
