@@ -37,6 +37,7 @@ export const updateBranding = createServerFn({ method: "POST" })
   });
 
 export const impersonateClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ clientId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     return { success: true, clientId: data.clientId };
