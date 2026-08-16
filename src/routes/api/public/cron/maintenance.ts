@@ -60,14 +60,15 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
             }
           }
 
-          // 2. Lógica para deleção após X dias (default 30)
+          // 2. Lógica para suspensão e deleção após X dias (default 30)
           const { data: sysSettings } = await supabaseAdmin
             .from('system_settings')
-            .select('*')
-            .eq('key', 'auto_delete_days')
-            .maybeSingle();
+            .select('*');
             
-          const deleteDays = Number(sysSettings?.value) || 30;
+          const settingsMap: Record<string, any> = {};
+          sysSettings?.forEach(s => settingsMap[s.key] = s.value);
+
+          const deleteDays = Number(settingsMap['auto_delete_days']) || 30;
           const deleteDate = new Date();
           deleteDate.setDate(deleteDate.getDate() - deleteDays);
 
@@ -81,16 +82,31 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
             const { deleteDAAccount } = await import('@/lib/directadmin.server');
             for (const s of toDeleteServices as any) {
               try {
+                // DirectAdmin
                 if (s.server_id && s.username) {
                   await deleteDAAccount(s.server_id, s.username);
                 }
+                
+                // VPS Contabo (Não deletar automaticamente por segurança? Ou só marcar como deletado no banco?)
+                // Se houver uma vps_instance vinculada, podemos registrar o evento
+                const { data: vps } = await supabaseAdmin
+                    .from('vps_instances')
+                    .select('*')
+                    .eq('service_id', s.id)
+                    .maybeSingle();
+                
+                if (vps) {
+                    // Opcionalmente suspender na Contabo se possível via API
+                    // performContaboAction(vps.id, 'stop', ...)
+                }
+
                 await supabaseAdmin
                   .from('services')
                   .update({ status: 'terminated' } as any)
                   .eq('id', s.id);
                 results.deletions++;
               } catch (err: any) {
-                results.errors.push(`Erro ao deletar ${s.id}: ${err.message}`);
+                results.errors.push(`Erro ao processar expiração do serviço ${s.id}: ${err.message}`);
               }
             }
           }
