@@ -24,19 +24,15 @@ export const getSystemLogs = createServerFn({ method: "GET" })
 
 
     if (data.type === "email") {
-      const { data: logs, error } = await context.supabase
+      const { data: logs, count, error } = await context.supabase
         .from("email_logs")
-        .select(`
-          *,
-          profile:profiles(full_name, email)
-        `)
+        .select(
+          "id, created_at, template_name, status, to_email, subject, user_id, profile:profiles(full_name)",
+          { count: "planned" },
+        )
         .order("created_at", { ascending: false })
         .range(data.offset, data.offset + data.limit - 1);
-      
-      const { count } = await context.supabase
-        .from("email_logs")
-        .select("*", { count: 'exact', head: true });
-        
+
       if (error) throw error;
       return {
         type: "email",
