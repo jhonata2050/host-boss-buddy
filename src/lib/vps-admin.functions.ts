@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getVPSAdminData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context as any;
     if (!userId) throw new Error("Unauthorized");
@@ -26,6 +28,7 @@ export const getVPSAdminData = createServerFn({ method: "GET" })
   });
 
 export const updateVPSInstance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     id: z.string(),
     external_id: z.string().optional(),
