@@ -488,7 +488,7 @@ export const updateProduct = createServerFn({ method: "POST" })
 
     if (priceError) throw new Error(priceError.message);
 
-    return { success: true };
+    return { success: true, id: input.id };
   });
 
 export const updateServiceDetails = createServerFn({ method: "POST" })
