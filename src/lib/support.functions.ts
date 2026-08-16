@@ -377,6 +377,7 @@ export const createProduct = createServerFn({ method: "POST" })
       external_id: z.string().nullable(),
       is_visible: z.boolean().default(true),
       sort_order: z.number().default(0),
+      disk_quota_mb: z.number().nullable().optional(),
       prices: z.array(z.object({
         cycle: z.enum(["monthly", "quarterly", "semiannually", "annually", "biennially"]),
         price: z.number(),
@@ -405,6 +406,7 @@ export const createProduct = createServerFn({ method: "POST" })
         external_id: input.external_id || null,
         is_visible: input.is_visible,
         sort_order: input.sort_order,
+        disk_quota_mb: input.disk_quota_mb || null,
         setup_fee: 0,
         auto_provision: true,
         is_featured: false
@@ -444,6 +446,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       external_id: z.string().nullable(),
       is_visible: z.boolean(),
       sort_order: z.number(),
+      disk_quota_mb: z.number().nullable(),
       prices: z.array(z.object({
         cycle: z.enum(["monthly", "quarterly", "semiannually", "annually", "biennially"]),
         price: z.number(),
@@ -470,7 +473,8 @@ export const updateProduct = createServerFn({ method: "POST" })
         directadmin_package: input.directadmin_package || null,
         external_id: input.external_id || null,
         is_visible: input.is_visible,
-        sort_order: input.sort_order
+        sort_order: input.sort_order,
+        disk_quota_mb: input.disk_quota_mb
       })
       .eq("id", input.id);
 

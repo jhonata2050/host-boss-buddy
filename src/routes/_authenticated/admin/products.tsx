@@ -315,6 +315,26 @@ function ProductsPage() {
                 </div>
               </div>
 
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Espaço em Disco (MB)</Label>
+                  <Input 
+                    type="number"
+                    value={editingProduct.disk_quota_mb || ""} 
+                    onChange={e => setEditingProduct({...editingProduct, disk_quota_mb: Number(e.target.value)})}
+                    placeholder="Ex: 1024 para 1GB"
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="flex items-center justify-between pt-8">
+                  <Label>Produto Visível</Label>
+                  <Switch 
+                    checked={editingProduct.is_visible} 
+                    onCheckedChange={val => setEditingProduct({...editingProduct, is_visible: val})}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>Descrição</Label>
                 <Textarea 
@@ -407,13 +427,6 @@ function ProductsPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="font-bold">Ciclos de Cobrança</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Produto Visível</span>
-                    <Switch 
-                      checked={editingProduct.is_visible} 
-                      onCheckedChange={val => setEditingProduct({...editingProduct, is_visible: val})}
-                    />
-                  </div>
                 </div>
                 
                 <div className="grid gap-3">
