@@ -123,5 +123,8 @@ export const getContaboPlansFn = createServerFn({ method: "GET" })
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { getContaboProductTypes } = await import("./contabo.server");
-    return await getContaboProductTypes();
+    console.log("[VPS-Admin] Chamando getContaboProductTypes...");
+    const plans = await getContaboProductTypes();
+    console.log(`[VPS-Admin] Retornados ${plans?.length || 0} planos da Contabo.`);
+    return plans;
   });

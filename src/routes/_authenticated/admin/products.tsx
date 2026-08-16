@@ -107,6 +107,8 @@ function ProductsPage() {
   const handleEdit = (product: any) => {
     setEditingProduct({
       ...product,
+      directadmin_package: product.directadmin_package || product.external_id || "",
+      external_id: product.external_id || product.directadmin_package || "",
       prices: product.product_prices || []
     });
   };
@@ -119,6 +121,7 @@ function ProductsPage() {
       product_type: "hosting",
       group_id: productGroups.data?.[0]?.id || "",
       directadmin_package: "",
+      external_id: "",
       is_visible: true,
       sort_order: 0,
       prices: []
@@ -133,7 +136,8 @@ function ProductsPage() {
       group_id: editingProduct.group_id,
       product_type: editingProduct.product_type,
       description: editingProduct.description,
-      directadmin_package: editingProduct.directadmin_package,
+      directadmin_package: editingProduct.directadmin_package || editingProduct.external_id,
+      external_id: editingProduct.external_id || editingProduct.directadmin_package,
       is_visible: editingProduct.is_visible,
       sort_order: editingProduct.sort_order,
       prices: editingProduct.prices.map((p: any) => ({
@@ -330,8 +334,8 @@ function ProductsPage() {
                   <div className="space-y-2">
                     <Label>Plano Contabo (Product ID)</Label>
                     <Select 
-                      value={editingProduct.directadmin_package || ""} 
-                      onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val})}
+                      value={editingProduct.directadmin_package || editingProduct.external_id || ""} 
+                      onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val, external_id: val})}
                     >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue placeholder={
