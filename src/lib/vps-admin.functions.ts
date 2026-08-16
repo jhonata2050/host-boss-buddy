@@ -43,8 +43,7 @@ export const updateVPSInstance = createServerFn({ method: "POST" })
     id: z.string(),
     external_id: z.string().optional(),
     ip_address: z.string().optional(),
-    status: z.string().optional(),
-    notes: z.string().optional()
+    status: z.string().optional()
   }).parse(data))
   .handler(async ({ data, context }) => {
     const { userId } = context as any;
@@ -94,8 +93,7 @@ export const assignInstanceToClient = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
     serviceId: z.string().uuid(),
     externalId: z.string(),
-    ipAddress: z.string(),
-    name: z.string()
+    ipAddress: z.string().optional()
   }).parse(data))
   .handler(async ({ data, context }) => {
     const { userId } = context as any;
@@ -115,8 +113,7 @@ export const assignInstanceToClient = createServerFn({ method: "POST" })
       .insert({
         service_id: data.serviceId,
         external_id: data.externalId,
-        ip_address: data.ipAddress,
-        name: data.name,
+        ip_address: data.ipAddress || null,
         status: 'active'
       });
 
