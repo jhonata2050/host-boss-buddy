@@ -72,7 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }});
             }, 0);
           }
-          void queryClient.invalidateQueries();
+          // Revalida apenas o que está montado na tela
+          void queryClient.invalidateQueries({ refetchType: "active" });
         }
       }
     });
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (id) window.sessionStorage.setItem('impersonated_id', id);
       else window.sessionStorage.removeItem('impersonated_id');
     }
-    queryClient.invalidateQueries();
+    void queryClient.invalidateQueries({ refetchType: "active" });
   };
 
   return (
@@ -147,8 +148,8 @@ export function useRoles() {
       }
       return (data ?? []).map((row) => row.role as AppRole);
     },
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 15,
+    gcTime: 1000 * 60 * 60,
     retry: 1,
   });
 }

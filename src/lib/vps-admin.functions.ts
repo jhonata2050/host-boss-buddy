@@ -6,12 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const getVPSAdminData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roles } = await context.supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { data, error } = await supabaseAdmin
@@ -37,12 +32,7 @@ export const updateVPSInstance = createServerFn({ method: "POST" })
     status: z.string()
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: roles } = await context.supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { error } = await supabaseAdmin
@@ -61,12 +51,7 @@ export const updateVPSInstance = createServerFn({ method: "POST" })
 export const syncContaboInstancesFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roles } = await context.supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { getContaboInstances } = await import("./contabo.server");
@@ -83,12 +68,7 @@ export const assignInstanceToClient = createServerFn({ method: "POST" })
     name: z.string().optional()
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: roles } = await context.supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { error } = await supabaseAdmin
@@ -114,12 +94,7 @@ export const assignInstanceToClient = createServerFn({ method: "POST" })
 export const getContaboPlansFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roles } = await context.supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { getContaboProductTypes } = await import("./contabo.server");

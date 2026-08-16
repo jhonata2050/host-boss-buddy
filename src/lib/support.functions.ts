@@ -6,12 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const getSystemSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-
-    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { data, error } = await supabaseAdmin
@@ -34,12 +29,7 @@ export const updateSystemSettings = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.record(z.any()).parse(data))
   .handler(async ({ data: settings, context }) => {
     // Verificar se é admin
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     for (const [key, value] of Object.entries(settings)) {
@@ -62,12 +52,7 @@ export const getTickets = createServerFn({ method: "GET" })
     }).parse(data)
   )
   .handler(async ({ data, context }) => {
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
 
     let query = context.supabase
       .from("tickets")
@@ -164,12 +149,7 @@ export const replyTicket = createServerFn({ method: "POST" })
     }).parse(data)
   )
   .handler(async ({ data: input, context }) => {
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
 
     const { data, error } = await context.supabase
       .from("ticket_messages")
@@ -386,12 +366,7 @@ export const createProduct = createServerFn({ method: "POST" })
     }).parse(data)
   )
   .handler(async ({ data: input, context }) => {
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { data: product, error: prodError } = await context.supabase
@@ -455,12 +430,7 @@ export const updateProduct = createServerFn({ method: "POST" })
     }).parse(data)
   )
   .handler(async ({ data: input, context }) => {
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Unauthorized");
 
     const { error: prodError } = await context.supabase
@@ -514,12 +484,7 @@ export const updateServiceDetails = createServerFn({ method: "POST" })
     }).parse(data)
   )
   .handler(async ({ data: input, context }) => {
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    
-    const isAdmin = roles?.some((r: any) => r.role === "admin") ?? false;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Acesso restrito a administradores.");
 
     const { error } = await context.supabase

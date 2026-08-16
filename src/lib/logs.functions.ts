@@ -12,30 +12,27 @@ export const getSystemLogs = createServerFn({ method: "GET" })
     }).parse(data)
   )
   .handler(async ({ data, context }) => {
-    // Verify admin
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    
-    if (!roles?.some(r => r.role === 'admin')) {
+    // Verify admin (uma única chamada ao banco)
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+
+    if (!isAdmin) {
       throw new Error("Unauthorized");
     }
 
+
     if (data.type === "email") {
-      const { data: logs, error } = await context.supabase
+      const { data: logs, count, error } = await context.supabase
         .from("email_logs")
-        .select(`
-          *,
-          profile:profiles(full_name, email)
-        `)
+        .select(
+          "id, created_at, template_name, status, to_email, subject, user_id, profile:profiles(full_name)",
+          { count: "estimated" },
+        )
         .order("created_at", { ascending: false })
         .range(data.offset, data.offset + data.limit - 1);
-      
-      const { count } = await context.supabase
-        .from("email_logs")
-        .select("*", { count: 'exact', head: true });
-        
+
       if (error) throw error;
       return {
         type: "email",
@@ -58,7 +55,7 @@ export const getSystemLogs = createServerFn({ method: "GET" })
 
     let query = context.supabase
       .from("audit_logs")
-      .select("id, category, action, status, actor_id, actor_email, entity_type, entity_id, description, ip_address, user_agent, metadata, created_at", { count: "exact" });
+      .select("id, category, action, status, actor_email, entity_type, entity_id, description, ip_address, created_at", { count: "estimated" });
 
     if (data.type === "auth") query = query.eq("category", "auth");
     if (data.type === "data") query = query.eq("category", "data");

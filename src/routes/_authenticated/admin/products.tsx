@@ -64,16 +64,21 @@ function ProductsPage() {
   const productGroups = useQuery({
     queryKey: ["admin-product-groups"],
     queryFn: () => getProductGroups(),
+    staleTime: 1000 * 60 * 15,
   });
 
   const contaboPlans = useQuery({
     queryKey: ["contabo-plans"],
     queryFn: () => getContaboPlansFn(),
+    // Só busca o catálogo externo quando o editor de um produto VPS está aberto
+    enabled: editingProduct?.product_type === "vps",
+    staleTime: 1000 * 60 * 30,
   });
 
   const servers = useQuery({
     queryKey: ["admin-servers"],
     queryFn: () => getServers(),
+    staleTime: 1000 * 60 * 15,
   });
 
   const daPackages = useQuery({

@@ -51,9 +51,16 @@ function AdminVPSPage() {
   const { data: clients } = useQuery({
     queryKey: ['admin-clients-simple'],
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('id, full_name, email');
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .order('full_name')
+        .limit(500);
       return data || [];
-    }
+    },
+    // Lista só é usada no modal de vinculação
+    enabled: isAssignModalOpen,
+    staleTime: 1000 * 60 * 10,
   });
 
   const { data: clientServices } = useQuery({
