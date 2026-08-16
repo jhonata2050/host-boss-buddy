@@ -401,8 +401,8 @@ export const createProduct = createServerFn({ method: "POST" })
         group_id: input.group_id,
         description: input.description,
         product_type: input.product_type,
-        directadmin_package: input.directadmin_package,
-        external_id: input.external_id,
+        directadmin_package: input.directadmin_package || null,
+        external_id: input.external_id || null,
         is_visible: input.is_visible,
         sort_order: input.sort_order,
         setup_fee: 0,
@@ -464,8 +464,8 @@ export const updateProduct = createServerFn({ method: "POST" })
       .update({
         name: input.name,
         description: input.description,
-        directadmin_package: input.directadmin_package,
-        external_id: input.external_id,
+        directadmin_package: input.directadmin_package || null,
+        external_id: input.external_id || null,
         is_visible: input.is_visible,
         sort_order: input.sort_order
       })

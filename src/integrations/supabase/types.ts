@@ -420,6 +420,7 @@ export type Database = {
           disk_quota_mb: number | null
           domains_limit: number | null
           email_accounts_limit: number | null
+          external_id: string | null
           group_id: string | null
           id: string
           is_featured: boolean
@@ -441,6 +442,7 @@ export type Database = {
           disk_quota_mb?: number | null
           domains_limit?: number | null
           email_accounts_limit?: number | null
+          external_id?: string | null
           group_id?: string | null
           id?: string
           is_featured?: boolean
@@ -462,6 +464,7 @@ export type Database = {
           disk_quota_mb?: number | null
           domains_limit?: number | null
           email_accounts_limit?: number | null
+          external_id?: string | null
           group_id?: string | null
           id?: string
           is_featured?: boolean
