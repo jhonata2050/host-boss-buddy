@@ -5,9 +5,9 @@ async function getContaboToken() {
       .from("system_settings")
       .select("*");
   
-  const settings: Record<string, any> = {};
+  const settings: Record<string, string> = {};
   settingsData?.forEach(s => {
-    settings[s.key] = s.value;
+    settings[s.key] = typeof s.value === 'string' ? s.value.trim() : String(s.value ?? '').trim();
   });
   
   const clientId = settings['contabo_client_id'] || process.env['CONTABO_CLIENT_ID'];
@@ -16,7 +16,7 @@ async function getContaboToken() {
   const apiPass = settings['contabo_api_password'] || process.env['CONTABO_API_PASSWORD'];
 
   if (!clientId || !clientSecret || !apiUser || !apiPass) {
-    throw new Error("Contabo API credentials not configured in Finance Settings");
+    throw new Error("Credenciais da API Contabo não configuradas em Admin > Financeiro.");
   }
 
   const params = new URLSearchParams();
@@ -32,7 +32,21 @@ async function getContaboToken() {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
   });
 
-  if (!res.ok) throw new Error("Failed to authenticate with Contabo");
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json() as { error?: string; error_description?: string };
+      detail = body.error_description || body.error || '';
+    } catch {
+      detail = await res.text().catch(() => '');
+    }
+    if (detail.toLowerCase().includes('invalid user credentials')) {
+      throw new Error(
+        "Contabo recusou as credenciais (usuário/senha da API inválidos). No Painel do Cliente Contabo, em 'API', use o E-mail da API e a Senha da API (não a senha da sua conta), e confira o Client ID/Secret."
+      );
+    }
+    throw new Error(`Falha ao autenticar na Contabo (${res.status})${detail ? `: ${detail}` : ''}`);
+  }
   const authResponse = await res.json() as { access_token: string };
   return authResponse.access_token;
 }
