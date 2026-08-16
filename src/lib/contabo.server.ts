@@ -1,8 +1,8 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function getContaboToken() {
-  const { getSystemSettingsImplementation } = await import("./admin.server");
-  const settings = await getSystemSettingsImplementation();
+  const { getSystemSettings } = await import("./support.functions");
+  const settings = await getSystemSettings({ data: undefined });
   
   const clientId = (settings as any)['contabo_client_id'] || process.env['CONTABO_CLIENT_ID'];
   const clientSecret = (settings as any)['contabo_client_secret'] || process.env['CONTABO_CLIENT_SECRET'];
