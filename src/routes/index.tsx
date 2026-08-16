@@ -53,7 +53,7 @@ function Index() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-6">
         <span className="flex min-w-0 items-center gap-2 text-lg font-semibold">
           {branding.logo_url ? (
-            <span className="flex items-center rounded-2xl bg-foreground px-4 py-2.5">
+            <span className="flex items-center rounded-2xl px-4 py-2.5">
               <img
                 src={branding.logo_url}
                 alt={branding.app_name}
