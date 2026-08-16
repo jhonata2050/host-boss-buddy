@@ -12,6 +12,7 @@ import {
   History,
   LogOut,
   Mail,
+  Monitor,
   MoreVertical,
   Package,
   PanelsTopLeft,
@@ -67,7 +68,10 @@ const ADMIN_SECTIONS: NavSection[] = [
   {
     label: "Clientes",
     icon: Users,
-    links: [{ label: "Contas de clientes", to: "/admin/clients", icon: Users }],
+    links: [
+      { label: "Contas de clientes", to: "/admin/clients", icon: Users },
+      { label: "Servidores VPS", to: "/admin/vps", icon: Monitor },
+    ],
   },
   {
     label: "Atendimento",

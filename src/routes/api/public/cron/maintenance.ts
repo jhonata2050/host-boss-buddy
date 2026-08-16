@@ -115,9 +115,10 @@ export const Route = createFileRoute('/api/public/cron/maintenance')({
                   .from('invoices')
                   .insert({
                     user_id: service.user_id,
-                    total_amount: service.products.price || 0, // Ajustar conforme lógica de preços
+                    total_amount: service.products.price || 0,
                     status: 'pending',
-                    due_date: service.next_due_date
+                    due_date: service.next_due_date,
+                    payment_method: 'pix'
                   } as any)
                   .select()
                   .single();
