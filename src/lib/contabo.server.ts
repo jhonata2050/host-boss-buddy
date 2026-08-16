@@ -26,6 +26,8 @@ async function getContaboToken() {
   params.append('username', apiUser);
   params.append('password', apiPass);
 
+  console.log("[Contabo] Tentando obter token para o usuário:", apiUser);
+
   const res = await fetch('https://auth.contabo.com/auth/realms/contabo/protocol/openid-connect/token', {
     method: 'POST',
     body: params,
@@ -34,13 +36,17 @@ async function getContaboToken() {
 
   if (!res.ok) {
     let detail = '';
+    let errorBody: any = null;
     try {
-      const body = await res.json() as { error?: string; error_description?: string };
-      detail = body.error_description || body.error || '';
+      errorBody = await res.json();
+      detail = errorBody.error_description || errorBody.error || '';
     } catch {
       detail = await res.text().catch(() => '');
     }
-    if (detail.toLowerCase().includes('invalid user credentials')) {
+    
+    console.error(`[Contabo] Erro na autenticação (${res.status}):`, detail);
+    
+    if (detail.toLowerCase().includes('invalid user credentials') || (errorBody && errorBody.error === 'invalid_grant')) {
       throw new Error(
         "Contabo recusou as credenciais (usuário/senha da API inválidos). No Painel do Cliente Contabo, em 'API', use o E-mail da API e a Senha da API (não a senha da sua conta), e confira o Client ID/Secret."
       );
@@ -60,7 +66,11 @@ export async function getContaboInstances() {
     }
   });
   
-  if (!res.ok) throw new Error("Failed to fetch Contabo instances");
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => 'Unknown error');
+    console.error(`[Contabo] Erro ao buscar instâncias (${res.status}):`, errorText);
+    throw new Error(`Falha ao buscar instâncias na Contabo (${res.status})`);
+  }
   return res.json();
 }
 
@@ -91,7 +101,11 @@ export async function performContaboAction(instanceId: string, action: string, u
     }
   });
 
-  if (!res.ok) throw new Error(`Failed to perform ${action} on Contabo`);
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => 'Unknown error');
+    console.error(`[Contabo] Erro na ação ${action} (${res.status}):`, errorText);
+    throw new Error(`Falha ao executar ${action} na Contabo (${res.status})`);
+  }
   return { success: true };
 }
 
