@@ -12,6 +12,7 @@ import {
   History,
   LogOut,
   Mail,
+  Monitor,
   MoreVertical,
   Package,
   PanelsTopLeft,
