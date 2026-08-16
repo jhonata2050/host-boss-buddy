@@ -91,7 +91,7 @@ function AdminFinanceSettingsPage() {
           </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {GATEWAYS.map((gateway) => {
+            {GATEWAYS.filter(g => g.id !== 'contabo').map((gateway) => {
               const configured = isGatewayConfigured(gateway.id, settings as Record<string, unknown>);
               return (
                 <Card key={gateway.id} className="rounded-3xl border-none shadow-sm">
