@@ -110,3 +110,18 @@ export const assignInstanceToClient = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+export const getContaboPlansFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roles } = await context.supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
+
+    const { getContaboProductTypes } = await import("./contabo.server");
+    return await getContaboProductTypes();
+  });
