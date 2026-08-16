@@ -62,10 +62,20 @@ function AdminVPSPage() {
       if (!selectedClientId) return [];
       const { data } = await supabase
         .from('services')
-        .select('id, domain, products(name)')
-        .eq('user_id', selectedClientId)
-        .eq('status', 'active');
-      return data || [];
+        .select(`
+          id, 
+          domain, 
+          status,
+          products(name, product_type)
+        `)
+        .eq('user_id', selectedClientId);
+      
+      // Filtramos no cliente para garantir que mostramos o que é relevante
+      return (data || []).filter(s => 
+        (s.products as any)?.product_type === 'vps' || 
+        s.status === 'pending' || 
+        s.status === 'active'
+      );
     },
     enabled: !!selectedClientId
   });
