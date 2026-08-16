@@ -12,15 +12,16 @@ export const getSystemLogs = createServerFn({ method: "GET" })
     }).parse(data)
   )
   .handler(async ({ data, context }) => {
-    // Verify admin
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    
-    if (!roles?.some(r => r.role === 'admin')) {
+    // Verify admin (uma única chamada ao banco)
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+
+    if (!isAdmin) {
       throw new Error("Unauthorized");
     }
+
 
     if (data.type === "email") {
       const { data: logs, error } = await context.supabase
