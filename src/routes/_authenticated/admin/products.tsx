@@ -83,14 +83,14 @@ function ProductsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => updateProduct({ data }),
+    mutationFn: (data: any) => data.id ? updateProduct({ data }) : createProduct({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       setEditingProduct(null);
-      toast.success("Produto atualizado com sucesso!");
+      toast.success(editingProduct?.id ? "Produto atualizado com sucesso!" : "Produto criado com sucesso!");
     },
     onError: (err: any) => {
-      toast.error("Erro ao atualizar: " + err.message);
+      toast.error("Erro ao salvar: " + err.message);
     }
   });
 
@@ -105,10 +105,27 @@ function ProductsPage() {
     });
   };
 
+  const handleCreate = () => {
+    setEditingProduct({
+      name: "",
+      slug: "",
+      description: "",
+      product_type: "hosting",
+      group_id: productGroups.data?.[0]?.id || "",
+      directadmin_package: "",
+      is_visible: true,
+      sort_order: 0,
+      prices: []
+    });
+  };
+
   const handleSave = () => {
     updateMutation.mutate({
       id: editingProduct.id,
       name: editingProduct.name,
+      slug: editingProduct.slug || editingProduct.name.toLowerCase().replace(/\s+/g, '-'),
+      group_id: editingProduct.group_id,
+      product_type: editingProduct.product_type,
       description: editingProduct.description,
       directadmin_package: editingProduct.directadmin_package,
       is_visible: editingProduct.is_visible,
