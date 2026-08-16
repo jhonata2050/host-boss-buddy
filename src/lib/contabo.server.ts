@@ -1,13 +1,22 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function getContaboToken() {
-  const clientId = process.env['CONTABO_CLIENT_ID'];
-  const clientSecret = process.env['CONTABO_CLIENT_SECRET'];
-  const apiUser = process.env['CONTABO_API_USER'];
-  const apiPass = process.env['CONTABO_API_PASSWORD'];
+  const { data: settingsData } = await supabaseAdmin
+      .from("system_settings")
+      .select("*");
+  
+  const settings: Record<string, any> = {};
+  settingsData?.forEach(s => {
+    settings[s.key] = s.value;
+  });
+  
+  const clientId = settings['contabo_client_id'] || process.env['CONTABO_CLIENT_ID'];
+  const clientSecret = settings['contabo_client_secret'] || process.env['CONTABO_CLIENT_SECRET'];
+  const apiUser = settings['contabo_api_user'] || process.env['CONTABO_API_USER'];
+  const apiPass = settings['contabo_api_password'] || process.env['CONTABO_API_PASSWORD'];
 
   if (!clientId || !clientSecret || !apiUser || !apiPass) {
-    throw new Error("Contabo API credentials not configured");
+    throw new Error("Contabo API credentials not configured in Finance Settings");
   }
 
   const params = new URLSearchParams();
@@ -24,8 +33,8 @@ async function getContaboToken() {
   });
 
   if (!res.ok) throw new Error("Failed to authenticate with Contabo");
-  const data = await res.json();
-  return data.access_token;
+  const authResponse = await res.json() as { access_token: string };
+  return authResponse.access_token;
 }
 
 export async function getContaboInstances() {
@@ -42,17 +51,17 @@ export async function getContaboInstances() {
 }
 
 export async function performContaboAction(instanceId: string, action: string, userId: string) {
-  const { data, error } = await supabaseAdmin
+  const { data: vpsData, error } = await supabaseAdmin
     .from('vps_instances')
     .select('external_id, service:services(user_id)')
     .eq('id', instanceId)
     .single();
 
-  if (error || !data) {
+  if (error || !vpsData) {
     throw new Error("Instance not found or unauthorized");
   }
 
-  const vps = data as any;
+  const vps = vpsData as any;
   if (vps.service.user_id !== userId) {
     throw new Error("Unauthorized access to instance");
   }

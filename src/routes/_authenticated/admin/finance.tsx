@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSystemSettings, updateSystemSettings } from "@/lib/support.functions";
-import { Save, Gift, Wallet, ExternalLink } from "lucide-react";
+import { Save, Gift, Wallet, ExternalLink, Server } from "lucide-react";
 import { toast } from "sonner";
 import { GATEWAYS, METHOD_LABELS, isGatewayConfigured } from "@/lib/gateways";
 
@@ -91,7 +91,7 @@ function AdminFinanceSettingsPage() {
           </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {GATEWAYS.map((gateway) => {
+            {GATEWAYS.filter(g => g.id !== 'contabo').map((gateway) => {
               const configured = isGatewayConfigured(gateway.id, settings as Record<string, unknown>);
               return (
                 <Card key={gateway.id} className="rounded-3xl border-none shadow-sm">
@@ -144,6 +144,63 @@ function AdminFinanceSettingsPage() {
                 </Card>
               );
             })}
+          </div>
+
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Server className="h-5 w-5 text-brand" />
+              Provedores de Infraestrutura (VPS)
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {GATEWAYS.filter(g => g.id === 'contabo').map((gateway) => {
+                const configured = isGatewayConfigured(gateway.id, settings as Record<string, unknown>);
+                return (
+                  <Card key={gateway.id} className="rounded-3xl border-none shadow-sm">
+                    <CardHeader className="space-y-3">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <Wallet className="h-5 w-5 shrink-0 text-brand" />
+                          <CardTitle className="truncate text-lg">{gateway.name}</CardTitle>
+                        </div>
+                        <Badge
+                          variant={configured ? "default" : "secondary"}
+                          className="shrink-0 rounded-full text-[10px] uppercase"
+                        >
+                          {configured ? "Ativo" : "Inativo"}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <a
+                          href={gateway.docs}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="ml-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                          Docs <ExternalLink className="size-3" />
+                        </a>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {gateway.fields.map((field) => (
+                        <div key={field.key} className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            {field.label}
+                            {field.optional && <span className="text-[10px] text-muted-foreground">(opcional)</span>}
+                          </Label>
+                          <Input
+                            name={field.key}
+                            type={field.secret ? "password" : "text"}
+                            placeholder={field.placeholder}
+                            defaultValue={(settings?.[field.key] as string) ?? ""}
+                            className="rounded-xl"
+                          />
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex justify-end gap-4">
