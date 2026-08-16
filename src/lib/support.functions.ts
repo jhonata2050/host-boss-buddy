@@ -374,6 +374,7 @@ export const createProduct = createServerFn({ method: "POST" })
       description: z.string().nullable(),
       product_type: z.string().default("hosting"),
       directadmin_package: z.string().nullable(),
+      external_id: z.string().nullable(),
       is_visible: z.boolean().default(true),
       sort_order: z.number().default(0),
       prices: z.array(z.object({
@@ -400,7 +401,8 @@ export const createProduct = createServerFn({ method: "POST" })
         group_id: input.group_id,
         description: input.description,
         product_type: input.product_type,
-        directadmin_package: input.directadmin_package,
+        directadmin_package: input.directadmin_package || null,
+        external_id: input.external_id || null,
         is_visible: input.is_visible,
         sort_order: input.sort_order,
         setup_fee: 0,
@@ -437,6 +439,7 @@ export const updateProduct = createServerFn({ method: "POST" })
       name: z.string(),
       description: z.string().nullable(),
       directadmin_package: z.string().nullable(),
+      external_id: z.string().nullable(),
       is_visible: z.boolean(),
       sort_order: z.number(),
       prices: z.array(z.object({
@@ -461,7 +464,8 @@ export const updateProduct = createServerFn({ method: "POST" })
       .update({
         name: input.name,
         description: input.description,
-        directadmin_package: input.directadmin_package,
+        directadmin_package: input.directadmin_package || null,
+        external_id: input.external_id || null,
         is_visible: input.is_visible,
         sort_order: input.sort_order
       })

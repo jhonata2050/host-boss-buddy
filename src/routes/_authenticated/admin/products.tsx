@@ -53,7 +53,7 @@ function ProductsPage() {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, slug, description, directadmin_package, disk_quota_mb, is_visible, sort_order, product_type, group_id, product_groups(name), product_prices(cycle, price, is_active)",
+          "id, name, slug, description, directadmin_package, external_id, disk_quota_mb, is_visible, sort_order, product_type, group_id, product_groups(name), product_prices(cycle, price, is_active)",
         )
         .order("sort_order");
       if (error) throw error;
@@ -107,6 +107,8 @@ function ProductsPage() {
   const handleEdit = (product: any) => {
     setEditingProduct({
       ...product,
+      directadmin_package: product.directadmin_package || product.external_id || "",
+      external_id: product.external_id || product.directadmin_package || "",
       prices: product.product_prices || []
     });
   };
@@ -119,6 +121,7 @@ function ProductsPage() {
       product_type: "hosting",
       group_id: productGroups.data?.[0]?.id || "",
       directadmin_package: "",
+      external_id: "",
       is_visible: true,
       sort_order: 0,
       prices: []
@@ -133,7 +136,8 @@ function ProductsPage() {
       group_id: editingProduct.group_id,
       product_type: editingProduct.product_type,
       description: editingProduct.description,
-      directadmin_package: editingProduct.directadmin_package,
+      directadmin_package: editingProduct.directadmin_package || editingProduct.external_id,
+      external_id: editingProduct.external_id || editingProduct.directadmin_package,
       is_visible: editingProduct.is_visible,
       sort_order: editingProduct.sort_order,
       prices: editingProduct.prices.map((p: any) => ({
@@ -330,20 +334,31 @@ function ProductsPage() {
                   <div className="space-y-2">
                     <Label>Plano Contabo (Product ID)</Label>
                     <Select 
-                      value={editingProduct.directadmin_package || ""} 
-                      onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val})}
+                      value={editingProduct.directadmin_package || editingProduct.external_id || ""} 
+                      onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val, external_id: val})}
                     >
                       <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder={contaboPlans.isLoading ? "Carregando..." : "Selecione o plano VPS"} />
+                        <SelectValue placeholder={
+                          contaboPlans.isLoading ? "Carregando planos da Contabo..." : 
+                          contaboPlans.error ? "Erro ao carregar (verifique API)" : 
+                          "Selecione o plano VPS"
+                        } />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-none shadow-xl">
                         {contaboPlans.data?.map((plan: any) => (
                           <SelectItem key={plan.productId} value={plan.productId}>
-                            {plan.name} ({plan.productId})
+                            {plan.name} ({plan.productId}) - {plan.vCpu} vCPU / {plan.ramMb / 1024}GB RAM
                           </SelectItem>
                         ))}
                         {(!contaboPlans.data || contaboPlans.data.length === 0) && !contaboPlans.isLoading && (
-                          <div className="p-2 text-xs text-center text-muted-foreground">Nenhum plano encontrado na API</div>
+                          <div className="p-4 text-xs text-center text-muted-foreground">
+                            {contaboPlans.error ? (
+                              <div className="text-destructive font-medium">
+                                Falha na API Contabo. <br/>
+                                Certifique-se de que as credenciais em Financeiro estão corretas.
+                              </div>
+                            ) : "Nenhum plano encontrado na API"}
+                          </div>
                         )}
                       </SelectContent>
                     </Select>

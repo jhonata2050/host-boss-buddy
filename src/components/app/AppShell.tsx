@@ -268,9 +268,9 @@ export function AppShell({
                     <Link
                       to="/"
                       className={cn(
-                        "flex items-center",
+                        "flex items-center h-12",
                         branding.logo_url
-                          ? "w-full justify-start rounded-2xl px-3 py-2"
+                          ? "w-full justify-start rounded-2xl px-2"
                           : "size-8 justify-center rounded-full bg-brand",
                       )}
                     >
@@ -278,7 +278,7 @@ export function AppShell({
                         <img
                           src={branding.logo_url}
                           alt={branding.app_name}
-                          className="h-8 w-auto max-w-full object-contain"
+                          className="h-full w-auto max-w-full object-contain"
                         />
                       ) : (
                         <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>
@@ -358,9 +358,9 @@ export function AppShell({
             <Link
               to="/"
               className={cn(
-                "flex min-w-0 items-center",
+                "flex min-w-0 items-center h-12 w-full",
                 branding.logo_url
-                  ? "w-full justify-start rounded-2xl px-3 py-2"
+                  ? "justify-start rounded-2xl px-2"
                   : "size-8 justify-center overflow-hidden rounded-full bg-brand",
               )}
             >
@@ -368,7 +368,7 @@ export function AppShell({
                 <img
                   src={branding.logo_url}
                   alt={branding.app_name}
-                  className="h-8 w-auto max-w-full object-contain"
+                  className="h-full w-auto max-w-full object-contain"
                 />
               ) : (
                 <span className="text-sm font-bold text-brand-foreground">{branding.app_name.charAt(0)}</span>

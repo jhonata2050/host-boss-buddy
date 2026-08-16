@@ -110,22 +110,46 @@ export async function performContaboAction(instanceId: string, action: string, u
 }
 
 export async function getContaboProductTypes() {
-  const token = await getContaboToken();
-  // Documentação Contabo: GET /v1/compute/instances/products
-  const res = await fetch('https://api.contabo.com/v1/compute/instances/products', {
-    headers: { 
-      'Authorization': `Bearer ${token}`,
-      'x-request-id': crypto.randomUUID()
+  try {
+    const token = await getContaboToken();
+    console.log("[Contabo] Buscando catálogo de produtos...");
+    
+    // API Contabo requer paginação ou limite alto para retornar todos
+    const res = await fetch('https://api.contabo.com/v1/compute/instances/products?size=100', {
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'x-request-id': crypto.randomUUID()
+      }
+    });
+    
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => 'Unknown error');
+      console.error(`[Contabo] Erro ao buscar produtos (${res.status}):`, errorText);
+      
+      // Se for 400, pode ser que o parâmetro size não seja suportado ou algo na query
+      if (res.status === 400) {
+        console.log("[Contabo] Tentando busca sem parâmetros...");
+        const retryRes = await fetch('https://api.contabo.com/v1/compute/instances/products', {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'x-request-id': crypto.randomUUID()
+          }
+        });
+        if (retryRes.ok) {
+          const retryData = await retryRes.json();
+          return retryData.data || [];
+        }
+      }
+      
+      throw new Error(`Falha ao buscar tipos de produtos na Contabo (${res.status}): ${errorText}`);
     }
-  });
-  
-  if (!res.ok) {
-    const errorText = await res.text().catch(() => 'Unknown error');
-    console.error(`[Contabo] Erro ao buscar produtos (${res.status}):`, errorText);
-    throw new Error(`Falha ao buscar tipos de produtos na Contabo (${res.status})`);
+    const response = await res.json();
+    console.log(`[Contabo] ${response.data?.length || 0} produtos encontrados.`);
+    return response.data || [];
+  } catch (err: any) {
+    console.error("[Contabo] Exceção em getContaboProductTypes:", err.message);
+    throw err;
   }
-  const response = await res.json();
-  return response.data || [];
 }
 
 export async function provisionContaboVPS(serviceId: string, config: any) {
