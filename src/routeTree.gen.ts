@@ -43,6 +43,7 @@ import { Route as ApiPublicBrandingRouteImport } from './routes/api/public/brand
 import { Route as ApiPublicPasswordResetRouteImport } from './routes/api/public/password-reset'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin/clients.index'
 import { Route as AuthenticatedAdminClientsClientIdRouteImport } from './routes/_authenticated/admin/clients.$clientId'
+import { Route as AuthenticatedAdminVpsIndexRouteImport } from './routes/_authenticated/admin/vps/index'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 import { Route as ApiPublicVpsWebhookRouteImport } from './routes/api/public/vps/webhook'
 import { Route as ApiPublicWebhooksAbacatepayRouteImport } from './routes/api/public/webhooks/abacatepay'
@@ -240,6 +241,12 @@ const AuthenticatedAdminClientsClientIdRoute =
     path: '/$clientId',
     getParentRoute: () => AuthenticatedAdminClientsRoute,
   } as any)
+const AuthenticatedAdminVpsIndexRoute =
+  AuthenticatedAdminVpsIndexRouteImport.update({
+    id: '/vps/',
+    path: '/vps/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const ApiPublicCronMaintenanceRoute =
   ApiPublicCronMaintenanceRouteImport.update({
     id: '/api/public/cron/maintenance',
@@ -328,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
+  '/admin/vps/': typeof AuthenticatedAdminVpsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -366,6 +374,7 @@ export interface FileRoutesByTo {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
+  '/admin/vps': typeof AuthenticatedAdminVpsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -411,6 +420,7 @@ export interface FileRoutesById {
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/public/webhooks/woovi': typeof ApiPublicWebhooksWooviRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
+  '/_authenticated/admin/vps/': typeof AuthenticatedAdminVpsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/api/public/webhooks/woovi'
     | '/admin/clients/'
+    | '/admin/vps/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -494,6 +505,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/api/public/webhooks/woovi'
     | '/admin/clients'
+    | '/admin/vps'
   id:
     | '__root__'
     | '/'
@@ -538,6 +550,7 @@ export interface FileRouteTypes {
     | '/api/public/webhooks/stripe'
     | '/api/public/webhooks/woovi'
     | '/_authenticated/admin/clients/'
+    | '/_authenticated/admin/vps/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -796,6 +809,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClientsClientIdRouteImport
       parentRoute: typeof AuthenticatedAdminClientsRoute
     }
+    '/_authenticated/admin/vps/': {
+      id: '/_authenticated/admin/vps/'
+      path: '/vps'
+      fullPath: '/admin/vps/'
+      preLoaderRoute: typeof AuthenticatedAdminVpsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/api/public/cron/maintenance': {
       id: '/api/public/cron/maintenance'
       path: '/api/public/cron/maintenance'
@@ -885,6 +905,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminServersRoute: typeof AuthenticatedAdminServersRoute
   AuthenticatedAdminTicketsRoute: typeof AuthenticatedAdminTicketsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminVpsIndexRoute: typeof AuthenticatedAdminVpsIndexRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -901,6 +922,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminServersRoute: AuthenticatedAdminServersRoute,
     AuthenticatedAdminTicketsRoute: AuthenticatedAdminTicketsRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+    AuthenticatedAdminVpsIndexRoute: AuthenticatedAdminVpsIndexRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =

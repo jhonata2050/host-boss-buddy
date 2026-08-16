@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { Monitor, Save, User } from 'lucide-react';
 
-export const Route = createFileRoute('/_authenticated/admin/vps')({
+export const Route = createFileRoute('/_authenticated/admin/vps/')({
   component: AdminVPSPage,
 });
 
