@@ -23,11 +23,7 @@ const finishSchema = z.object({
 });
 
 async function assertAdmin(supabase: any, userId: string) {
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
-  const isAdmin = roles?.some((r: { role: string }) => r.role === "admin") ?? false;
+  const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
   if (!isAdmin) throw new Error("Unauthorized");
 }
 
