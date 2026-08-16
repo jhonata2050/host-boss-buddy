@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { updateProduct, getServers, getDAPackagesList } from "@/lib/support.functions";
+import { updateProduct, createProduct, getServers, getDAPackagesList, getProductGroups } from "@/lib/support.functions";
+import { getContaboPlansFn } from "@/lib/vps-admin.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/products")({
@@ -52,12 +53,22 @@ function ProductsPage() {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, slug, description, directadmin_package, disk_quota_mb, is_visible, sort_order, product_groups(name), product_prices(cycle, price, is_active)",
+          "id, name, slug, description, directadmin_package, disk_quota_mb, is_visible, sort_order, product_type, group_id, product_groups(name), product_prices(cycle, price, is_active)",
         )
         .order("sort_order");
       if (error) throw error;
       return data;
     },
+  });
+
+  const productGroups = useQuery({
+    queryKey: ["admin-product-groups"],
+    queryFn: () => getProductGroups(),
+  });
+
+  const contaboPlans = useQuery({
+    queryKey: ["contabo-plans"],
+    queryFn: () => getContaboPlansFn(),
   });
 
   const servers = useQuery({
@@ -72,14 +83,20 @@ function ProductsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => updateProduct({ data }),
+    mutationFn: async (data: any) => {
+      if (data.id) {
+        return await updateProduct({ data });
+      } else {
+        return await createProduct({ data });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       setEditingProduct(null);
-      toast.success("Produto atualizado com sucesso!");
+      toast.success(editingProduct?.id ? "Produto atualizado com sucesso!" : "Produto criado com sucesso!");
     },
     onError: (err: any) => {
-      toast.error("Erro ao atualizar: " + err.message);
+      toast.error("Erro ao salvar: " + err.message);
     }
   });
 
@@ -94,10 +111,27 @@ function ProductsPage() {
     });
   };
 
+  const handleCreate = () => {
+    setEditingProduct({
+      name: "",
+      slug: "",
+      description: "",
+      product_type: "hosting",
+      group_id: productGroups.data?.[0]?.id || "",
+      directadmin_package: "",
+      is_visible: true,
+      sort_order: 0,
+      prices: []
+    });
+  };
+
   const handleSave = () => {
     updateMutation.mutate({
       id: editingProduct.id,
       name: editingProduct.name,
+      slug: editingProduct.slug || editingProduct.name.toLowerCase().replace(/\s+/g, '-'),
+      group_id: editingProduct.group_id,
+      product_type: editingProduct.product_type,
       description: editingProduct.description,
       directadmin_package: editingProduct.directadmin_package,
       is_visible: editingProduct.is_visible,
@@ -139,7 +173,10 @@ function ProductsPage() {
             className="h-11 rounded-xl pl-9"
           />
         </div>
-        <Button className="h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button 
+          className="h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={handleCreate}
+        >
           <Plus className="mr-1 size-4" />
           Novo
         </Button>
@@ -209,11 +246,12 @@ function ProductsPage() {
         </div>
       )}
 
-      {/* Modal de Edição */}
       <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
         <DialogContent className="max-w-2xl rounded-3xl border-none shadow-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Editar Produto</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">
+              {editingProduct?.id ? "Editar Produto" : "Novo Produto"}
+            </DialogTitle>
           </DialogHeader>
           
           {editingProduct && (
@@ -224,8 +262,43 @@ function ProductsPage() {
                   <Input 
                     value={editingProduct.name} 
                     onChange={e => setEditingProduct({...editingProduct, name: e.target.value})}
+                    placeholder="Ex: Hospedagem Start"
                     className="rounded-xl"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo de Produto</Label>
+                  <Select 
+                    value={editingProduct.product_type} 
+                    onValueChange={val => setEditingProduct({...editingProduct, product_type: val})}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-none shadow-xl">
+                      <SelectItem value="hosting">Hospedagem (DirectAdmin)</SelectItem>
+                      <SelectItem value="vps">VPS (Contabo)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Grupo</Label>
+                  <Select 
+                    value={editingProduct.group_id || ""} 
+                    onValueChange={val => setEditingProduct({...editingProduct, group_id: val})}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Selecione um grupo" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-none shadow-xl">
+                      {productGroups.data?.map((g: any) => (
+                        <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Ordem de Exibição</Label>
@@ -250,42 +323,70 @@ function ProductsPage() {
               <div className="rounded-2xl border border-border p-4 bg-muted/30">
                 <div className="flex items-center gap-2 mb-4 text-sm font-bold uppercase text-muted-foreground">
                   <Server className="size-4" />
-                  Integração DirectAdmin
+                  {editingProduct.product_type === 'vps' ? 'Integração Contabo' : 'Integração DirectAdmin'}
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
+                
+                {editingProduct.product_type === 'vps' ? (
                   <div className="space-y-2">
-                    <Label>Servidor para Sincronização</Label>
-                    <Select value={selectedServer} onValueChange={setSelectedServer}>
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder="Selecione um servidor" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border-none shadow-xl">
-                        {servers.data?.map((s: any) => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Pacote no Servidor</Label>
+                    <Label>Plano Contabo (Product ID)</Label>
                     <Select 
                       value={editingProduct.directadmin_package || ""} 
                       onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val})}
                     >
                       <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder={daPackages.isLoading ? "Carregando..." : "Selecione um pacote"} />
+                        <SelectValue placeholder={contaboPlans.isLoading ? "Carregando..." : "Selecione o plano VPS"} />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-none shadow-xl">
-                        {daPackages.data?.map((pkg: string) => (
-                          <SelectItem key={pkg} value={pkg}>{pkg}</SelectItem>
+                        {contaboPlans.data?.map((plan: any) => (
+                          <SelectItem key={plan.productId} value={plan.productId}>
+                            {plan.name} ({plan.productId})
+                          </SelectItem>
                         ))}
-                        {(!daPackages.data || daPackages.data.length === 0) && !daPackages.isLoading && (
-                          <div className="p-2 text-xs text-center text-muted-foreground">Nenhum pacote encontrado ou servidor não selecionado</div>
+                        {(!contaboPlans.data || contaboPlans.data.length === 0) && !contaboPlans.isLoading && (
+                          <div className="p-2 text-xs text-center text-muted-foreground">Nenhum plano encontrado na API</div>
                         )}
                       </SelectContent>
                     </Select>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Este ID será enviado à Contabo durante o provisionamento automático.
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Servidor para Sincronização</Label>
+                      <Select value={selectedServer} onValueChange={setSelectedServer}>
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue placeholder="Selecione um servidor" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-none shadow-xl">
+                          {servers.data?.map((s: any) => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Pacote no Servidor</Label>
+                      <Select 
+                        value={editingProduct.directadmin_package || ""} 
+                        onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val})}
+                      >
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue placeholder={daPackages.isLoading ? "Carregando..." : "Selecione um pacote"} />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-none shadow-xl">
+                          {daPackages.data?.map((pkg: string) => (
+                            <SelectItem key={pkg} value={pkg}>{pkg}</SelectItem>
+                          ))}
+                          {(!daPackages.data || daPackages.data.length === 0) && !daPackages.isLoading && (
+                            <div className="p-2 text-xs text-center text-muted-foreground">Nenhum pacote encontrado ou servidor não selecionado</div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
