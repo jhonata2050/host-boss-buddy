@@ -334,16 +334,27 @@ function ProductsPage() {
                       onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val})}
                     >
                       <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder={contaboPlans.isLoading ? "Carregando..." : "Selecione o plano VPS"} />
+                        <SelectValue placeholder={
+                          contaboPlans.isLoading ? "Carregando planos da Contabo..." : 
+                          contaboPlans.error ? "Erro ao carregar (verifique API)" : 
+                          "Selecione o plano VPS"
+                        } />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-none shadow-xl">
                         {contaboPlans.data?.map((plan: any) => (
                           <SelectItem key={plan.productId} value={plan.productId}>
-                            {plan.name} ({plan.productId})
+                            {plan.name} ({plan.productId}) - {plan.vCpu} vCPU / {plan.ramMb / 1024}GB RAM
                           </SelectItem>
                         ))}
                         {(!contaboPlans.data || contaboPlans.data.length === 0) && !contaboPlans.isLoading && (
-                          <div className="p-2 text-xs text-center text-muted-foreground">Nenhum plano encontrado na API</div>
+                          <div className="p-4 text-xs text-center text-muted-foreground">
+                            {contaboPlans.error ? (
+                              <div className="text-destructive font-medium">
+                                Falha na API Contabo. <br/>
+                                Certifique-se de que as credenciais em Financeiro estão corretas.
+                              </div>
+                            ) : "Nenhum plano encontrado na API"}
+                          </div>
                         )}
                       </SelectContent>
                     </Select>
