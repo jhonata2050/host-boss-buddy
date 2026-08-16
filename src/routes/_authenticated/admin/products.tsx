@@ -124,6 +124,7 @@ function ProductsPage() {
       external_id: "",
       is_visible: true,
       sort_order: 0,
+      disk_quota_mb: 0,
       prices: []
     });
   };
@@ -140,6 +141,7 @@ function ProductsPage() {
       external_id: editingProduct.external_id || null,
       is_visible: editingProduct.is_visible,
       sort_order: editingProduct.sort_order,
+      disk_quota_mb: editingProduct.disk_quota_mb,
       prices: editingProduct.prices.map((p: any) => ({
         cycle: p.cycle,
         price: Number(p.price),
