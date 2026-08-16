@@ -2,121 +2,111 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getContaboInstances } from "./contabo.server";
 
 export const getVPSAdminData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { userId } = context as any;
-    if (!userId) throw new Error("Unauthorized");
-
-    // Verificar se é admin
-    const { data: role } = await supabaseAdmin
+    const { data: roles } = await context.supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .single();
+      .eq('user_id', context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
 
-    if (!role) throw new Error("Forbidden");
-
-    const { data: instances, error } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('vps_instances')
       .select(`
         *,
-        service:services (
+        service:services(
           *,
-          profile:profiles (
-            email,
-            full_name
-          )
+          profile:profiles(full_name, email)
         )
       `);
 
     if (error) throw error;
-    return instances;
+    return data;
   });
 
 export const updateVPSInstance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     id: z.string(),
-    external_id: z.string().optional(),
-    ip_address: z.string().optional(),
-    status: z.string().optional()
+    external_id: z.string(),
+    ip_address: z.string().nullable(),
+    status: z.string()
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { userId } = context as any;
-    if (!userId) throw new Error("Unauthorized");
-
-    // Verificar se é admin
-    const { data: role } = await supabaseAdmin
+    const { data: roles } = await context.supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .single();
-
-    if (!role) throw new Error("Forbidden");
+      .eq('user_id', context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
 
     const { error } = await supabaseAdmin
       .from('vps_instances')
-      .update(data as any)
+      .update({
+        external_id: data.external_id,
+        ip_address: data.ip_address,
+        status: data.status
+      })
       .eq('id', data.id);
 
     if (error) throw error;
     return { success: true };
   });
 
-export const syncContaboInstancesFn = createServerFn({ method: "POST" })
+export const syncContaboInstancesFn = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { userId } = context as any;
-    
-    // Check admin
-    const { data: role } = await supabaseAdmin
+    const { data: roles } = await context.supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .single();
+      .eq('user_id', context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
 
-    if (!role) throw new Error("Forbidden");
-
-    // Fetch from Contabo
-    const result = await getContaboInstances();
-    return result.data || []; // Contabo returns { data: [...] }
+    const { getContaboInstances } = await import("./contabo.server");
+    const response = await getContaboInstances();
+    return response.data || [];
   });
 
 export const assignInstanceToClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
-    serviceId: z.string().uuid(),
+    serviceId: z.string(),
     externalId: z.string(),
-    ipAddress: z.string().optional()
+    ipAddress: z.string().optional(),
+    name: z.string().optional()
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { userId } = context as any;
-    
-    // Check admin
-    const { data: role } = await supabaseAdmin
+    const { data: roles } = await context.supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .single();
-
-    if (!role) throw new Error("Forbidden");
+      .eq('user_id', context.userId);
+    
+    const isAdmin = roles?.some((r: any) => r.role === 'admin') ?? false;
+    if (!isAdmin) throw new Error("Unauthorized");
 
     const { error } = await supabaseAdmin
       .from('vps_instances')
-      .insert({
+      .upsert({
         service_id: data.serviceId,
         external_id: data.externalId,
         ip_address: data.ipAddress || null,
         status: 'active'
-      });
+      }, { onConflict: 'service_id' });
 
     if (error) throw error;
+    
+    // Update service status to active if not already
+    await supabaseAdmin
+      .from('services')
+      .update({ status: 'active' })
+      .eq('id', data.serviceId);
+
     return { success: true };
   });
