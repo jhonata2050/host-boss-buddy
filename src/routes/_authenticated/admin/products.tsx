@@ -347,7 +347,7 @@ function ProductsPage() {
                       <SelectContent className="rounded-xl border-none shadow-xl">
                         {contaboPlans.data?.map((plan: any) => (
                           <SelectItem key={plan.productId} value={plan.productId}>
-                            {plan.name} ({plan.productId}) - {plan.vCpu} vCPU / {plan.ramMb / 1024}GB RAM
+                            {plan.name} ({plan.productId}) — {plan.vCpu} vCPU / {plan.ramMb >= 1024 ? `${plan.ramMb/1024}GB` : `${plan.ramMb}MB`} RAM
                           </SelectItem>
                         ))}
                         {(!contaboPlans.data || contaboPlans.data.length === 0) && !contaboPlans.isLoading && (

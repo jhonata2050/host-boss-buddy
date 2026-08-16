@@ -112,10 +112,11 @@ export async function performContaboAction(instanceId: string, action: string, u
 export async function getContaboProductTypes() {
   try {
     const token = await getContaboToken();
-    console.log("[Contabo] Buscando catálogo de produtos...");
+    console.log("[Contabo] Buscando catálogo de produtos via /v1/products...");
     
-    // API Contabo requer paginação ou limite alto para retornar todos
-    const res = await fetch('https://api.contabo.com/v1/compute/instances/products?size=100', {
+    // O endpoint /v1/compute/instances/products está retornando 400 (instanceId missing)
+    // na API atual da Contabo. Usaremos o endpoint global /v1/products que funciona.
+    const res = await fetch('https://api.contabo.com/v1/products?size=100', {
       headers: { 
         'Authorization': `Bearer ${token}`,
         'x-request-id': crypto.randomUUID()
@@ -125,27 +126,24 @@ export async function getContaboProductTypes() {
     if (!res.ok) {
       const errorText = await res.text().catch(() => 'Unknown error');
       console.error(`[Contabo] Erro ao buscar produtos (${res.status}):`, errorText);
-      
-      // Se for 400, pode ser que o parâmetro size não seja suportado ou algo na query
-      if (res.status === 400) {
-        console.log("[Contabo] Tentando busca sem parâmetros...");
-        const retryRes = await fetch('https://api.contabo.com/v1/compute/instances/products', {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'x-request-id': crypto.randomUUID()
-          }
-        });
-        if (retryRes.ok) {
-          const retryData = await retryRes.json();
-          return retryData.data || [];
-        }
-      }
-      
       throw new Error(`Falha ao buscar tipos de produtos na Contabo (${res.status}): ${errorText}`);
     }
+    
     const response = await res.json();
-    console.log(`[Contabo] ${response.data?.length || 0} produtos encontrados.`);
-    return response.data || [];
+    const allProducts = response.data || [];
+    
+    // Mapear para o formato esperado pela UI (productId, name, etc)
+    // A API /v1/products retorna itens dentro de priceItem
+    const formattedProducts = allProducts.map((p: any) => ({
+      productId: p.priceItem?.itemId || p.priceItem?.key,
+      name: p.priceItem?.name,
+      vCpu: p.priceItem?.specs?.find((s: any) => s.title.toLowerCase().includes('cpu'))?.description || 'N/A',
+      ramMb: parseInt(p.priceItem?.specs?.find((s: any) => s.title.toLowerCase().includes('ram'))?.description) * 1024 || 0,
+      diskGb: p.priceItem?.specs?.find((s: any) => s.title.toLowerCase().includes('disk'))?.description || 'N/A'
+    })).filter((p: any) => p.productId && p.name);
+
+    console.log(`[Contabo] ${formattedProducts.length} produtos formatados.`);
+    return formattedProducts;
   } catch (err: any) {
     console.error("[Contabo] Exceção em getContaboProductTypes:", err.message);
     throw err;
