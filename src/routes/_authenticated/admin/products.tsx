@@ -107,8 +107,8 @@ function ProductsPage() {
   const handleEdit = (product: any) => {
     setEditingProduct({
       ...product,
-      directadmin_package: product.directadmin_package || product.external_id || "",
-      external_id: product.external_id || product.directadmin_package || "",
+      directadmin_package: product.directadmin_package || "",
+      external_id: product.external_id || "",
       prices: product.product_prices || []
     });
   };
@@ -124,6 +124,7 @@ function ProductsPage() {
       external_id: "",
       is_visible: true,
       sort_order: 0,
+      disk_quota_mb: 0,
       prices: []
     });
   };
@@ -136,10 +137,11 @@ function ProductsPage() {
       group_id: editingProduct.group_id,
       product_type: editingProduct.product_type,
       description: editingProduct.description,
-      directadmin_package: editingProduct.directadmin_package || editingProduct.external_id,
-      external_id: editingProduct.external_id || editingProduct.directadmin_package,
+      directadmin_package: editingProduct.directadmin_package || null,
+      external_id: editingProduct.external_id || null,
       is_visible: editingProduct.is_visible,
       sort_order: editingProduct.sort_order,
+      disk_quota_mb: editingProduct.disk_quota_mb,
       prices: editingProduct.prices.map((p: any) => ({
         cycle: p.cycle,
         price: Number(p.price),
@@ -315,6 +317,26 @@ function ProductsPage() {
                 </div>
               </div>
 
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Espaço em Disco (MB)</Label>
+                  <Input 
+                    type="number"
+                    value={editingProduct.disk_quota_mb || ""} 
+                    onChange={e => setEditingProduct({...editingProduct, disk_quota_mb: Number(e.target.value)})}
+                    placeholder="Ex: 1024 para 1GB"
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="flex items-center justify-between pt-8">
+                  <Label>Produto Visível</Label>
+                  <Switch 
+                    checked={editingProduct.is_visible} 
+                    onCheckedChange={val => setEditingProduct({...editingProduct, is_visible: val})}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>Descrição</Label>
                 <Textarea 
@@ -334,8 +356,8 @@ function ProductsPage() {
                   <div className="space-y-2">
                     <Label>Plano Contabo (Product ID)</Label>
                     <Select 
-                      value={editingProduct.directadmin_package || editingProduct.external_id || ""} 
-                      onValueChange={val => setEditingProduct({...editingProduct, directadmin_package: val, external_id: val})}
+                      value={editingProduct.external_id || ""} 
+                      onValueChange={val => setEditingProduct({...editingProduct, external_id: val, directadmin_package: val})}
                     >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue placeholder={
@@ -407,13 +429,6 @@ function ProductsPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="font-bold">Ciclos de Cobrança</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Produto Visível</span>
-                    <Switch 
-                      checked={editingProduct.is_visible} 
-                      onCheckedChange={val => setEditingProduct({...editingProduct, is_visible: val})}
-                    />
-                  </div>
                 </div>
                 
                 <div className="grid gap-3">
